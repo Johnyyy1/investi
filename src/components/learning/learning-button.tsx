@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const variants = cva(
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-ql-md border-b-2 px-6 py-3 text-ql-body font-semibold transition duration-[var(--ql-motion-fast)] active:translate-y-px motion-safe:active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-ql-md border-b-2 px-6 py-3 text-ql-body font-semibold transition duration-[var(--ql-motion-fast)] motion-safe:active:translate-y-px motion-safe:active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
   { variants: { variant: {
     primary: "border-ql-blue-700 bg-ql-blue-500 text-ql-text hover:bg-ql-blue-400",
     secondary: "border border-b-2 border-ql-border-strong bg-ql-surface text-ql-text hover:bg-ql-subtle",
@@ -19,4 +19,3 @@ export function LearningButton({ variant, loading = false, disabled, className, 
     {children}
   </button>;
 }
-

@@ -8,7 +8,7 @@ export function LearningProgressBar({ value, total, label }: { value: number; to
   const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(safeTotal, value)) : 0;
   const duration = useLearningDuration();
   return <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={safeTotal} aria-valuenow={safeValue} className="h-3 flex-1 overflow-hidden rounded-ql-full bg-ql-blue-100">
-    <motion.div initial={false} animate={{ width: `${safeValue / safeTotal * 100}%` }} transition={{ duration }} className="h-full rounded-ql-full bg-ql-blue-500" />
+    <motion.div initial={false} animate={{ width: `${safeValue / safeTotal * 100}%` }} transition={{ duration }} className="h-full rounded-ql-full bg-ql-blue-700" />
   </div>;
 }
 export function LessonProgress({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
@@ -18,4 +18,3 @@ export function LessonProgress({ step, total, onBack }: { step: number; total: n
     <span className="shrink-0 text-ql-small tabular-nums text-ql-secondary">{step} / {total}</span>
   </div>;
 }
-

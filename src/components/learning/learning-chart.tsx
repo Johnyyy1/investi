@@ -17,7 +17,7 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
   return <figure className="min-w-0 rounded-ql-lg border border-ql-border bg-ql-surface p-6">
     <figcaption><h3 className="text-ql-title font-semibold">{title}</h3><p className="mt-1 text-ql-small text-ql-secondary">{description}</p></figcaption>
     <div className="mt-4 h-64 min-w-0">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 256 }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart accessibilityLayer data={data} margin={learningChartStyle.margin}>
           <CartesianGrid stroke="var(--color-ql-border)" vertical={false} />
           <XAxis dataKey="label" tick={learningChartStyle.axis} tickLine={false} axisLine={false} />
@@ -32,4 +32,3 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
     </details>
   </figure>;
 }
-

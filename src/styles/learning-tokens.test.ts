@@ -25,5 +25,7 @@ describe("learning token accessibility", () => {
     const sizes = [...tokens.matchAll(/--text-ql-([\w-]+):/g)].map((match) => match[1]);
     expect(sizes.filter((name) => name in colors)).toEqual([]);
   });
+  it("keeps progress indicators distinguishable from their tracks", () => {
+    expect(contrast("blue-700", "blue-100")).toBeGreaterThanOrEqual(3);
+  });
 });
-

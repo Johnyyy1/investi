@@ -8,7 +8,7 @@ The new system is opt-in through `.learning-theme`. The working application keep
 
 Semantic accents: success #55C878 on #EFFBF2; warning #F7BF4F on #FFF9E8; danger #F26F6F on #FFF2F2. Use darker semantic ink for text. Blue/green/red accent fills are not body text. Original secondary #607890 is retained as `ql-secondary-palette`; readable secondary ink is #586F85 so small text passes 4.5:1 against the pale backgrounds. Muted #8DA0B2 is decorative only. Controls use a stronger border and focus ring. Contrast tests protect the intended text/surface pairs.
 
-Nunito Sans is loaded by next/font in the showcase with weights 400, 500, 600, 700. During migration load that font at the new shell boundary and set `--font-learning`; do not add another UI font. Existing fonts remain on legacy routes during this slice. KaTeX uses its own mathematical fonts, which are not UI typography.
+Nunito Sans is loaded by next/font in the showcase with weights 400, 500, 600, 700. During migration load that font at the new shell boundary and set `--font-learning`; do not add another UI font. Existing fonts remain on legacy routes during this slice. KaTeX uses its own mathematical fonts, which are not UI typography. Import `katex/dist/katex.min.css` at the route/layout boundary that consumes FormulaBlock, as the showcase does.
 
 Text classes: `text-ql-meta` (12), `small` (14), `body` (16), `emphasis` (18), `title` (20), `section` (24), `page-title` (32), `celebration` (40, completion only). Use regular or semibold by default; avoid 800/900. Never reuse a color name as a text-size token.
 
@@ -34,7 +34,11 @@ Spacing uses Tailwind's four-pixel base with 4, 8, 12, 16, 20, 24, 32, 40, 48, 6
 
 Wrap AnswerOption groups in a fieldset with a legend. Supply explanatory LessonFeedback after submission; correctness never uses a toast. Shortcut labels are display hints, not global keyboard handlers: only show them if the lesson implements those shortcuts (or clearly identifies them as option numbers).
 
+LessonFeedback and CompletionScreen offer opt-in `autoFocusAction` for flows that replace the focused submit/continue button. Their actions reference the feedback/completion description for screen readers. Do not enable autofocus on passive previews or initial page content. The practice demo also returns focus to its back control on reset. Locked achievement copy stays at full contrast; only the decorative icon fades. Progress fills use blue-700 against blue-100 to exceed 3:1 non-text contrast.
+
 FinanceInput modes identify intent; percentage supplies a default % suffix, currency units must be passed explicitly. Keep blanks and partial values as strings and validate at the domain boundary. MetricResult consumes formatted values; no financial logic lives here. LearningChart is a focused single-series starting point, not a chart builder. Extend its shared style exports for additional meaningful chart types.
+
+Charts measure their actual container after hydration instead of assuming a desktop width during server rendering. The native details/data table is server-rendered and remains usable without JavaScript. Empty and non-finite datasets have explicit fallbacks; chart animation is disabled.
 
 Motion durations are 150ms fast, 250ms normal, 500ms reward. `useLearningDuration` respects reduced motion, including width animation; CSS disables transitions/press transforms where appropriate. Progress updates, XP changes, and completion are event-driven. No ambient motion.
 
@@ -58,3 +62,12 @@ The showcase includes an interactive answer/completion flow, all control states,
 
 Next slice: migrate the Returns module overview to ModulePath and the new shell, reading existing persisted lesson states. Then migrate a single lesson reading/practice flow. Keep auth, progress actions, financial utilities, and authored content unchanged while validating each integration.
 
+## Validation
+
+Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`. For repeatable browser checks, start `npm run dev`, then run `node scripts/validate-design-system.mjs`. Install the Playwright Chromium browser first, or use `BROWSER_CHANNEL=chrome` with an installed Chrome. Override the origin with `DESIGN_SYSTEM_BASE_URL` if needed. This script opens an isolated headless browser, not a personal browser profile.
+
+The browser check covers 320/390/768/1024/1440px layouts, page overflow, chart sizing, keyboard radio navigation and focus handoffs, input error state, normal/reduced motion, and the no-JavaScript data table. Unit tests cover invalid chart values, MathML/safe formula fallback, motion durations, and token contrast. Motion's expected development-only reduced-motion notice is explicitly allowed; other browser warnings/errors fail validation.
+
+Validation scope: Chromium automation plus manual in-app-browser inspection. This is not a full screen-reader, cross-browser, or production lesson integration audit. Gamification remains illustrative, charts are single-series, and unavailable navigation remains disabled. Production isolation must also be checked against `npm start`: `/dev/design-system` must return HTTP 404, not merely disappear from navigation.
+
+Completion validation (2026-09-08): lint, typecheck, 56 unit tests across 9 files, production build, and the browser script passed. Manual desktop/mobile inspection covered controls, feedback, completion, formulas, chart/table, rewards, and shell. No horizontal page overflow was observed at the five tested widths or in the 320px no-JavaScript fallback. Production HTTP 404 and absence from normal navigation were confirmed. Fixes were limited to focus handoffs, completion visibility/padding, reduced-motion press behavior, progress/achievement contrast, and chart server-render sizing. Auth, financial logic, persisted progress, and production screen designs were unchanged.
