@@ -1,0 +1,5 @@
+type WorkedExampleProps = { title: string; introduction?: string; steps: { label: string; value: string; emphasis?: boolean }[]; conclusion: string };
+
+export function WorkedExample({ title, introduction, steps, conclusion }: WorkedExampleProps) {
+  return <section className="my-9 border-y border-line py-6"><p className="text-xs font-medium uppercase tracking-[0.15em] text-muted">Worked example</p><h3 className="mt-2 text-lg font-semibold tracking-[-0.03em]">{title}</h3>{introduction ? <p className="mt-2 text-sm leading-6 text-neutral-600">{introduction}</p> : null}<dl className="mt-5 divide-y divide-line border-y border-line">{steps.map((step) => <div key={step.label} className="flex items-baseline justify-between gap-5 py-3 text-sm"><dt className="text-neutral-600">{step.label}</dt><dd className={step.emphasis ? "font-semibold tabular-nums text-positive" : "font-mono tabular-nums"}>{step.value}</dd></div>)}</dl><p className="mt-5 text-sm leading-6 text-neutral-700">{conclusion}</p></section>;
+}

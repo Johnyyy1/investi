@@ -7,7 +7,8 @@ Quantlearn is an editorial, data-led learning product for quantitative finance.
 - **App Router** separates public authentication routes from authenticated product routes.
 - **Better Auth** owns identity, sessions, and credentials; the application layout is the single access boundary.
 - **Drizzle + PostgreSQL** own publishable module and lesson records plus per-user lesson progress.
-- **`features/learning`** defines a temporary product-facing module registry. **`features/progress`** owns validated persistence contracts. Future modules add a catalog entry and lesson records without changing the shell or auth layer.
+- **`features/lessons`** is a typed repository-authored lesson engine. It supports ordered editorial blocks, interactive figures, and exercises without introducing a generic page builder.
+- **`features/progress`** owns validated persistence contracts. Future modules add a catalog entry and authored lesson records without changing the shell or auth layer.
 
 ## Local setup
 
@@ -18,6 +19,7 @@ Quantlearn is an editorial, data-led learning product for quantitative finance.
    ```bash
    npm run db:generate
    npm run db:migrate
+   npm run db:seed
    ```
 
 4. Run the app:
@@ -34,3 +36,5 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+`db:seed` is idempotent and publishes the Returns module sequence, including the first authored lesson.
