@@ -18,7 +18,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
   const [completedLessons, lessonStates] = user
     ? await Promise.all([
         getModuleProgress(user.id, RETURNS_MODULE_ID),
-        Promise.all(returnsLessons.slice(0, 2).map((lesson) => getLessonProgress(user.id, lesson.id))),
+        Promise.all(returnsLessons.slice(0, 3).map((lesson) => getLessonProgress(user.id, lesson.id))),
       ])
     : [0, []];
   const percentage = Math.round((completedLessons / returnsLessons.length) * 100);

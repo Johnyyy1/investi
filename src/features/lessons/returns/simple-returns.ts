@@ -15,7 +15,7 @@ export const simpleReturnsLesson: AuthoredLesson = {
     { id: "representation", label: "Decimals and percentages" },
     { id: "practice", label: "Practice" },
   ],
-  navigation: { previous: { href: "/learn/returns/what-is-a-return", label: "What is a return?" } },
+  navigation: { previous: { href: "/learn/returns/what-is-a-return", label: "What is a return?" }, next: { href: "/learn/returns/compounding-and-cumulative-returns", label: "Compounding & cumulative returns" } },
   blocks: [
     { id: "periods", type: "heading", title: "A period return measures one move at a time.", body: "For a daily series, each return compares today’s price with yesterday’s—not with the first price in the series." },
     { id: "period-intro", type: "paragraph", content: "Financial analysis works with returns because they put each price movement on a comparable scale. The denominator changes with every period: it is always the previous price." },

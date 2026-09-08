@@ -28,6 +28,7 @@ export async function completeLessonAction(lessonId: string) {
     revalidatePath("/learn/returns");
     revalidatePath("/learn/returns/what-is-a-return");
     revalidatePath("/learn/returns/simple-returns");
+    revalidatePath("/learn/returns/compounding-and-cumulative-returns");
     return { ok: true };
   } catch {
     return { ok: false, message: "Completion could not be saved. Please try again." };

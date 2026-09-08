@@ -1,0 +1,42 @@
+import type { AuthoredLesson } from "../types";
+import { returnsLessons } from "./manifest";
+
+export const compoundingAndCumulativeReturnsLesson: AuthoredLesson = {
+  id: returnsLessons[2].id,
+  moduleSlug: "returns",
+  slug: returnsLessons[2].slug,
+  title: returnsLessons[2].title,
+  eyebrow: "Quant Foundations · Returns",
+  position: 3,
+  estimatedMinutes: returnsLessons[2].estimatedMinutes,
+  sections: [
+    { id: "why-addition-fails", label: "Why adding returns fails" },
+    { id: "growth-factors", label: "Growth factors" },
+    { id: "explore", label: "Explore compounding" },
+    { id: "asymmetry", label: "Loss asymmetry" },
+    { id: "practice", label: "Practice" },
+  ],
+  navigation: { previous: { href: "/learn/returns/simple-returns", label: "Simple returns" } },
+  blocks: [
+    { id: "why-addition-fails", type: "heading", title: "Across periods, returns compound rather than simply add.", body: "Each period changes the value that the next period starts from. That moving base is why a sequence of returns needs multiplication." },
+    { id: "recap", type: "paragraph", content: "Lesson 2 treated each period separately. Now the question is different: after several period returns, what is the total performance and final value?" },
+    { id: "prediction", type: "multipleChoiceQuestion", prompt: "Predict before revealing the calculation. Starting capital is 10,000. It earns +20% in Period 1 and then loses −20% in Period 2. What is the ending capital?", options: [{ id: "a", label: "10,000, because +20% and −20% cancel." }, { id: "b", label: "9,600." }, { id: "c", label: "8,000." }], correctOptionId: "b", correctExplanation: "After the gain, 10,000 becomes 12,000. The 20% loss is then applied to 12,000, not 10,000: 12,000 × 0.80 = 9,600.", incorrectExplanation: "The second percentage uses a new base. First: 10,000 × 1.20 = 12,000. Then: 12,000 × 0.80 = 9,600. Adding +20% and −20% misses that change in base." },
+    { id: "twenty-example", type: "workedExample", title: "+20% followed by −20%", introduction: "Use 10,000 as the starting value and apply each period in order.", steps: [{ label: "Starting value", value: "10,000" }, { label: "After +20%", value: "12,000", emphasis: true }, { label: "After −20%", value: "9,600", emphasis: true }, { label: "Cumulative return", value: "−4%", emphasis: true }], conclusion: "The arithmetic sum is 0%, but the actual cumulative return is −4%. The loss was taken from the larger value of 12,000." },
+    { id: "growth-factors", type: "heading", title: "A return becomes a growth factor when you add one.", body: "Growth factors make the multiplication visible. They use decimal returns internally." },
+    { id: "growth-callout", type: "conceptCallout", title: "Three ways to write the same move", content: "+5% is the displayed percentage, 0.05 is the decimal return used in calculations, and 1.05 is the growth factor. Likewise, −12% is −0.12 and has a growth factor of 0.88." },
+    { id: "cumulative-formula", type: "formula", expression: "R_cumulative = Π(1 + R_t) − 1", variables: [{ symbol: "R_cumulative", description: "total return across all periods" }, { symbol: "R_t", description: "return in each period" }, { symbol: "Π", description: "multiply every period’s growth factor" }] },
+    { id: "value-formula", type: "formula", expression: "V_n = V_0 × Π(1 + R_t)", variables: [{ symbol: "V_0", description: "starting investment value" }, { symbol: "V_n", description: "ending value after n periods" }, { symbol: "R_t", description: "each period return" }] },
+    { id: "explore", type: "heading", title: "Follow the value through every period.", body: "The explorer keeps the arithmetic sum beside the compounded result so the distinction is explicit." },
+    { id: "compounding-explorer", type: "interactiveFigure", figure: "compounding-explorer", title: "Compounding explorer", description: "Start with the +20%, −20% sequence, then edit it. Every row shows the value that becomes the next period’s base." },
+    { id: "two-gains", type: "numericQuestion", prompt: "Two consecutive returns are +10% and +10%. What is the cumulative return?", answer: 21, tolerance: 0.05, unit: "%", correctExplanation: "The growth factors are 1.10 and 1.10. Their product is 1.21, so the cumulative return is 0.21 = 21%, not 20%.", incorrectExplanation: "Multiply growth factors rather than adding returns: (1 + 0.10)(1 + 0.10) − 1 = 0.21 = 21%." },
+    { id: "price-series", type: "heading", title: "Price series and compounded returns agree.", body: "With no external cash flows, you can also calculate the total return directly from the first and final price." },
+    { id: "price-series-example", type: "workedExample", title: "100 → 110 → 99", steps: [{ label: "Period 1 return", value: "+10%" }, { label: "Period 2 return", value: "−10%" }, { label: "Compounded return", value: "1.10 × 0.90 − 1 = −1%", emphasis: true }, { label: "Direct price return", value: "99 ÷ 100 − 1 = −1%", emphasis: true }], conclusion: "Both methods agree because the product of consecutive price ratios telescopes to final price divided by starting price." },
+    { id: "multi-period", type: "multiNumericQuestion", prompt: "For the series 100 → 110 → 99, calculate the first return, second return, and cumulative return.", answers: [{ id: "first", label: "100 → 110", answer: 10, tolerance: 0.05, unit: "%" }, { id: "second", label: "110 → 99", answer: -10, tolerance: 0.05, unit: "%" }, { id: "cumulative", label: "Cumulative return", answer: -1, tolerance: 0.05, unit: "%" }], correctExplanation: "The period returns are +10% and −10%. Their growth factors are 1.10 and 0.90, so the cumulative return is 1.10 × 0.90 − 1 = −1%.", incorrectExplanation: "Compute each period from its own previous price, then multiply their growth factors. Do not add +10% and −10%." },
+    { id: "asymmetry", type: "heading", title: "Losses need larger gains to recover.", body: "A loss reduces the base. Recovering to the original value therefore requires a gain calculated from a smaller number." },
+    { id: "recovery-explorer", type: "interactiveFigure", figure: "recovery-explorer", title: "Loss required recovery", description: "Try a loss magnitude. The required recovery gain comes from 1 ÷ (1 − loss) − 1." },
+    { id: "loss-practice", type: "numericQuestion", prompt: "An investment falls 50%. What return is required from the new value to recover to the original value?", answer: 100, tolerance: 0.05, unit: "%", correctExplanation: "After a 50% loss, 100 becomes 50. It takes a gain of 50 on a base of 50 to return to 100: 50 ÷ 50 = 100%.", incorrectExplanation: "A 50% loss halves the value. The recovery starts from that halved value, so it needs to double: +100%." },
+    { id: "concept", type: "multipleChoiceQuestion", prompt: "Why can’t period simple returns generally be added to calculate cumulative performance?", options: [{ id: "a", label: "Because every period’s return is applied to the value produced by earlier periods." }, { id: "b", label: "Because percentages can never be added in finance." }, { id: "c", label: "Because cumulative return always equals the final price change in currency." }], correctOptionId: "a", correctExplanation: "Each return acts on a changing base. Multiplying growth factors captures that sequence, whereas simple addition usually does not.", incorrectExplanation: "The problem is the changing base value. Returns can sometimes add as an approximation, but exact cumulative performance compounds growth factors." },
+    { id: "takeaway", type: "takeaway", title: "Takeaway", content: "Period returns describe one interval. Cumulative return describes the whole sequence. Multiply growth factors to get cumulative return and ending value; do not add period returns." },
+    { id: "checkpoint", type: "checkpoint", label: "Before you continue", content: "You can distinguish period return, cumulative return, and ending value; compound a sequence with growth factors; and explain why equal percentage gains and losses do not cancel." },
+  ],
+};

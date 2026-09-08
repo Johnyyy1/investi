@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FinancialInputError, absoluteChange, consecutiveSimpleReturns, simpleReturn } from "./returns";
+import { FinancialInputError, absoluteChange, compoundPeriods, compoundValue, consecutiveSimpleReturns, cumulativeReturn, recoveryReturn, simpleReturn } from "./returns";
 
 describe("simpleReturn", () => {
   it.each([
@@ -51,5 +51,37 @@ describe("consecutiveSimpleReturns", () => {
     expect(() => consecutiveSimpleReturns([100])).toThrow(FinancialInputError);
     expect(() => consecutiveSimpleReturns([100, 0, 10])).toThrow(FinancialInputError);
     expect(() => consecutiveSimpleReturns([100, -10])).toThrow(FinancialInputError);
+  });
+});
+
+describe("compounding", () => {
+  it.each([
+    [[0.2, -0.2], -0.04],
+    [[0.1, 0.1], 0.21],
+    [[0.1, -0.1], -0.01],
+    [[], 0],
+  ])("calculates cumulative return for %j", (returns, expected) => {
+    expect(cumulativeReturn(returns)).toBeCloseTo(expected, 12);
+  });
+
+  it("calculates an ending value without rounding period returns", () => {
+    expect(compoundValue(10000, [0.2, -0.2])).toBeCloseTo(9600, 12);
+    expect(compoundValue(100, [-1])).toBe(0);
+    expect(compoundValue(12.5, [0.0125, -0.0075])).toBeCloseTo(12.561328125, 12);
+  });
+
+  it("keeps a wiped-out value at zero in later periods", () => {
+    expect(compoundPeriods(100, [-1, 0.2]).map((period) => period.endValue)).toEqual([0, 0]);
+  });
+
+  it("rejects a return below -100%", () => {
+    expect(() => cumulativeReturn([-1.01])).toThrow(FinancialInputError);
+    expect(() => compoundValue(100, [-1.01])).toThrow(FinancialInputError);
+  });
+
+  it("calculates required recovery without treating loss as a negative return", () => {
+    expect(recoveryReturn(0.1)).toBeCloseTo(0.111111111111111, 12);
+    expect(recoveryReturn(0.5)).toBe(1);
+    expect(() => recoveryReturn(1)).toThrow(FinancialInputError);
   });
 });
