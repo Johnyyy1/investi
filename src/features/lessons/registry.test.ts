@@ -8,7 +8,8 @@ describe("authored lesson registry", () => {
     expect(lesson).toMatchObject({ id: returnsLessons[0].id, title: "What is a return?" });
   });
 
-  it("keeps unpublished Returns lessons out of the authored registry", () => {
-    expect(getAuthoredLesson("returns", "simple-returns")).toBeUndefined();
+  it("registers Simple returns while later unpublished lessons stay unavailable", () => {
+    expect(getAuthoredLesson("returns", "simple-returns")).toMatchObject({ title: "Simple returns" });
+    expect(getAuthoredLesson("returns", "compounding-and-cumulative-returns")).toBeUndefined();
   });
 });

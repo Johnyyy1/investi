@@ -39,6 +39,14 @@ export function simpleReturn(start: number, end: number) {
   return end / start - 1;
 }
 
+/** Unrounded period returns for each consecutive pair in a price series. */
+export function consecutiveSimpleReturns(prices: readonly number[]) {
+  if (prices.length < 2) {
+    throw new FinancialInputError("At least two prices are required to calculate period returns.");
+  }
+  return prices.slice(1).map((currentPrice, index) => simpleReturn(prices[index], currentPrice));
+}
+
 /** Parses user-entered price strings without treating an empty field as zero. */
 export function parsePrice(value: string, label: string) {
   if (value.trim() === "") {

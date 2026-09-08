@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FinancialInputError, absoluteChange, simpleReturn } from "./returns";
+import { FinancialInputError, absoluteChange, consecutiveSimpleReturns, simpleReturn } from "./returns";
 
 describe("simpleReturn", () => {
   it.each([
@@ -31,5 +31,25 @@ describe("absoluteChange", () => {
 
   it("calculates an unchanged price as zero", () => {
     expect(absoluteChange(100, 100)).toBe(0);
+  });
+});
+
+describe("consecutiveSimpleReturns", () => {
+  it("calculates each period from the immediately previous price", () => {
+    const returns = consecutiveSimpleReturns([100, 105, 102, 108]);
+    expect(returns[0]).toBeCloseTo(0.05, 12);
+    expect(returns[1]).toBeCloseTo(-0.0285714285714286, 12);
+    expect(returns[2]).toBeCloseTo(0.0588235294117647, 12);
+  });
+
+  it("supports decimals and unchanged prices", () => {
+    expect(consecutiveSimpleReturns([10.5, 10.5, 10.75])).toEqual([0, expect.closeTo(0.0238095238095238, 12)]);
+  });
+
+  it("rejects incomplete and invalid series", () => {
+    expect(() => consecutiveSimpleReturns([])).toThrow(FinancialInputError);
+    expect(() => consecutiveSimpleReturns([100])).toThrow(FinancialInputError);
+    expect(() => consecutiveSimpleReturns([100, 0, 10])).toThrow(FinancialInputError);
+    expect(() => consecutiveSimpleReturns([100, -10])).toThrow(FinancialInputError);
   });
 });

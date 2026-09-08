@@ -37,4 +37,4 @@ npm test
 npm run build
 ```
 
-`db:seed` is idempotent and publishes the Returns module sequence, including the first authored lesson.
+`db:seed` is idempotent and publishes the Returns module sequence, including the first two authored lessons.

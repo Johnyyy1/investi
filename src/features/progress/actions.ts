@@ -27,6 +27,7 @@ export async function completeLessonAction(lessonId: string) {
     revalidatePath("/learn");
     revalidatePath("/learn/returns");
     revalidatePath("/learn/returns/what-is-a-return");
+    revalidatePath("/learn/returns/simple-returns");
     return { ok: true };
   } catch {
     return { ok: false, message: "Completion could not be saved. Please try again." };

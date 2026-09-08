@@ -7,6 +7,7 @@ export const whatIsAReturnLesson: AuthoredLesson = {
   slug: returnsLessons[0].slug,
   title: returnsLessons[0].title,
   eyebrow: "Quant Foundations · Returns",
+  position: 1,
   estimatedMinutes: returnsLessons[0].estimatedMinutes,
   sections: [
     { id: "meaning", label: "What a return measures" },
@@ -14,6 +15,7 @@ export const whatIsAReturnLesson: AuthoredLesson = {
     { id: "calculate", label: "Calculate a return" },
     { id: "check", label: "Check your reasoning" },
   ],
+  navigation: { next: { href: "/learn/returns/simple-returns", label: "Simple returns" } },
   blocks: [
     { id: "meaning", type: "heading", title: "A return tells you what an investment earned relative to where it began.", body: "A price movement is a fact. A return gives that movement context." },
     { id: "price-change", type: "paragraph", content: "Suppose an asset moves from 100 to 110. Its price changed by 10 units. That absolute change is useful, but it does not yet tell us how large the gain was relative to the money invested." },
