@@ -37,10 +37,10 @@ npm test
 npm run build
 ```
 
-`db:seed` is idempotent and publishes the first six Foundations lessons and first three Returns lessons, retaining the remaining lesson entries as upcoming. Apply the included migrations before seeding.
+`db:seed` is idempotent and publishes the first seven Foundations lessons and first three Returns lessons, retaining the remaining lesson entries as upcoming. Apply the included migrations before seeding.
 
 
-All production routes share the validated `ql-*` learning theme and Nunito Sans. Home remains at `/dashboard`; `/learn` presents the curriculum and `/progress` shows completed and active learning. Investing Foundations comes first with six available and two upcoming lessons. Returns & Compounding has three available and three upcoming lessons. Home preserves active learning continuity; Progress counts only the nine available lessons.
+All production routes share the validated `ql-*` learning theme and Nunito Sans. Home remains at `/dashboard`; `/learn` presents the curriculum and `/progress` shows completed and active learning. Investing Foundations comes first with seven available and one upcoming lesson. Returns & Compounding has three available and three upcoming lessons. Home preserves active learning continuity; Progress counts only the ten available lessons.
 
 Local browser validation (requires the running app and local PostgreSQL):
 

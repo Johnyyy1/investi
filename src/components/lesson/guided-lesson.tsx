@@ -18,7 +18,9 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
 }) {
   const router = useRouter();
   const learningModule = getModuleBySlug(lesson.moduleSlug)!;
-  const moduleLessons = getModuleLessons(lesson.moduleSlug).filter((item) => item.status === "available");
+  const curriculumLessons = getModuleLessons(lesson.moduleSlug);
+  const moduleLessons = curriculumLessons.filter((item) => item.status === "available");
+  const upcomingLessons = curriculumLessons.length - moduleLessons.length;
   const nextLesson = moduleLessons[moduleLessons.findIndex((item) => item.id === lesson.id) + 1];
   const moduleHref = `/learn/${lesson.moduleSlug}`;
   const steps = getGuidedSteps(lesson);
@@ -86,7 +88,7 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
     {error ? <p role="alert" className="mt-5 rounded-ql-md border border-ql-danger bg-ql-danger-bg p-4 text-ql-small text-ql-danger-ink">{error}</p> : null}
     {finished ? <div className="mt-8 rounded-ql-xl bg-ql-surface">
       <CompletionScreen autoFocusAction title="Lesson complete" description={lesson.title} actionLabel={`Back to ${learningModule.title}`} onContinue={() => { router.push(moduleHref); router.refresh(); }} />
-      {nextLesson ? <div className="px-6 pb-6 sm:px-10"><LearningLink href={`${moduleHref}/${nextLesson.slug}`}>Next lesson: {nextLesson.title}</LearningLink></div> : lesson.moduleSlug === "investing-foundations" ? <div className="px-6 pb-6 sm:px-10"><p className="mb-4 text-ql-small text-ql-secondary">You’ve reached the end of the available Foundations sequence. Five more lessons are planned.</p><LearningLink href="/learn/returns">Explore Returns &amp; Compounding</LearningLink></div> : null}
+      {nextLesson ? <div className="px-6 pb-6 sm:px-10"><LearningLink href={`${moduleHref}/${nextLesson.slug}`}>Next lesson: {nextLesson.title}</LearningLink></div> : lesson.moduleSlug === "investing-foundations" ? <div className="px-6 pb-6 sm:px-10"><p className="mb-4 text-ql-small text-ql-secondary">You’ve reached the end of the available Foundations sequence. {upcomingLessons} more {upcomingLessons === 1 ? "lesson is" : "lessons are"} planned.</p><LearningLink href="/learn/returns">Explore Returns &amp; Compounding</LearningLink></div> : null}
       <div className="px-6 pb-8 sm:px-10"><p className="mb-3 text-ql-small text-ql-secondary" data-testid="completion-progress">{completedLessons} of {moduleLessons.length} available {learningModule.title} lessons complete · Saved to your account</p><LearningProgressBar value={completedLessons} total={moduleLessons.length} label={`${learningModule.title} available lesson progress`} /></div>
     </div> : <>
       {position > 0 ? <LearningButton className="mt-4" variant="ghost" disabled={pending} onClick={() => void move(position - 1)}>Previous step</LearningButton> : null}

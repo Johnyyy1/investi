@@ -6,6 +6,6 @@ export const foundationsLessons = [
   { id: "foundations-bonds-cash", slug: "bonds-and-cash", title: "Bonds & cash", summary: "Explore lending, payments, and liquidity.", estimatedMinutes: 11, status: "available" },
   { id: "foundations-markets", slug: "how-markets-work", title: "How markets work", summary: "Understand how buyers, sellers, and prices meet.", estimatedMinutes: 11, status: "available" },
   { id: "foundations-risk-reward", slug: "risk-vs-reward", title: "Risk vs reward", summary: "Connect uncertainty, losses, and potential outcomes.", estimatedMinutes: 12, status: "available" },
-  { id: "foundations-portfolio", slug: "your-first-portfolio", title: "Your first portfolio", summary: "Bring the building blocks together.", estimatedMinutes: 12, status: "planned" },
+  { id: "foundations-portfolio", slug: "your-first-portfolio", title: "Your first portfolio", summary: "Combine assets, test allocations, and understand the trade-offs.", estimatedMinutes: 15, status: "available" },
   { id: "foundations-checkpoint", slug: "foundations-checkpoint", title: "Foundations checkpoint", summary: "Connect the core mental models.", estimatedMinutes: 8, status: "planned" },
 ] as const;

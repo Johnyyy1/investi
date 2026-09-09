@@ -65,3 +65,27 @@ export function drawdownFromPeak(peak: number, current: number) {
   finiteNonnegative(current, "Current value");
   return Math.max(0, (peak - current) / peak);
 }
+
+const PORTFOLIO_WEIGHT_TOLERANCE = 1e-10;
+
+/**
+ * Validates decimal portfolio weights: 0.6 represents a 60% allocation.
+ * The tolerance accommodates ordinary floating-point sums without rounding inputs.
+ */
+export function validatePortfolioWeights(weights: readonly number[]) {
+  if (weights.length === 0) throw new FinancialInputError("At least one portfolio weight is required.");
+  for (const weight of weights) {
+    if (!Number.isFinite(weight) || weight < 0 || weight > 1) throw new FinancialInputError("Each portfolio weight must be a finite number from 0 to 1.");
+  }
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  if (Math.abs(total - 1) > PORTFOLIO_WEIGHT_TOLERANCE) throw new FinancialInputError("Portfolio weights must sum to 1.");
+  return true;
+}
+
+/** Unrounded one-period portfolio return in decimal units, using matching weights and returns. */
+export function portfolioWeightedReturn(weights: readonly number[], returns: readonly number[]) {
+  validatePortfolioWeights(weights);
+  if (weights.length !== returns.length) throw new FinancialInputError("Portfolio weights and returns must have the same length.");
+  if (returns.some((returnValue) => !Number.isFinite(returnValue))) throw new FinancialInputError("Each asset return must be a finite number.");
+  return weights.reduce((total, weight, index) => total + weight * returns[index], 0);
+}

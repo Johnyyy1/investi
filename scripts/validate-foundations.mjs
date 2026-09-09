@@ -68,7 +68,7 @@ try {
   const modules = await sql`select slug, position from learning_module where slug in ('returns', 'investing-foundations') order by position`;
   assert.deepEqual(modules.map((module) => module.slug), ["investing-foundations", "returns"]);
   assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations'`)[0].count), 8);
-  assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations' and is_published`)[0].count), 6);
+  assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations' and is_published`)[0].count), 7);
 
   await page.goto(`${baseURL}/sign-up`);
   await page.getByLabel("Name", { exact: true }).fill("Foundations QA");
@@ -95,10 +95,10 @@ try {
   assert.deepEqual(await page.locator('ol[aria-label="Available learning journey"] h2').allTextContents(), ["Investing Foundations", "Returns & Compounding"]);
   await layouts("learn", true);
   await page.getByRole("link", { name: "Explore Foundations" }).click(); await heading("Investing Foundations");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 6 available lessons complete");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 7 available lessons complete");
   const pathItems = page.getByRole("list", { name: "Module learning path" }).getByRole("listitem");
   assert.equal(await pathItems.count(), 8);
-  for (let i = 6; i < 8; i++) assert.equal(await pathItems.nth(i).getByRole("button").count(), 0);
+  for (let i = 7; i < 8; i++) assert.equal(await pathItems.nth(i).getByRole("button").count(), 0);
   await layouts("module", true);
   await pathItems.first().getByRole("button", { name: "Start lesson" }).click();
   await heading("Same money, different purchasing power");
@@ -170,11 +170,37 @@ try {
   await next("Risk takes more than one form"); await check(0); await next("Spreading exposure can reduce one dependency"); await button("Portfolio B · many investments").click(); await page.getByText("broad market risk remains", { exact: false }).waitFor(); await layouts("diversification", true); await check(1); await next("The timing of a need matters");
   await button("Intended for decades later").click(); await page.getByText("longer horizon", { exact: false }).waitFor(); await layouts("time-horizon", true); await check(0); await next("Risk is a question of outcomes and circumstances");
   await button("Mark lesson complete").click(); await heading("Lesson complete");
+  await page.getByRole("link", { name: "Next lesson: Your first portfolio" }).click(); await heading("A collection shaped by its parts");
+  await check(1); await next("One outcome can dominate"); await check(0); await next("See what spreading exposure can change");
+  await page.getByText("-10%", { exact: true }).waitFor(); await button("All four fall together").click();
+  await page.getByText("-20%", { exact: true }).first().waitFor(); assert.equal(await page.getByText("-20%", { exact: true }).count(), 2); await layouts("diversification-impact", true);
+  await next("Allocation gives each part a share"); await next("Build, predict, and observe");
+  await page.getByText("+5.4%", { exact: true }).waitFor();
+  await page.getByLabel("Stocks allocation", { exact: true }).fill("70"); await page.getByText("Reduce the allocation by 10%.", { exact: true }).waitFor();
+  assert.equal(await page.getByText("Hypothetical one-period portfolio return", { exact: true }).count(), 0);
+  await page.getByLabel("Stocks allocation", { exact: true }).fill("-1"); await page.getByText("Stocks allocation must be from 0% to 100%.", { exact: true }).waitFor();
+  await button("60 / 30 / 10 example").click(); await page.getByText("Ready · allocation equals 100%.", { exact: true }).waitFor();
+  await page.getByLabel("Stocks allocation slider", { exact: true }).focus(); await page.getByLabel("Stocks allocation slider", { exact: true }).press("ArrowRight");
+  assert.notEqual(await page.getByLabel("Stocks allocation slider", { exact: true }).evaluate((el) => getComputedStyle(el).outlineStyle), "none", "Portfolio slider has a visible keyboard focus indicator");
+  await page.getByText("Reduce the allocation by 1%.", { exact: true }).waitFor();
+  await button("100% stocks").click(); await page.getByText("+8%", { exact: true }).waitFor();
+  await button("60 / 30 / 10 example").click(); await button("Stocks fall −10%").click(); await page.getByText("−5.4%", { exact: true }).waitFor();
+  await page.getByLabel("Stocks hypothetical return", { exact: true }).fill("-101"); await page.getByText("Stocks return cannot be below −100%.", { exact: true }).waitFor();
+  await page.getByLabel("Stocks hypothetical return", { exact: true }).fill("-10"); await layouts("portfolio-builder", true);
+  await page.reload(); await heading("Build, predict, and observe"); assert.equal((await row("foundations-portfolio")).last_position, 4);
+  await page.getByText("+5.4%", { exact: true }).waitFor(); await next("Each asset can play more than one role");
+  await button("Bond").click(); await page.getByText("Credit, interest-rate, inflation, and liquidity risks may matter", { exact: true }).waitFor(); await layouts("portfolio-asset-roles", true);
+  await next("Weights shape the one-period result"); await layouts("portfolio-weighted-return", true); await page.getByLabel("Your answer", { exact: true }).fill("5"); await button("Check answer").click(); await heading("That’s right");
+  await next("Diversification reduces some dependencies"); await check(1); await next("Match uncertainty to the time available");
+  await button("Money not expected for 20 years").click(); await page.getByText("Longer horizon", { exact: true }).waitFor(); await layouts("portfolio-horizon", true); await check(0);
+  await next("Emotional comfort is not financial capacity"); await button("Financial need").click(); await button("Consider both").click(); await page.getByText("Tolerance is not enough", { exact: true }).waitFor(); await layouts("portfolio-risk-capacity", true); await check(1);
+  await next("Every portfolio is a set of trade-offs"); await check(1); await next("The mix is the decision");
+  await failThenRetry("Mark lesson complete", "foundations-portfolio"); await button("Mark lesson complete").click(); await heading("Lesson complete");
   await button("Back to Investing Foundations").click(); await heading("Investing Foundations");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "6 of 6 available lessons complete");
-  assert.equal(await page.getByRole("button", { name: "Review lesson", exact: true }).count(), 6);
+  assert.equal(await page.getByTestId("module-progress").textContent(), "7 of 7 available lessons complete");
+  assert.equal(await page.getByRole("button", { name: "Review lesson", exact: true }).count(), 7);
   await page.goto(`${baseURL}/progress`); await heading("Your progress");
-  assert.match(await page.getByTestId("available-progress").textContent(), /6 of 9/); await layouts("progress", true);
+  assert.match(await page.getByTestId("available-progress").textContent(), /7 of 10/); await layouts("progress", true);
   await button("Sign out").click(); await page.waitForURL("**/sign-in");
   await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password);
   await button("Sign in").click(); await page.waitForURL("**/dashboard");
@@ -190,6 +216,9 @@ try {
   const riskCompleted = await row("foundations-risk-reward");
   await page.goto(`${baseURL}/learn/investing-foundations/risk-vs-reward`); await heading("Different outcomes can be equally possible"); await check(1); await next("Expected is not realized");
   assert.deepEqual(await row("foundations-risk-reward"), riskCompleted, "Risk review preserves completion, timestamp and cursor");
+  const portfolioCompleted = await row("foundations-portfolio");
+  await page.goto(`${baseURL}/learn/investing-foundations/your-first-portfolio`); await heading("A collection shaped by its parts"); await check(1); await next("One outcome can dominate");
+  assert.deepEqual(await row("foundations-portfolio"), portfolioCompleted, "Portfolio review preserves completion, timestamp and cursor");
   // Same disposable learner simulates a pre-Foundations account with active Returns progress.
   await sql`delete from lesson_progress where user_id = ${userId}`;
   await page.goto(`${baseURL}/learn/returns/simple-returns`); await heading("One period at a time"); await next("Use the previous price");
@@ -198,10 +227,10 @@ try {
   assert.equal((await profile()).onboarding_completed_at.toISOString(), onboardingCompleted);
   assert.equal((await profile()).experience_level, "BEGINNER");
   expectedNetworkFailure = true; // The intentionally unavailable route may log its expected 404.
-  await page.goto(`${baseURL}/learn/investing-foundations/your-first-portfolio`);
+  await page.goto(`${baseURL}/learn/investing-foundations/foundations-checkpoint`);
   await heading("This page isn’t available");
   assert.deepEqual(errors, []);
-  console.log("PASS: beginner onboarding, legacy profile recomputation, all six guided lessons, market and risk interactions, save/completion retry, refresh, next lesson, sign-out/in, review, Returns continuity, real counts, six widths, keyboard, focus, reduced motion, no hydration/console errors. Screenshots:", screenshotDir);
+  console.log("PASS: beginner onboarding, legacy profile recomputation, all seven guided lessons, portfolio allocation/return/diversification/horizon/capacity interactions, save/completion retry, refresh, next lesson, sign-out/in, review, Returns continuity, real counts, six widths, keyboard, focus, reduced motion, no hydration/console errors. Screenshots:", screenshotDir);
 } finally {
   await sql`delete from "user" where email = ${email}`;
   await sql.end(); await browser.close();

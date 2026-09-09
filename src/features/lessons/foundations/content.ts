@@ -85,7 +85,92 @@ const riskReward: AuthoredStep[] = [
   { title: "Risk is a question of outcomes and circumstances", blocks: [takeaway("Risk is not volatility alone. Expected return is an estimate; realized return is what happened. Losses, concentration, liquidity, inflation, and time horizon can all matter. Diversification may reduce some risks, while risk tolerance and risk capacity describe different parts of a person’s situation.")] },
 ];
 
-const flows = [whyInvest, stocks, etfs, bondsAndCash, markets, riskReward];
+const portfolio: AuthoredStep[] = [
+  {
+    title: "A collection shaped by its parts",
+    blocks: [
+      paragraph("portfolio-definition", "A portfolio is simply a collection of investments. Its behavior depends on what it contains and how much is allocated to each component. Two people can both own stocks, bonds, and cash yet have portfolios that behave differently because their holdings and weights differ."),
+      question("portfolio-opening", "What is a portfolio?", ["A guaranteed investment outcome", "A collection of investments", "A single stock chosen for long-term growth"], 1, "A portfolio is a collection of investments. What it contains and the amount allocated to each component shape how the collection behaves."),
+    ],
+  },
+  {
+    title: "One outcome can dominate",
+    blocks: [
+      { id: "concentration-example", type: "workedExample", title: "Compare two hypothetical portfolios", steps: [{ label: "Portfolio A", value: "100% one company" }, { label: "Portfolio B", value: "Broad stock exposure + bonds + cash" }], conclusion: "Portfolio A depends entirely on one company. Portfolio B depends on multiple components. That difference changes concentration, liquidity, price fluctuation, and potential-return trade-offs; it does not prove that Portfolio B is appropriate for everyone." },
+      question("concentration-check", "Which portfolio depends more heavily on the outcome of a single company?", ["Portfolio A · 100% one company", "Portfolio B · multiple companies, bonds, and cash", "They depend on one company equally"], 0, "Portfolio A has greater company-specific concentration: one company determines the entire outcome. Combining assets can reduce that dependency without eliminating every kind of risk."),
+    ],
+  },
+  {
+    title: "See what spreading exposure can change",
+    blocks: [
+      figure("diversification-impact", "diversification-impact", "A single-company shock", "First predict the effect of a 40% fall in Company A. Then switch to a broad fall and observe which risk diversification cannot remove."),
+    ],
+  },
+  {
+    title: "Allocation gives each part a share",
+    blocks: [
+      paragraph("allocation", "Asset allocation describes how a portfolio is divided among asset categories. A 60% stock, 30% bond, and 10% cash mix is one hypothetical illustration—not a default, ideal, or recommendation. Changing the weights changes how strongly each component influences the whole."),
+      concept("allocation-tradeoff", "Combining assets changes the trade-offs", "Different components may respond differently to business conditions, interest rates, inflation, and financial needs. Combining them can spread some dependencies and create different liquidity, income, uncertainty, and growth characteristics. They may still lose value together."),
+    ],
+  },
+  {
+    title: "Build, predict, and observe",
+    blocks: [
+      figure("portfolio-builder", "portfolio-builder", "Portfolio Builder", "Load 100% stocks, then the hypothetical 60 / 30 / 10 mix. Change a weight, make the total equal 100%, predict the one-period result, and switch stocks from +8% to −10%."),
+    ],
+  },
+  {
+    title: "Each asset can play more than one role",
+    blocks: [
+      paragraph("roles-intro", "Cash can provide liquidity and nominal stability while retaining purchasing-power risk. Bonds represent lending with contractual cash-flow terms, while credit, interest-rate, inflation, and liquidity risks can matter. Stocks represent ownership with growth and income potential, alongside substantial business and market uncertainty."),
+      figure("asset-roles", "asset-comparison", "Stocks, bonds, and cash", "Select each category. Words such as “can,” “often,” and “may” matter: an asset label alone does not promise a particular outcome."),
+    ],
+  },
+  {
+    title: "Weights shape the one-period result",
+    blocks: [
+      { id: "weighted-formula", type: "formula", expression: "R_p = sum(w_i R_i)", latex: "R_p = \\sum_{i=1}^{n} w_i R_i", variables: [{ symbol: "w_i", description: "Allocation weight of asset i, expressed as a decimal" }, { symbol: "R_i", description: "Return of asset i for the same period" }, { symbol: "R_p", description: "Portfolio return for that period" }] },
+      { id: "weighted-example", type: "workedExample", title: "One hypothetical period", introduction: "Suppose stocks return +10%, bonds +2%, and cash 0% during the same period. These are invented educational inputs, not expected returns.", steps: [{ label: "Stocks", value: "0.60 × 10% = 6.0%" }, { label: "Bonds", value: "0.30 × 2% = 0.6%" }, { label: "Cash", value: "0.10 × 0% = 0.0%" }, { label: "Portfolio return", value: "6.0% + 0.6% + 0.0% = 6.6%" }], conclusion: "Each return is multiplied by its weight. This is a simplified one-period result, not an expected return and not a model of portfolio volatility." },
+      { id: "weighted-check", type: "numericQuestion", prompt: "A portfolio holds 50% Asset A and 50% Asset B. A returns +10% and B returns 0%. What is the portfolio’s one-period return?", answer: 5, tolerance: 0.000001, unit: "%", correctExplanation: "0.50 × 10% + 0.50 × 0% = 5%. A portfolio return is a weighted result, not an unweighted average regardless of allocation.", incorrectExplanation: "Multiply each return by its allocation: 0.50 × 10% + 0.50 × 0% = 5%." },
+    ],
+  },
+  {
+    title: "Diversification reduces some dependencies",
+    blocks: [
+      concept("diversification-limits", "Useful, but not a guarantee", "Diversification means avoiding unnecessary dependence on a small number of outcomes. Many companies can reduce reliance on one company; multiple asset classes can spread other dependencies. But more investments do not automatically mean better diversification when they share the same exposures. Diversification does not guarantee profit, eliminate broad market risk, or make every portfolio equally appropriate."),
+      question("diversification-check", "Does diversification guarantee that a portfolio will not lose money?", ["Yes, if it contains enough investments", "No, diversified investments can still fall together"], 1, "No. Diversification can reduce concentration and some other specific dependencies, but broad market losses and other risks can remain."),
+    ],
+  },
+  {
+    title: "Match uncertainty to the time available",
+    blocks: [
+      figure("horizon-scenario", "portfolio-horizon-scenario", "Two different time horizons", "Compare money needed in six months with money not expected to be needed for 20 years. Focus on ability to withstand a loss, not on choosing an allocation."),
+      question("horizon-check", "Why might time horizon matter when thinking about a portfolio?", ["Short-term financial needs may reduce the ability to tolerate market losses", "A longer horizon guarantees that every loss will recover", "Time horizon determines a universally correct allocation"], 0, "Money needed soon may leave less ability to absorb a market loss. A longer horizon can provide more time to withstand fluctuations, but it does not guarantee recovery or profit."),
+    ],
+  },
+  {
+    title: "Emotional comfort is not financial capacity",
+    blocks: [
+      figure("risk-context", "risk-capacity-scenario", "Tolerance and capacity", "Someone says, “I don’t mind seeing my portfolio fall 30%,” but needs the money next year. Reveal each part of the situation before answering."),
+      question("capacity-check", "If someone emotionally accepts large losses but needs the money very soon, is risk tolerance alone enough?", ["Yes, emotional comfort settles the decision", "No, financial ability to absorb loss matters too"], 1, "No. Risk tolerance is emotional willingness; risk capacity is the financial ability to absorb losses. A near-term need can limit capacity even when tolerance sounds high."),
+    ],
+  },
+  {
+    title: "Every portfolio is a set of trade-offs",
+    blocks: [
+      paragraph("trade-offs", "Portfolio construction balances competing considerations: growth potential, uncertainty, liquidity, possible income, and the timing of financial needs. Increasing one characteristic may weaken another. There is no universally optimal beginner portfolio, and a familiar allocation such as 60 / 30 / 10 or 60 / 40 is only a hypothetical mix unless placed in a specific person’s full context."),
+      question("appropriate-check", "Does holding stocks, bonds, and cash automatically create an appropriate portfolio?", ["Yes, those three labels fit everyone", "No, the holdings, weights, time horizon, and circumstances still matter"], 1, "No. Asset categories alone do not determine suitability. Their contents and weights interact with time horizon, liquidity needs, risk tolerance, risk capacity, and other circumstances."),
+    ],
+  },
+  {
+    title: "The mix is the decision",
+    blocks: [
+      takeaway("A portfolio is a collection whose behavior depends on its components and their weights. Allocation creates trade-offs. Diversification can reduce unnecessary dependence without eliminating loss. Stocks, bonds, and cash can play different roles, while time horizon, risk tolerance, and risk capacity help explain why no single mix is right for everyone."),
+    ],
+  },
+];
+
+const flows = [whyInvest, stocks, etfs, bondsAndCash, markets, riskReward, portfolio];
 export const foundationsContent: AuthoredLesson[] = flows.map((steps, index) => {
   const definition = foundationsLessons[index];
   return { id: definition.id, moduleSlug: "investing-foundations", slug: definition.slug, title: definition.title, eyebrow: "Investing Foundations", position: index + 1, estimatedMinutes: definition.estimatedMinutes, sections: steps.map((step, position) => ({ id: String(position), label: step.title })), blocks: steps.flatMap((step) => step.blocks) };

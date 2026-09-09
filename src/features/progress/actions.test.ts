@@ -6,13 +6,13 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "./actions";
 describe("shared persisted lesson actions", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.user.mockResolvedValue({ id: "session-owner" }); mocks.count.mockResolvedValue(2); });
-  it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["foundations-markets", "module-investing-foundations"], ["foundations-risk-reward", "module-investing-foundations"], ["returns-compounding", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
+  it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["foundations-markets", "module-investing-foundations"], ["foundations-risk-reward", "module-investing-foundations"], ["foundations-portfolio", "module-investing-foundations"], ["returns-compounding", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
     expect(await completeLessonAction(id)).toEqual({ ok: true, completedLessons: 2 });
     expect(mocks.complete).toHaveBeenCalledWith("session-owner", id);
     expect(mocks.count).toHaveBeenCalledWith("session-owner", moduleId);
     expect(mocks.revalidate).toHaveBeenCalledWith("/learn", "layout");
   });
-  it.each(["foundations-portfolio", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
+  it.each(["foundations-checkpoint", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
     expect(await markLessonStartedAction(id)).toMatchObject({ ok: false });
     expect(await saveLessonPositionAction(id, 1)).toMatchObject({ ok: false });
     expect(await completeLessonAction(id)).toMatchObject({ ok: false });
@@ -23,6 +23,11 @@ describe("shared persisted lesson actions", () => {
     expect(mocks.save).not.toHaveBeenCalled();
     expect(await saveLessonPositionAction("foundations-why-invest", 8)).toEqual({ ok: true });
     expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-why-invest", lastPosition: 8, status: "in_progress" });
+  });
+  it("accepts every valid portfolio step and rejects a cursor past the final step", async () => {
+    expect(await saveLessonPositionAction("foundations-portfolio", 11)).toEqual({ ok: true });
+    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-portfolio", lastPosition: 11, status: "in_progress" });
+    expect(await saveLessonPositionAction("foundations-portfolio", 12)).toMatchObject({ ok: false });
   });
   it("rejects anonymous writes", async () => {
     mocks.user.mockResolvedValue(null);

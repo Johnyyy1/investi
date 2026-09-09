@@ -138,7 +138,7 @@ try {
   assert.match(await page.getByTestId("module-progress").textContent(), /3 of 3/); await layouts("returns-completed");
   await page.getByRole("link", { name: "Home", exact: true }).click(); await heading("Continue learning"); await layouts("home-completed");
   await page.getByRole("link", { name: "Progress", exact: true }).click(); await heading("Your progress");
-  assert.match(await page.getByTestId("available-progress").textContent(), /3 of 9 available lessons complete/); await layouts("progress-completed");
+  assert.match(await page.getByTestId("available-progress").textContent(), /3 of 10 available lessons complete/); await layouts("progress-completed");
   await button("Sign out").click(); await heading("Welcome back"); await layouts("sign-in");
   await signIn("incorrect-password"); await page.getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   await signIn(); await page.waitForURL("**/dashboard"); await heading("Continue learning");

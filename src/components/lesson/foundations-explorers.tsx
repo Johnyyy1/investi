@@ -5,7 +5,7 @@ import { FinanceInput } from "@/components/learning/finance-input";
 import { ConceptCard } from "@/components/learning/concept-card";
 import { MetricResult } from "@/components/learning/metric-result";
 import { compoundValue, FinancialInputError, parsePrice } from "@/features/finance/returns";
-import { bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, simpleBondCashflows } from "@/features/finance/foundations";
+import { bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, portfolioWeightedReturn, simpleBondCashflows } from "@/features/finance/foundations";
 
 const number = (value: number) => value.toLocaleString("en-IE", { maximumSignificantDigits: 8, notation: value !== 0 && (Math.abs(value) < 0.000001 || Math.abs(value) >= 1e15) ? "scientific" : "standard" });
 const euros = (value: number) => value.toLocaleString("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
@@ -101,9 +101,9 @@ export function BondCashflowExplorer() {
 }
 
 const assetDetails = {
-  cash: { name: "Cash", relationship: "Neither ownership nor a loan", volatility: "Usually low in nominal terms", purpose: "Liquidity and short-term needs", payments: "Its account may pay interest, depending on the account" },
-  bond: { name: "Bond", relationship: "A loan to an issuer", volatility: "Can move with rates and issuer conditions", purpose: "Lending with stated payment terms", payments: "Interest payments and principal repayment are typically promised" },
-  stock: { name: "Stock", relationship: "Ownership in a company", volatility: "Can change substantially with market and business conditions", purpose: "Participation in a company’s outcomes", payments: "Price changes and possible dividends" },
+  cash: { name: "Cash", relationship: "Immediately available money", volatility: "Often nominally stable; inflation can reduce purchasing power", purpose: "Liquidity and short-term usefulness", payments: "An account may pay interest, depending on its terms" },
+  bond: { name: "Bond", relationship: "A loan to an issuer", volatility: "Credit, interest-rate, inflation, and liquidity risks may matter", purpose: "Contractual cash-flow structure and possible income", payments: "Interest and principal repayment are typically promised, not guaranteed" },
+  stock: { name: "Stock", relationship: "Ownership in a company", volatility: "Business and market uncertainty; prices may fluctuate substantially", purpose: "Potential business growth and possible income", payments: "Price changes and dividends, when declared" },
 } as const;
 
 export function AssetComparison() {
@@ -115,7 +115,7 @@ export function AssetComparison() {
     </div>
     <div aria-live="polite" className="grid gap-4 border-y border-ql-border py-6 sm:grid-cols-2">
       <MetricResult label="Relationship" value={detail.relationship} />
-      <MetricResult label="Price volatility" value={detail.volatility} />
+      <MetricResult label="Behavior and risk" value={detail.volatility} />
       <MetricResult label="Common purpose" value={detail.purpose} />
       <MetricResult label="Potential payments / outcome" value={detail.payments} />
     </div>
@@ -224,5 +224,62 @@ export function TimeHorizonExplorer() {
       {(Object.keys(horizonExamples) as (keyof typeof horizonExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{horizonExamples[key].name}</button>)}
     </div>
     <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>
+  </section>;
+}
+
+const diversificationScenarios = {
+  company: { label: "Only Company A falls", returns: [-0.4, 0, 0, 0], detail: "Company A falls 40%; the other three hypothetical companies remain unchanged." },
+  broad: { label: "All four fall together", returns: [-0.2, -0.2, -0.2, -0.2], detail: "All four hypothetical companies fall 20% together." },
+} as const;
+
+export function DiversificationImpact() {
+  const [scenario, setScenario] = useState<keyof typeof diversificationScenarios>("company");
+  const selected = diversificationScenarios[scenario];
+  const concentrated = portfolioWeightedReturn([1, 0, 0, 0], selected.returns);
+  const spread = portfolioWeightedReturn([0.25, 0.25, 0.25, 0.25], selected.returns);
+  return <section aria-label="Diversification impact illustration" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose a hypothetical company-return scenario">
+      {(Object.keys(diversificationScenarios) as (keyof typeof diversificationScenarios)[]).map((key) => <button key={key} type="button" aria-pressed={scenario === key} onClick={() => setScenario(key)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${scenario === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{diversificationScenarios[key].label}</button>)}
+    </div>
+    <p className="text-ql-small text-ql-secondary">{selected.detail} These are simplified one-period inputs, not forecasts.</p>
+    <div aria-live="polite" aria-atomic="true" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2">
+      <MetricResult label="Portfolio A · 100% Company A" value={signedPercent(concentrated * 100)} sentiment="negative" />
+      <MetricResult label="Portfolio B · 25% in each company" value={signedPercent(spread * 100)} sentiment="negative" />
+    </div>
+    <ConceptCard title={scenario === "company" ? "One dependency has less influence" : "Diversification does not remove broad losses"}>{scenario === "company" ? "In Portfolio B, Company A’s −40% return has a −10% portfolio effect: 25% × −40%. More holdings are not automatically better diversified; the exposures must actually differ." : "When all four holdings fall together, both portfolios fall in this example. Real investments may move together too. This is not correlation analysis."}</ConceptCard>
+  </section>;
+}
+
+const portfolioHorizons = {
+  soon: { label: "Money needed in 6 months", timing: "Near-term need", capacity: "A loss may disrupt the planned use before there is time for circumstances to change." },
+  later: { label: "Money not expected for 20 years", timing: "Longer horizon", capacity: "More time may make fluctuations easier to withstand, but it does not guarantee recovery or profit." },
+} as const;
+
+export function PortfolioHorizonScenario() {
+  const [horizon, setHorizon] = useState<keyof typeof portfolioHorizons>("soon");
+  const selected = portfolioHorizons[horizon];
+  return <section aria-label="Portfolio time-horizon scenario" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose when the money is needed">
+      {(Object.keys(portfolioHorizons) as (keyof typeof portfolioHorizons)[]).map((key) => <button key={key} type="button" aria-pressed={horizon === key} onClick={() => setHorizon(key)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${horizon === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{portfolioHorizons[key].label}</button>)}
+    </div>
+    <div aria-live="polite" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2"><MetricResult label="Timing" value={selected.timing} /><MetricResult label="Why it matters" value={selected.capacity} /></div>
+    <p className="text-ql-small text-ql-secondary">This scenario shows why timing belongs in portfolio thinking. It does not prescribe an allocation.</p>
+  </section>;
+}
+
+const riskContext = {
+  tolerance: { label: "Emotional response", title: "Risk tolerance", detail: "“I would not panic if my portfolio fell 30%.” This describes emotional willingness to experience loss and uncertainty." },
+  capacity: { label: "Financial need", title: "Risk capacity", detail: "“I need this money next year.” This can limit the financial ability to absorb a loss, even when the person feels calm about market swings." },
+  together: { label: "Consider both", title: "Tolerance is not enough", detail: "Portfolio decisions involve both willingness and financial ability to bear loss, alongside goals, liquidity, and time horizon. This lesson is not a suitability assessment." },
+} as const;
+
+export function RiskCapacityScenario() {
+  const [context, setContext] = useState<keyof typeof riskContext>("tolerance");
+  const selected = riskContext[context];
+  return <section aria-label="Risk tolerance and capacity scenario" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Explore the person's risk context">
+      {(Object.keys(riskContext) as (keyof typeof riskContext)[]).map((key) => <button key={key} type="button" aria-pressed={context === key} onClick={() => setContext(key)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${context === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{riskContext[key].label}</button>)}
+    </div>
+    <ConceptCard title={selected.title}>{selected.detail}</ConceptCard>
   </section>;
 }

@@ -1,4 +1,4 @@
-import { AssetComparison, BondCashflowExplorer, DiversificationPreview, DrawdownExplorer, GrowthComparison, LiquidityComparison, MarketQuoteExplorer, RiskScenarioExplorer, ShareExplorer, TimeHorizonExplorer, IndexEtfVisual } from "./foundations-explorers";
+import { AssetComparison, BondCashflowExplorer, DiversificationImpact, DiversificationPreview, DrawdownExplorer, GrowthComparison, LiquidityComparison, MarketQuoteExplorer, PortfolioHorizonScenario, RiskCapacityScenario, RiskScenarioExplorer, ShareExplorer, TimeHorizonExplorer, IndexEtfVisual } from "./foundations-explorers";
 import type { LessonBlock } from "@/features/lessons/types";
 import { ConceptCard } from "@/components/learning/concept-card";
 import { FormulaBlock } from "@/components/learning/formula-block";
@@ -7,6 +7,7 @@ import { CompoundingExplorer } from "./compounding-explorer";
 import { ReturnCalculator } from "./return-calculator";
 import { PriceSeriesExplorer } from "./price-series-explorer";
 import { RecoveryExplorer } from "./recovery-explorer";
+import { PortfolioBuilder } from "./portfolio-builder";
 
 /** Presentation adapter for existing authored blocks, not a second content source. */
 export function GuidedBlock({ block }: { block: LessonBlock }) {
@@ -22,7 +23,7 @@ export function GuidedBlock({ block }: { block: LessonBlock }) {
     </section>;
     case "conceptCallout": case "explanation": case "takeaway": return <ConceptCard title={block.title}>{block.content}</ConceptCard>;
     case "checkpoint": return <section><h3 className="text-ql-title font-semibold">{block.label}</h3><p className="mt-3 text-ql-body text-ql-secondary">{block.content}</p></section>;
-    case "interactiveFigure": return <div><p className="mb-6 text-ql-body text-ql-secondary">{block.description}</p>{block.figure === "growth-comparison" ? <GrowthComparison /> : block.figure === "ownership-explorer" ? <ShareExplorer kind="ownership" /> : block.figure === "market-cap-explorer" ? <ShareExplorer kind="market-cap" /> : block.figure === "index-etf-visual" ? <IndexEtfVisual /> : block.figure === "bond-cashflow-explorer" ? <BondCashflowExplorer /> : block.figure === "asset-comparison" ? <AssetComparison /> : block.figure === "market-quote-explorer" ? <MarketQuoteExplorer /> : block.figure === "liquidity-comparison" ? <LiquidityComparison /> : block.figure === "risk-scenario-explorer" ? <RiskScenarioExplorer /> : block.figure === "drawdown-explorer" ? <DrawdownExplorer /> : block.figure === "diversification-preview" ? <DiversificationPreview /> : block.figure === "time-horizon-explorer" ? <TimeHorizonExplorer /> : block.figure === "return-calculator" ? <ReturnCalculator /> : block.figure === "price-series-explorer" ? <PriceSeriesExplorer /> : block.figure === "compounding-explorer" ? <CompoundingExplorer /> : block.figure === "recovery-explorer" ? <RecoveryExplorer /> : null}</div>;
+    case "interactiveFigure": return <div><p className="mb-6 text-ql-body text-ql-secondary">{block.description}</p>{block.figure === "growth-comparison" ? <GrowthComparison /> : block.figure === "ownership-explorer" ? <ShareExplorer kind="ownership" /> : block.figure === "market-cap-explorer" ? <ShareExplorer kind="market-cap" /> : block.figure === "index-etf-visual" ? <IndexEtfVisual /> : block.figure === "bond-cashflow-explorer" ? <BondCashflowExplorer /> : block.figure === "asset-comparison" ? <AssetComparison /> : block.figure === "market-quote-explorer" ? <MarketQuoteExplorer /> : block.figure === "liquidity-comparison" ? <LiquidityComparison /> : block.figure === "risk-scenario-explorer" ? <RiskScenarioExplorer /> : block.figure === "drawdown-explorer" ? <DrawdownExplorer /> : block.figure === "diversification-preview" ? <DiversificationPreview /> : block.figure === "time-horizon-explorer" ? <TimeHorizonExplorer /> : block.figure === "portfolio-builder" ? <PortfolioBuilder /> : block.figure === "diversification-impact" ? <DiversificationImpact /> : block.figure === "portfolio-horizon-scenario" ? <PortfolioHorizonScenario /> : block.figure === "risk-capacity-scenario" ? <RiskCapacityScenario /> : block.figure === "return-calculator" ? <ReturnCalculator /> : block.figure === "price-series-explorer" ? <PriceSeriesExplorer /> : block.figure === "compounding-explorer" ? <CompoundingExplorer /> : block.figure === "recovery-explorer" ? <RecoveryExplorer /> : null}</div>;
     default: return null; // Questions own their Check → feedback → Continue interaction.
   }
 }

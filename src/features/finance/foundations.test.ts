@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { annualCoupon, bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, simpleBondCashflows, totalCouponPayments } from "./foundations";
+import { annualCoupon, bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, portfolioWeightedReturn, simpleBondCashflows, totalCouponPayments, validatePortfolioWeights } from "./foundations";
 import { compoundValue } from "./returns";
 describe("beginner financial examples", () => {
   it("distinguishes fractions from percentages", () => {
@@ -42,4 +42,29 @@ describe("beginner financial examples", () => {
     expect(drawdownFromPeak(3, 2)).toBeCloseTo(1 / 3);
   });
   it.each([[0, 0], [-1, 0], [100, -1], [Infinity, 100], [100, NaN]])("rejects invalid drawdown values %s, %s", (peak, current) => expect(() => drawdownFromPeak(peak, current)).toThrow());
+  it("validates portfolio weights with floating-point tolerance", () => {
+    expect(validatePortfolioWeights([0.6, 0.3, 0.1])).toBe(true);
+    expect(validatePortfolioWeights([0.1, 0.2, 0.7])).toBe(true);
+    expect(validatePortfolioWeights([0.1 + 0.2, 0.7])).toBe(true);
+  });
+  it.each([
+    [[0.6, 0.3]],
+    [[0.6, 0.3, 0.100001]],
+    [[-0.1, 0.5, 0.6]],
+    [[1.1, 0]],
+    [[NaN, 1]],
+    [[Infinity, 0]],
+    [[]],
+  ])("rejects invalid portfolio weights %j", (weights) => expect(() => validatePortfolioWeights(weights)).toThrow());
+  it("calculates unrounded weighted one-period returns", () => {
+    expect(portfolioWeightedReturn([0.6, 0.3, 0.1], [0.1, 0.02, 0])).toBeCloseTo(0.066, 12);
+    expect(portfolioWeightedReturn([0.5, 0.5], [0.1, 0])).toBeCloseTo(0.05, 12);
+    expect(portfolioWeightedReturn([0.25, 0.25, 0.25, 0.25], [-0.4, 0, 0, 0])).toBeCloseTo(-0.1, 12);
+    expect(portfolioWeightedReturn([0.1, 0.2, 0.7], [-0.123456789, 0.031415926, 0.001234567])).toBeCloseTo(-0.0051982968, 12);
+  });
+  it("accepts negative asset returns and rejects mismatched or non-finite returns", () => {
+    expect(portfolioWeightedReturn([1], [-0.4])).toBe(-0.4);
+    expect(() => portfolioWeightedReturn([0.5, 0.5], [0.1])).toThrow();
+    expect(() => portfolioWeightedReturn([0.5, 0.5], [0.1, NaN])).toThrow();
+  });
 });
