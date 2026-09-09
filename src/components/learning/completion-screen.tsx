@@ -1,11 +1,11 @@
 "use client";
 import { motion } from "motion/react";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { CircleCheck } from "lucide-react";
 import { LearningButton } from "./learning-button";
 import { useLearningDuration } from "./motion";
 
-export function CompletionScreen({ title, description, xp, onContinue, autoFocusAction = false, actionLabel = "Continue learning" }: { title: string; description: string; xp?: number; onContinue: () => void; autoFocusAction?: boolean; actionLabel?: string }) {
+export function CompletionScreen({ title, description, xp, children, onContinue, autoFocusAction = false, actionLabel = "Continue learning" }: { title: string; description: string; xp?: number; children?: ReactNode; onContinue: () => void; autoFocusAction?: boolean; actionLabel?: string }) {
   const duration = useLearningDuration("reward");
   const descriptionId = useId();
   const sectionRef = useRef<HTMLElement>(null);
@@ -20,6 +20,7 @@ export function CompletionScreen({ title, description, xp, onContinue, autoFocus
       <p className="mt-3 text-ql-body text-ql-secondary">{description}</p>
       {xp !== undefined ? <p className="mt-4 text-ql-emphasis font-semibold text-ql-link">+{xp} XP earned</p> : null}
     </motion.div>
-    <LearningButton autoFocus={autoFocusAction} aria-describedby={descriptionId} className="mt-6" onClick={onContinue}>{actionLabel}</LearningButton>
+    {children}
+    <LearningButton autoFocus={autoFocusAction} aria-describedby={descriptionId} className="mt-7 w-full" onClick={onContinue}>{actionLabel}</LearningButton>
   </section>;
 }

@@ -1,5 +1,7 @@
 # QuantLearn learning design system
 
+> This document records the original design-system slice. The current production integration now has persisted XP/streak state and three implemented Learn/Lab/Progress destinations; see [product-reset.md](product-reset.md).
+
 The new system is opt-in through `.learning-theme`. The working application keeps its existing design until route-by-route migration. Preview at `/dev/design-system` under `npm run dev`; the route returns 404 in production and is excluded from normal navigation. All showcase rewards and learner values are explicitly illustrative.
 
 ## Tokens and typography

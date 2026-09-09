@@ -13,7 +13,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test:product": "node scripts/validate-learning-loop.mjs",
+    "test:persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-persistence.mts",
+    "demo:cleanup": "node scripts/cleanup-demos.mjs"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.11",

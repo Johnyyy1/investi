@@ -14,9 +14,9 @@ export function SignInForm() {
   async function onSubmit(formData: FormData) {
     setIsSubmitting(true); setErrorMessage(undefined);
     try {
-    const { error } = await authClient.signIn.email({ email: String(formData.get("email") ?? ""), password: String(formData.get("password") ?? ""), callbackURL: "/dashboard" });
+    const { error } = await authClient.signIn.email({ email: String(formData.get("email") ?? ""), password: String(formData.get("password") ?? ""), callbackURL: "/learn" });
     if (error) { setErrorMessage(getAuthErrorMessage(error, "We could not sign you in. Please try again.")); setIsSubmitting(false); return; }
-    router.replace("/dashboard"); router.refresh();
+    router.replace("/learn"); router.refresh();
     } catch { setErrorMessage("We could not connect. Please try again."); }
     finally { setIsSubmitting(false); }
   }

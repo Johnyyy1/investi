@@ -22,6 +22,13 @@
       "when": 1788942335153,
       "tag": "0002_awesome_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788961321636,
+      "tag": "0003_chunky_sphinx",
+      "breakpoints": true
     }
   ]
 }

@@ -17,7 +17,7 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
   if (data.some((point) => !Number.isFinite(point.value))) return <p role="status" className="text-ql-small text-ql-danger-ink">This chart needs finite numeric values.</p>;
   return <figure className="min-w-0 rounded-ql-lg border border-ql-border bg-ql-surface p-6">
     <figcaption><h3 className="text-ql-title font-semibold">{title}</h3><p className="mt-1 text-ql-small text-ql-secondary">{description}</p></figcaption>
-    <div className="mt-4 h-64 min-w-0">
+    <div className="mt-4 h-64 min-w-0 max-w-full overflow-hidden">
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart accessibilityLayer data={data} margin={learningChartStyle.margin}>
           <CartesianGrid stroke="var(--color-ql-border)" vertical={false} />

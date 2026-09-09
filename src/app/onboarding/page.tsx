@@ -9,7 +9,7 @@ export default async function OnboardingPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
   const profile = await getLearningProfile(user.id);
-  if (profile?.onboardingCompletedAt) redirect("/dashboard");
+  if (profile?.onboardingCompletedAt) redirect("/learn");
   const answers = profile ? draftSchema.parse({ experienceLevel: profile.experienceLevel, goals: profile.goals, interests: profile.interests, dailyGoalMinutes: profile.dailyGoalMinutes }) : emptyDraft;
   return <OnboardingFlow initialAnswers={answers} initialStep={profile?.onboardingStep ?? 0} />;
 }

@@ -3,7 +3,7 @@ import { AnswerOption } from "@/components/learning/answer-option";
 import { dailyGoals, experienceOptions, goalOptions, interestOptions, type OnboardingDraft } from "@/features/onboarding/domain";
 
 export const questionTitles = ["", "How familiar are you with investing?", "What would you like to get better at?", "What are you most interested in?", "How much time would you like to learn each day?"];
-export const questionHints = ["", "Choose the description that feels closest. There’s no test.", "Choose one or more goals. You can change these later.", "Choose one or more topics you’d like to explore.", "A little time, consistently. Choose a pace that fits your day."];
+export const questionHints = ["", "Choose the description that feels closest. There’s no test.", "Optional. Choose any goals you find useful.", "Optional. Choose topics you’d like to explore.", "A little time, consistently. Choose a pace that fits your day."];
 
 export function PreferencesQuestion({ step, answers, onChange, disabled = false }: {
   step: number; answers: OnboardingDraft; onChange: (answers: OnboardingDraft) => void; disabled?: boolean;

@@ -1,5 +1,3 @@
 import { redirect } from "next/navigation";
-
-export default function Home() {
-  redirect("/sign-in");
-}
+import { getCurrentUser } from "@/lib/session";
+export default async function Home() { redirect(await getCurrentUser() ? "/learn" : "/sign-in"); }

@@ -7,11 +7,7 @@ import { MetricResult } from "@/components/learning/metric-result";
 import { FinancialInputError, parsePrice } from "@/features/finance/returns";
 import { portfolioWeightedReturn, validatePortfolioWeights } from "@/features/finance/foundations";
 
-const assets = [
-  { id: "stocks", label: "Stocks", color: "bg-ql-blue-500" },
-  { id: "bonds", label: "Bonds", color: "bg-ql-warning" },
-  { id: "cash", label: "Cash", color: "bg-ql-success" },
-] as const;
+import { portfolioAssets as assets } from "@/features/lab/portfolio";
 type AssetId = typeof assets[number]["id"];
 type Inputs = Record<AssetId, string>;
 

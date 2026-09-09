@@ -2,3 +2,10 @@
 @import "../styles/learning-tokens.css";
 
 html, body { min-height: 100%; background: var(--color-ql-page); }
+
+.ql-range { appearance: none; background: transparent; }
+.ql-range:focus { outline: 3px solid var(--color-ql-link); outline-offset: 3px; }
+.ql-range::-webkit-slider-runnable-track { height: 6px; background: var(--color-ql-border-strong); border-radius: 99px; }
+.ql-range::-webkit-slider-thumb { appearance: none; margin-top: -8px; width: 22px; height: 22px; border-radius: 50%; background: var(--color-ql-link); border: 3px solid var(--color-ql-surface); box-shadow: 0 0 0 1px var(--color-ql-link); }
+.ql-range::-moz-range-track { height: 6px; background: var(--color-ql-border-strong); border-radius: 99px; }
+.ql-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-ql-link); border: 3px solid var(--color-ql-surface); }

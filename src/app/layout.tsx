@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "investi", template: "%s · investi" },
-  description: "Learn investing, step by step. Build the knowledge behind better investing decisions.",
+  description: "Learn investing by doing.",
 };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return <html lang="en"><body><LearningTheme>{children}</LearningTheme></body></html>;

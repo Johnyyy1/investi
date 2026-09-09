@@ -6,6 +6,6 @@ import { getCurrentUser } from "@/lib/session";
 
 export const metadata = { title: "Sign in" };
 export default async function AuthPage() {
-  if (await getCurrentUser()) redirect("/dashboard");
+  if (await getCurrentUser()) redirect("/learn");
   return <AuthLayout title="Welcome back" description="Sign in to pick up where you left off." footer={<>New to investi? <Link href="/sign-up" className="font-semibold text-ql-link underline underline-offset-4">Create an account</Link></>}><SignInForm /></AuthLayout>;
 }

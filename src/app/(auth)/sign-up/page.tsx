@@ -6,6 +6,6 @@ import { getCurrentUser } from "@/lib/session";
 
 export const metadata = { title: "Create account" };
 export default async function AuthPage() {
-  if (await getCurrentUser()) redirect("/dashboard");
-  return <AuthLayout title="Build your investing foundations" description="Create your account to save your learning and return whenever you’re ready." footer={<>Already learning with us? <Link href="/sign-in" className="font-semibold text-ql-link underline underline-offset-4">Sign in</Link></>}><SignUpForm /></AuthLayout>;
+  if (await getCurrentUser()) redirect("/learn");
+  return <AuthLayout title="Create account" description="Save your place. Build your knowledge." footer={<>Already learning with us? <Link href="/sign-in" className="font-semibold text-ql-link underline underline-offset-4">Sign in</Link></>}><SignUpForm /></AuthLayout>;
 }

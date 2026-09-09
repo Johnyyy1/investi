@@ -1,6 +1,9 @@
+import { sql } from "drizzle-orm";
 import { experienceValues, goalValues, interestValues } from "../features/onboarding/domain";
 import {
   boolean,
+  check,
+  date,
   index,
   integer,
   pgEnum,
@@ -24,6 +27,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
@@ -140,8 +144,23 @@ export const learningProfile = pgTable("learning_profile", {
   goals: learningGoalEnum("goals").array().notNull().default([]),
   interests: learningInterestEnum("interests").array().notNull().default([]),
   dailyGoalMinutes: integer("daily_goal_minutes"),
+  timeZone: text("time_zone"),
   recommendedStart: recommendedStartEnum("recommended_start"),
   onboardingStep: integer("onboarding_step").notNull().default(0),
   onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Completion receipt and learning-day ledger. One lifetime award per lesson per learner. */
+export const lessonAward = pgTable("lesson_award", {
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  lessonId: text("lesson_id").notNull().references(() => lesson.id, { onDelete: "cascade" }),
+  xp: integer("xp").notNull(),
+  learningDate: date("learning_date").notNull(),
+  timeZone: text("time_zone").notNull(),
+  awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.lessonId] }),
+  index("lesson_award_user_date_idx").on(table.userId, table.learningDate),
+  check("lesson_award_xp_check", sql`${table.xp} = 60`),
+]);

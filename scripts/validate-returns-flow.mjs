@@ -48,8 +48,7 @@ try {
   await page.getByRole("heading", { name: /^(Good morning|Good afternoon|Good evening|Welcome),/ }).waitFor();
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   assert.equal(await page.locator(".learning-theme").count(), 1, "Dashboard uses the shared theme");
-  await page.getByRole("link", { name: "Browse curriculum", exact: true }).click();
-  await heading("Learn investing, step by step");
+  await heading("Continue learning");
   assert.equal(await page.locator(".learning-theme").count(), 1, "Learn uses the shared theme");
   await page.locator('a[href="/learn/returns"]').click();
   await heading("Returns & Compounding");
@@ -145,10 +144,10 @@ try {
   assert.equal((await row()).status, "in_progress", "Reaching the end does not auto-complete");
   await page.getByRole("button", { name: "Mark lesson complete", exact: true }).click();
   await heading("Lesson complete");
-  assert.match(await page.getByTestId("completion-progress").textContent(), /1 of 3/);
+  assert.match(await page.getByTestId("completion-progress").textContent(), /1 available/);
   const completed = await row();
   assert.equal(completed.status, "completed");
-  await page.getByRole("button", { name: "Back to Returns & Compounding", exact: true }).click();
+  await page.getByRole("link", { name: "View module", exact: true }).click();
   await heading("Returns & Compounding");
   assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 3 available lessons complete");
   await page.reload();

@@ -1,0 +1,29 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { LearningButton } from "@/components/learning/learning-button";
+
+export function DemoButton() {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  const router = useRouter();
+  async function explore() {
+    setPending(true); setError(undefined);
+    try {
+      // Recover a successful creation whose response was lost, without seeding twice.
+      const current = await authClient.getSession();
+      if (!current.data) {
+        const result = await authClient.signIn.anonymous();
+        if (result.error) throw new Error("Demo initialization failed");
+      }
+      router.replace("/learn"); router.refresh();
+    } catch { setError("We couldn’t open the demo. Please try again."); setPending(false); }
+  }
+  return <div className="mt-6 border-t border-ql-border pt-6">
+    <LearningButton variant="secondary" loading={pending} onClick={() => void explore()} className="w-full">{pending ? "Opening demo…" : "Explore demo"}<ArrowRight aria-hidden="true" className="size-4" /></LearningButton>
+    <p className="mt-3 text-center text-ql-small text-ql-secondary">Jump in with a private practice profile.</p>
+    {error && <p role="alert" className="mt-3 text-ql-small text-ql-danger-ink">{error}</p>}
+  </div>;
+}

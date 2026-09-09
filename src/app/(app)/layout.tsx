@@ -8,5 +8,5 @@ export default async function ApplicationLayout({ children }: { children: React.
   if (!user) redirect("/sign-in");
   const profile = await getLearningProfile(user.id);
   if (!profile?.onboardingCompletedAt) redirect("/onboarding");
-  return <AppShell userName={user.name}>{children}</AppShell>;
+  return <AppShell userName={user.name} isDemo={user.isAnonymous === true} needsTimeZone={!profile.timeZone}>{children}</AppShell>;
 }

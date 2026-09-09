@@ -30,8 +30,8 @@ const goalsSchema = z.array(z.enum(goalValues)).max(6).refine((v) => new Set(v).
 const interestsSchema = z.array(z.enum(interestValues)).max(6).refine((v) => new Set(v).size === v.length);
 export const preferencesSchema = z.object({
   experienceLevel: z.enum(experienceValues),
-  goals: goalsSchema.refine((v) => v.length > 0),
-  interests: interestsSchema.refine((v) => v.length > 0),
+  goals: goalsSchema,
+  interests: interestsSchema,
   dailyGoalMinutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(20)]),
 }).strict();
 export const draftSchema = z.object({
@@ -76,3 +76,5 @@ export function recommendLearningPath({ experienceLevel, goals, interests }: Pic
   }[experienceLevel];
   return { recommendedModule: foundations ? { slug: "investing-foundations", title: "Investing Foundations", href: "/learn/investing-foundations" } : { slug: "returns", title: "Returns & Compounding", href: "/learn/returns" }, reason, futureTargets: targets.slice(0, 2) };
 }
+
+export const quickStartSchema = z.object({ experienceLevel: z.enum(experienceValues), timeZone: z.string().max(100) }).strict();

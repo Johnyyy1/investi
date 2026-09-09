@@ -1,3 +1,4 @@
+import { loadLearner } from "@/features/learning/load-learner";
 import { notFound } from "next/navigation";
 import { GuidedLesson } from "@/components/lesson/guided-lesson";
 import { getModuleLessons } from "@/features/learning/catalog";
@@ -18,5 +19,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const progress = user ? await getLessonProgress(user.id, lesson.id) : undefined;
   const status = progress?.status ?? "not_started";
   const completedLessons = user ? await getModuleProgress(user.id, getModuleLessons(moduleSlug)[0].moduleId) : 0;
-  return <GuidedLesson key={lesson.id} lesson={lesson} initialStatus={status} initialPosition={progress?.lastPosition ?? 0} initialCompletedLessons={completedLessons} />;
+  const summary = await loadLearner();
+  return <GuidedLesson key={lesson.id} lesson={lesson} initialStatus={status} initialPosition={progress?.lastPosition ?? 0} initialCompletedLessons={completedLessons} initialGamification={summary.gamification!} nextHref={summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`} />;
 }

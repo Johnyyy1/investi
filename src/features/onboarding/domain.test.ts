@@ -37,10 +37,11 @@ describe("preferences validation", () => {
   it.each([5, 10, 15, 20])("accepts supported daily goal %s", (dailyGoalMinutes) => expect(preferencesSchema.safeParse({ ...answers, dailyGoalMinutes }).success).toBe(true));
   it.each([
     { experienceLevel: "EXPERT" }, { experienceLevel: null }, { goals: ["RICH"] }, { interests: ["CRYPTO"] },
-    { goals: [] }, { interests: [] }, { goals: ["CONFIDENCE", "CONFIDENCE"] }, { interests: ["STOCKS", "STOCKS"] },
+    { goals: ["CONFIDENCE", "CONFIDENCE"] }, { interests: ["STOCKS", "STOCKS"] },
     { dailyGoalMinutes: 0 }, { dailyGoalMinutes: 25 }, { dailyGoalMinutes: "10" }, { dailyGoalMinutes: 5.5 },
     { recommendedStart: "fake" }, { userId: "another-user" }, { onboardingCompletedAt: new Date() },
   ])("rejects invalid completion payload %j", (patch) => expect(preferencesSchema.safeParse({ ...answers, ...patch }).success).toBe(false));
+  it("allows optional goals and interests without inventing preferences", () => expect(preferencesSchema.safeParse({ ...answers, goals: [], interests: [] }).success).toBe(true));
   it("allows incomplete drafts but still validates every supplied enum", () => {
     expect(draftSchema.safeParse(emptyDraft).success).toBe(true);
     expect(draftSchema.safeParse({ ...emptyDraft, interests: ["INVALID"] }).success).toBe(false);

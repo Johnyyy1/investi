@@ -22,11 +22,11 @@ describe("shared persisted lesson actions", () => {
     for (const position of [-1, 9, 1.5, Infinity]) expect(await saveLessonPositionAction("foundations-why-invest", position)).toMatchObject({ ok: false });
     expect(mocks.save).not.toHaveBeenCalled();
     expect(await saveLessonPositionAction("foundations-why-invest", 8)).toEqual({ ok: true });
-    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-why-invest", lastPosition: 8, status: "in_progress" });
+    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-why-invest", lastPosition: 8, status: "in_progress" }, undefined);
   });
   it("accepts every valid portfolio step and rejects a cursor past the final step", async () => {
     expect(await saveLessonPositionAction("foundations-portfolio", 11)).toEqual({ ok: true });
-    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-portfolio", lastPosition: 11, status: "in_progress" });
+    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-portfolio", lastPosition: 11, status: "in_progress" }, undefined);
     expect(await saveLessonPositionAction("foundations-portfolio", 12)).toMatchObject({ ok: false });
   });
   it("rejects anonymous writes", async () => {

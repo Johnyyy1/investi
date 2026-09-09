@@ -1,55 +1,65 @@
 # investi
 
-Learn investing, step by step. The current product teaches Investing Foundations and Returns & Compounding through nine guided, interactive lessons with persisted progress and personalized onboarding.
+Learn investing by doing. The authenticated product is organized around three destinations: **Learn**, **Lab**, and **Progress**. Ten guided lessons are currently available across Investing Foundations and Returns & Compounding, with persisted lesson position, transactional first-completion rewards, and focused interactive exercises.
 
-## Foundation
+## Architecture
 
-- **App Router** separates public authentication routes from authenticated product routes.
-- **Better Auth** owns identity, sessions, and credentials; the application layout is the single access boundary.
-- **Drizzle + PostgreSQL** own publishable module and lesson records plus per-user lesson progress.
-- **`features/lessons`** is a typed repository-authored lesson engine. It supports ordered editorial blocks, interactive figures, and exercises without introducing a generic page builder.
-- **`features/progress`** owns validated persistence contracts. Future modules add a catalog entry and authored lesson records without changing the shell or auth layer.
+- **Next.js App Router** separates public authentication/onboarding from authenticated product routes.
+- **Better Auth** owns credentials, normal sessions, and isolated anonymous demo sessions.
+- **Drizzle + PostgreSQL** own curriculum records, per-user progress, learning profiles, and immutable lesson-award receipts.
+- **`features/lessons`** is the typed authored lesson engine shared by Foundations and Returns.
+- **`features/progress`** validates step transitions and completes lessons with rewards in one transaction.
+- **`features/gamification`** derives XP, local learning days, streak, and daily lesson progress from persisted award receipts.
+- **`features/lab`** contains pure portfolio/backtest math and an explicitly synthetic educational fixture.
 
-## Local setup
+## Local setup and deployment order
 
 1. Copy `.env.example` to `.env.local` and set a real `BETTER_AUTH_SECRET`.
 2. Start PostgreSQL and update `DATABASE_URL`.
-3. Generate and apply the migration:
+3. Apply committed migrations before starting the new application code, then seed the curriculum:
 
    ```bash
-   npm run db:generate
    npm run db:migrate
    npm run db:seed
    ```
 
-4. Run the app:
+4. Start the app:
 
    ```bash
    npm run dev
    ```
 
+`db:seed` is idempotent. Migration `0003_chunky_sphinx.sql` must precede this application version because completion writes require `lesson_award`, `learning_profile.time_zone`, and `user.is_anonymous`.
+
 ## Verification
 
+With the local app and PostgreSQL running:
+
 ```bash
-npm run lint
-npm run typecheck
 npm test
+npm run typecheck
+npm run lint
 npm run build
-```
-
-`db:seed` is idempotent and publishes the first seven Foundations lessons and first three Returns lessons, retaining the remaining lesson entries as upcoming. Apply the included migrations before seeding.
-
-
-All production routes share the validated `ql-*` learning theme and Nunito Sans. Home remains at `/dashboard`; `/learn` presents the curriculum and `/progress` shows completed and active learning. Investing Foundations comes first with seven available and one upcoming lesson. Returns & Compounding has three available and three upcoming lessons. Home preserves active learning continuity; Progress counts only the ten available lessons.
-
-Local browser validation (requires the running app and local PostgreSQL):
-
-```bash
+npm run test:persistence
+npm run test:product
 BROWSER_CHANNEL=chrome node scripts/validate-foundations.mjs
-BROWSER_CHANNEL=chrome node scripts/validate-onboarding.mjs
-BROWSER_CHANNEL=chrome node scripts/validate-product-migration.mjs
 BROWSER_CHANNEL=chrome node scripts/validate-returns-flow.mjs
+BROWSER_CHANNEL=chrome node scripts/validate-product-migration.mjs
+BROWSER_CHANNEL=chrome node scripts/validate-onboarding.mjs
 BROWSER_CHANNEL=chrome node scripts/validate-design-system.mjs
 ```
 
-Omit `BROWSER_CHANNEL` if Playwright Chromium is installed. Product tests create and remove only their own disposable accounts. Screenshots default to `/tmp/investi-product-qa`. See [the Foundations implementation report](docs/investing-foundations.md) for scope and validation.
+Browser suites create and remove only their own local disposable identities. Screenshots are written under `/tmp`, never the repository.
+
+## Demo retention
+
+Anonymous demo sessions expire after 24 hours. Their database identities may remain until cleanup. Preview or apply the bounded cleanup with:
+
+```bash
+npm run demo:cleanup
+npm run demo:cleanup -- --apply
+```
+
+Only users explicitly marked `is_anonymous = true` and older than seven days are eligible; cascading foreign keys remove their sessions, profile, progress, and award receipts.
+
+See [the product reset notes](docs/product-reset.md) for reward, streak, daily-goal, synthetic-data, migration, compatibility, and validation semantics.

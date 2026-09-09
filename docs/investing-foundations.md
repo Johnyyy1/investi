@@ -1,5 +1,7 @@
 # Investing Foundations — implementation and validation
 
+> This document records the Foundations delivery slice. The later product reset replaces its Home/navigation, onboarding, reward, and Lab status descriptions; see [product-reset.md](product-reset.md) for current production behavior.
+
 Continues from `9143933` using the existing investi design, typed lesson blocks, ModulePath, guided runner, Better Auth, and Drizzle/PostgreSQL persistence.
 
 ## 1. Curriculum changes
