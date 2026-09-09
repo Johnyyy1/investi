@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { marketCapitalization, ownershipPercentage } from "./foundations";
+import { annualCoupon, marketCapitalization, ownershipPercentage, simpleBondCashflows, totalCouponPayments } from "./foundations";
 import { compoundValue } from "./returns";
 describe("beginner financial examples", () => {
   it("distinguishes fractions from percentages", () => {
@@ -22,4 +22,11 @@ describe("beginner financial examples", () => {
     expect(compoundValue(10_000, [-0.1, -0.1])).toBeCloseTo(8100);
     expect(compoundValue(10_000, [-1, 0.05])).toBe(0);
   });
+  it("illustrates fixed bond coupon cash flows without treating them as a return", () => {
+    expect(annualCoupon(1_000, 0.05)).toBe(50);
+    expect(totalCouponPayments(1_000, 0.05, 5)).toBe(250);
+    expect(simpleBondCashflows(1_000, 0.05, 5)).toEqual({ annualCoupon: 50, totalCouponPayments: 250, principalAtMaturity: 1_000, totalCashReceived: 1_250 });
+    expect(annualCoupon(1_000, 0)).toBe(0);
+  });
+  it.each([[0, 0.05, 5], [-1, 0.05, 5], [1_000, -0.01, 5], [1_000, 0.05, 0], [1_000, 0.05, -1], [Infinity, 0.05, 5], [1_000, Infinity, 5], [1_000, 0.05, NaN]])("rejects invalid simplified bond cash flows %s, %s, %s", (principal, rate, years) => expect(() => simpleBondCashflows(principal, rate, years)).toThrow());
 });

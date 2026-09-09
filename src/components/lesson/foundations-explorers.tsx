@@ -5,7 +5,7 @@ import { FinanceInput } from "@/components/learning/finance-input";
 import { ConceptCard } from "@/components/learning/concept-card";
 import { MetricResult } from "@/components/learning/metric-result";
 import { compoundValue, FinancialInputError, parsePrice } from "@/features/finance/returns";
-import { marketCapitalization, ownershipPercentage } from "@/features/finance/foundations";
+import { marketCapitalization, ownershipPercentage, simpleBondCashflows } from "@/features/finance/foundations";
 
 const number = (value: number) => value.toLocaleString("en-IE", { maximumSignificantDigits: 8, notation: value !== 0 && (Math.abs(value) < 0.000001 || Math.abs(value) >= 1e15) ? "scientific" : "standard" });
 const euros = (value: number) => value.toLocaleString("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
@@ -67,4 +67,57 @@ export function IndexEtfVisual() {
     <ConceptCard title="Investor · owns ETF shares">You hold shares of the fund, gaining exposure to its investments.</ConceptCard>
     <figcaption className="text-ql-small text-ql-secondary">Illustrative companies, not recommendations. This shows an index-tracking ETF; other ETFs follow different strategies.</figcaption>
   </figure>;
+}
+
+export function BondCashflowExplorer() {
+  const [principal, setPrincipal] = useState("1000");
+  const [couponRate, setCouponRate] = useState("5");
+  const [years, setYears] = useState("5");
+  const errorId = useId();
+  let result: ReturnType<typeof simpleBondCashflows> | undefined;
+  let error: string | undefined;
+  try {
+    const loan = parsePrice(principal, "Principal");
+    const rate = parsePrice(couponRate, "Annual coupon rate");
+    const term = parsePrice(years, "Years");
+    if (loan > 1e9) throw new FinancialInputError("Principal must be at most €1,000,000,000 for this illustration.");
+    if (rate > 100) throw new FinancialInputError("Use a coupon rate from 0% to 100%.");
+    if (!Number.isInteger(term) || term < 1 || term > 50) throw new FinancialInputError("Use a whole number of years from 1 to 50.");
+    result = simpleBondCashflows(loan, rate / 100, term);
+  } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
+  const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
+  return <section aria-label="Bond cash-flow illustration" className="space-y-6 min-w-0">
+    <div className="grid gap-5 sm:grid-cols-3"><FinanceInput {...invalid} label="Principal" prefix="€" value={principal} onValueChange={setPrincipal} /><FinanceInput {...invalid} label="Annual coupon rate" mode="percentage" value={couponRate} onValueChange={setCouponRate} /><FinanceInput {...invalid} label="Years to maturity" value={years} onValueChange={setYears} /></div>
+    {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : result ? <>
+      <div aria-live="polite" aria-atomic="true" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2">
+        <MetricResult label="Annual coupon" value={euros(result.annualCoupon)} />
+        <MetricResult label={`Total coupons over ${years} years`} value={euros(result.totalCouponPayments)} />
+        <MetricResult label="Principal returned at maturity" value={euros(result.principalAtMaturity)} />
+        <MetricResult label="Total nominal cash received" value={euros(result.totalCashReceived)} />
+      </div>
+      <ConceptCard title="A cash-flow illustration, with important assumptions">This assumes the issuer makes every promised payment, the coupon stays fixed, and you hold the bond to maturity. Taxes, reinvestment, inflation, the price paid for the bond, and any market-price changes are ignored. The total is not a 25% investment return or a yield calculation.</ConceptCard>
+    </> : null}
+  </section>;
+}
+
+const assetDetails = {
+  cash: { name: "Cash", relationship: "Neither ownership nor a loan", volatility: "Usually low in nominal terms", purpose: "Liquidity and short-term needs", payments: "Its account may pay interest, depending on the account" },
+  bond: { name: "Bond", relationship: "A loan to an issuer", volatility: "Can move with rates and issuer conditions", purpose: "Lending with stated payment terms", payments: "Interest payments and principal repayment are typically promised" },
+  stock: { name: "Stock", relationship: "Ownership in a company", volatility: "Can change substantially with market and business conditions", purpose: "Participation in a company’s outcomes", payments: "Price changes and possible dividends" },
+} as const;
+
+export function AssetComparison() {
+  const [asset, setAsset] = useState<keyof typeof assetDetails>("cash");
+  const detail = assetDetails[asset];
+  return <section aria-label="Cash, bond, and stock comparison" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Choose an asset to compare">
+      {(Object.keys(assetDetails) as (keyof typeof assetDetails)[]).map((key) => <button key={key} type="button" onClick={() => setAsset(key)} aria-pressed={asset === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${asset === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{assetDetails[key].name}</button>)}
+    </div>
+    <div aria-live="polite" className="grid gap-4 border-y border-ql-border py-6 sm:grid-cols-2">
+      <MetricResult label="Relationship" value={detail.relationship} />
+      <MetricResult label="Price volatility" value={detail.volatility} />
+      <MetricResult label="Common purpose" value={detail.purpose} />
+      <MetricResult label="Potential payments / outcome" value={detail.payments} />
+    </div>
+  </section>;
 }

@@ -25,25 +25,25 @@ describe("real learner summary", () => {
   it("continues a module after completion even if the recommendation changed", () => {
     const summary = getLearnerSummary([row("returns-what-is-a-return", "completed")]);
     expect(summary.next.id).toBe("returns-simple-returns");
-    expect(summary.percentage).toBe(17);
+    expect(summary.percentage).toBe(14);
     expect(getLearnerSummary([row("foundations-why-invest", "completed")], "returns").next.id).toBe("foundations-stocks");
   });
   it("moves to Returns when all available Foundations lessons are completed", () => {
     expect(getLearnerSummary(availableLessons.filter((lesson) => lesson.moduleSlug === "investing-foundations").map((lesson) => row(lesson.id, "completed"))).next.id).toBe("returns-what-is-a-return");
   });
-  it("counts only implemented learning and offers review when all six are complete", () => {
+  it("counts only implemented learning and offers review when all seven are complete", () => {
     const summary = getLearnerSummary(curriculumLessons.map((lesson) => row(lesson.id, "completed")));
     expect(summary.percentage).toBe(100);
     expect(summary.allComplete).toBe(true);
-    expect(summary.completed).toHaveLength(6);
-    expect(summary.recent).toHaveLength(6);
+    expect(summary.completed).toHaveLength(7);
+    expect(summary.recent).toHaveLength(7);
   });
   it("ignores unknown/planned progress and never unlocks upcoming lessons", () => {
-    const states = [row("foundations-bonds-cash", "completed"), row("unknown", "in_progress")];
+    const states = [row("foundations-markets", "completed"), row("unknown", "in_progress")];
     expect(getLearnerSummary(states).completed).toEqual([]);
     expect(getLearnerSummary(states).next.id).toBe("foundations-why-invest");
     const path = getModulePath("investing-foundations", states);
     expect(path).toHaveLength(8);
-    expect(path.slice(3).every((item) => item.state === "locked")).toBe(true);
+    expect(path.slice(4).every((item) => item.state === "locked")).toBe(true);
   });
 });

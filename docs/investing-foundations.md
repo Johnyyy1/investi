@@ -6,13 +6,14 @@ Continues from `9143933` using the existing investi design, typed lesson blocks,
 
 Investing Foundations is the first available module at `/learn/investing-foundations`, followed by Returns & Compounding at the unchanged `/learn/returns` route. Returns lesson IDs and progress remain stable. The catalog combines the two existing-style lesson manifests for routing, paths, seed data, published-lesson validation, and progress selection. There is no second curriculum engine or lesson runner.
 
-Foundations has eight planned lessons. Why invest?, Stocks: owning part of a business, and ETFs & indexes are available. Bonds & cash, How markets work, Risk vs reward, Your first portfolio, and Foundations checkpoint are upcoming, with no actionable navigation. Direct unavailable lesson URLs return the existing not-found page; server actions reject their IDs.
+Foundations has eight planned lessons. Why invest?, Stocks: owning part of a business, ETFs & indexes, and Bonds & cash are available. How markets work, Risk vs reward, Your first portfolio, and Foundations checkpoint are upcoming, with no actionable navigation. Direct unavailable lesson URLs return the existing not-found page; server actions reject their IDs.
 
 ## 2. Lessons implemented
 
 - **Why invest?** — nine guided steps plus explicit completion. Purchasing-power prediction, saving/liquidity versus uncertain investing outcomes, the €100/€110 basket, business growth, €100 → €105 → €110.25 compounding, risk, editable growth comparison, concept check, and takeaway.
 - **Stocks: owning part of a business** — ten guided steps plus completion. Share ownership, editable ownership fraction, share price versus company size, editable market cap, price expectations, dividends, numeric and conceptual practice, daily-control misconception, and takeaway.
 - **ETFs & indexes** — ten guided steps plus completion. The hundreds-of-companies question, diversification, indexes as measurements, a simple index → tracking ETF → investor visual, buyable ETF versus index, active strategies, remaining risk, asset exposure, fees, and takeaway. Checks cover all four required misconceptions.
+- **Bonds & cash** — ten guided steps plus completion. It contrasts cash, ownership, and lending; introduces issuer, principal, coupon, and maturity; includes a validated fixed-cash-flow illustration; explains the interest-rate/price direction without formal pricing; and covers credit, inflation, and liquidity risks. The cash-flow display explicitly is not a yield or total-return calculation.
 
 Authored content maps to the same production Check → Feedback → Continue interaction. Integrity tests enforce one occurrence of every block, at most one question per step, question-last ordering, and a non-question final step. Every available manifest lesson has exactly one matching authored lesson; upcoming lessons have none.
 
@@ -51,9 +52,9 @@ Home uses this deterministic priority among implemented lessons:
 3. First incomplete lesson in the recommended starting module.
 4. First incomplete lesson in curriculum order; if everything available is completed, offer review.
 
-Equal timestamps use curriculum order. Unknown or upcoming lesson progress is ignored. Rule 2 keeps an existing Returns learner moving through Returns after explicit completion, even if recomputation now recommends Foundations. When the three available Foundations lessons are finished, Returns becomes the next available learning.
+Equal timestamps use curriculum order. Unknown or upcoming lesson progress is ignored. Rule 2 keeps an existing Returns learner moving through Returns after explicit completion, even if recomputation now recommends Foundations. When the four available Foundations lessons are finished, Returns becomes the next available learning.
 
-Home's path preview follows the selected module, and recent completion links use each lesson's actual module. Learn presents a sequential journey with START HERE, Foundations, THEN Returns & Compounding, and upcoming topic areas. Progress shows both modules separately and six available lessons overall. The module and completion screens count three available lessons per module, with upcoming counts explicitly separated. No planned curriculum percentage, XP, streak, or other fabricated completion data is displayed.
+Home's path preview follows the selected module, and recent completion links use each lesson's actual module. Learn presents a sequential journey with START HERE, Foundations, THEN Returns & Compounding, and upcoming topic areas. Progress shows both modules separately and seven available lessons overall. The module and completion screens count four available Foundations lessons and three available Returns lessons, with upcoming counts explicitly separated. No planned curriculum percentage, XP, streak, or other fabricated completion data is displayed.
 
 ## 6. Persistence, migration, and rollout
 

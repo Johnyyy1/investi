@@ -22,3 +22,31 @@ export function marketCapitalization(sharePrice: number, sharesOutstanding: numb
   if (!Number.isFinite(result)) throw new FinancialInputError("The market value is too large. Use smaller inputs.");
   return result;
 }
+
+function positiveAmount(value: number, label: string) {
+  if (!Number.isFinite(value) || value <= 0) throw new FinancialInputError(`${label} must be a finite number greater than zero.`);
+}
+
+/** Coupon rates are decimal units: 0.05 represents a 5% annual coupon rate. */
+export function annualCoupon(principal: number, couponRate: number) {
+  positiveAmount(principal, "Principal");
+  finiteNonnegative(couponRate, "Coupon rate");
+  const result = principal * couponRate;
+  if (!Number.isFinite(result)) throw new FinancialInputError("The annual coupon is too large. Use smaller inputs.");
+  return result;
+}
+
+/** Simplified nominal cash flows only; this is not a bond yield or total-return calculation. */
+export function simpleBondCashflows(principal: number, couponRate: number, years: number) {
+  positiveAmount(years, "Years");
+  const coupon = annualCoupon(principal, couponRate);
+  const totalCoupon = coupon * years;
+  if (!Number.isFinite(totalCoupon)) throw new FinancialInputError("The total coupon payments are too large. Use smaller inputs.");
+  const totalCashReceived = principal + totalCoupon;
+  if (!Number.isFinite(totalCashReceived)) throw new FinancialInputError("The total cash received is too large. Use smaller inputs.");
+  return { annualCoupon: coupon, totalCouponPayments: totalCoupon, principalAtMaturity: principal, totalCashReceived };
+}
+
+export function totalCouponPayments(principal: number, couponRate: number, years: number) {
+  return simpleBondCashflows(principal, couponRate, years).totalCouponPayments;
+}

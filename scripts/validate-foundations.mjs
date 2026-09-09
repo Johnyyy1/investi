@@ -68,7 +68,7 @@ try {
   const modules = await sql`select slug, position from learning_module where slug in ('returns', 'investing-foundations') order by position`;
   assert.deepEqual(modules.map((module) => module.slug), ["investing-foundations", "returns"]);
   assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations'`)[0].count), 8);
-  assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations' and is_published`)[0].count), 3);
+  assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations' and is_published`)[0].count), 4);
 
   await page.goto(`${baseURL}/sign-up`);
   await page.getByLabel("Name", { exact: true }).fill("Foundations QA");
@@ -95,10 +95,10 @@ try {
   assert.deepEqual(await page.locator('ol[aria-label="Available learning journey"] h2').allTextContents(), ["Investing Foundations", "Returns & Compounding"]);
   await layouts("learn", true);
   await page.getByRole("link", { name: "Explore Foundations" }).click(); await heading("Investing Foundations");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 3 available lessons complete");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 4 available lessons complete");
   const pathItems = page.getByRole("list", { name: "Module learning path" }).getByRole("listitem");
   assert.equal(await pathItems.count(), 8);
-  for (let i = 3; i < 8; i++) assert.equal(await pathItems.nth(i).getByRole("button").count(), 0);
+  for (let i = 4; i < 8; i++) assert.equal(await pathItems.nth(i).getByRole("button").count(), 0);
   await layouts("module", true);
   await pathItems.first().getByRole("button", { name: "Start lesson" }).click();
   await heading("Same money, different purchasing power");
@@ -144,11 +144,23 @@ try {
   await next("Which can you buy?"); await check(1); await next("A fund can follow different strategies"); await check(1); await next("A basket still carries risk"); await check(1); await next("Keep the distinction clear"); await check(0);
   await next("Look inside the fund"); await layouts("fund-fees", true); await next("Try explaining it to someone else"); await next("One distinction opens the next door");
   await button("Mark lesson complete").click(); await heading("Lesson complete");
+  await page.getByRole("link", { name: "Next lesson: Bonds & cash" }).click(); await heading("Owning and lending are different roles");
+  await check(0); await next("Cash keeps money ready"); await check(0); await next("Every loan has two sides"); await next("A bond packages a loan"); await check(1); await next("Three terms describe the promise");
+  await page.getByLabel("Your answer", { exact: true }).fill("50"); await button("Check answer").click(); await heading("That’s right"); await next("Follow the promised cash flows");
+  await page.getByText("€1,250.00", { exact: true }).waitFor();
+  for (const [label, invalid, valid] of [["Principal", "0", "1000"], ["Annual coupon rate", "-1", "5"], ["Years to maturity", "1.5", "5"]]) {
+    await page.getByLabel(label, { exact: true }).fill(invalid); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
+    await page.getByLabel(label, { exact: true }).fill(valid);
+  }
+  await page.getByLabel("Annual coupon rate", { exact: true }).fill("3"); await page.getByText("€1,150.00", { exact: true }).waitFor(); await layouts("bond-cashflows", true);
+  await next("A bond can trade at a new price"); await check(0); await next("A promise is not the same as certainty"); await check(1); await next("Choose the relationship, then the purpose");
+  await button("Bond").click(); await page.getByText("A loan to an issuer", { exact: true }).waitFor(); await layouts("asset-comparison", true); await next("Three mental models to keep");
+  await button("Mark lesson complete").click(); await heading("Lesson complete");
   await button("Back to Investing Foundations").click(); await heading("Investing Foundations");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "3 of 3 available lessons complete");
-  assert.equal(await page.getByRole("button", { name: "Review lesson", exact: true }).count(), 3);
+  assert.equal(await page.getByTestId("module-progress").textContent(), "4 of 4 available lessons complete");
+  assert.equal(await page.getByRole("button", { name: "Review lesson", exact: true }).count(), 4);
   await page.goto(`${baseURL}/progress`); await heading("Your progress");
-  assert.match(await page.getByTestId("available-progress").textContent(), /3 of 6/); await layouts("progress", true);
+  assert.match(await page.getByTestId("available-progress").textContent(), /4 of 7/); await layouts("progress", true);
   await button("Sign out").click(); await page.waitForURL("**/sign-in");
   await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password);
   await button("Sign in").click(); await page.waitForURL("**/dashboard");
@@ -166,10 +178,10 @@ try {
   assert.equal((await profile()).onboarding_completed_at.toISOString(), onboardingCompleted);
   assert.equal((await profile()).experience_level, "BEGINNER");
   expectedNetworkFailure = true; // The intentionally unavailable route may log its expected 404.
-  await page.goto(`${baseURL}/learn/investing-foundations/bonds-and-cash`);
+  await page.goto(`${baseURL}/learn/investing-foundations/how-markets-work`);
   await heading("This page isn’t available");
   assert.deepEqual(errors, []);
-  console.log("PASS: beginner onboarding, legacy profile recomputation, all three guided lessons, calculators, ETF checks, save/completion retry, refresh, next lesson, sign-out/in, review, Returns continuity, real counts, six widths, keyboard, focus, reduced motion, no hydration/console errors. Screenshots:", screenshotDir);
+  console.log("PASS: beginner onboarding, legacy profile recomputation, all four guided lessons, calculators, ETF and bond checks, save/completion retry, refresh, next lesson, sign-out/in, review, Returns continuity, real counts, six widths, keyboard, focus, reduced motion, no hydration/console errors. Screenshots:", screenshotDir);
 } finally {
   await sql`delete from "user" where email = ${email}`;
   await sql.end(); await browser.close();
