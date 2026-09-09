@@ -16,7 +16,7 @@ Implemented from `7266e36` using the existing investi theme, tokens, Nunito Sans
 Apply `npm run db:migrate` before deploying the application. Migration `0001_violet_shape.sql` adds one `learning_profile` row per user, with a cascading user foreign key:
 
 - Nullable experience enum, goal and interest enum arrays, nullable daily goal minutes.
-- Recommended start enum (`returns`), draft step, completion timestamp, updated timestamp.
+- Recommended start enum (`returns`, `investing-foundations`; the latter added by migration 0002), draft step, completion timestamp, updated timestamp.
 - `20` is the stored representation of the 20+ minute choice.
 
 Existing users have no profile and therefore receive onboarding once. Existing lesson progress is retained. The migration is additive and does not rewrite user or lesson records. It was applied to the local PostgreSQL database during validation; no remote deployment was performed.
@@ -27,13 +27,15 @@ Ready is still a draft until Start learning succeeds. Completion is idempotent. 
 
 ## Recommendations
 
-`recommendLearningPath` is pure typed domain logic with no model/API call. Experience controls the explanation; selected goals and interests determine up to two future targets in stable curriculum order. Only the implemented Returns module is a navigable start, presented as Returns & Compounding. Beginners receive a clear explanation that Investing Foundations is planned. Future portfolio, quantitative, company-analysis and markets topics have no links or invented lessons.
+`recommendLearningPath` is pure typed domain logic with no model/API call. Beginners start with Investing Foundations. BASIC learners start there when they select the confidence goal, or ETF interests without quantitative/existing-knowledge goals; other BASIC learners, investors, and advanced learners start with Returns & Compounding. Goals and interests also select up to two future targets in stable order, including Quantitative Investing for quantitative interests. Future targets have no links.
 
-The available start remains the same for all experience levels until more content ships. Recommendations never change or erase lesson progress. No XP, streak, notification, payment or market-data system was added.
+Recommendations are recomputed from stored preferences when loading Home. An older completed profile with `recommendedStart = returns` is not rewritten, and its onboarding completion timestamp is retained. Updated preferences and new onboarding completions persist the current recommendation. Recommendations never change or erase lesson progress.
+
+Home preserves continuity before applying recommendations. See [Investing Foundations](investing-foundations.md) for the priority rule, current validation, and rollout instructions.
 
 ## Validation
 
-Executed successfully:
+Original onboarding-slice validation (current curriculum validation is recorded in `investing-foundations.md`):
 
 - `npm run lint`
 - `npm run typecheck`
@@ -53,4 +55,4 @@ Screenshots are disposable local QA artifacts under `/tmp/investi-onboarding-qa`
 
 ## Next slice
 
-Publish Investing Foundations, then connect the recommendation registry to that available module. The persisted daily-goal value is ready for a separately scoped real daily learning-goal system.
+Continue Investing Foundations with the separately scoped Bonds & cash lesson. The persisted daily-goal value is ready for a separately scoped real daily learning-goal system.

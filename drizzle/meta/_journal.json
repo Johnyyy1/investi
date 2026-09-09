@@ -15,6 +15,13 @@
       "when": 1788941182555,
       "tag": "0001_violet_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788942335153,
+      "tag": "0002_awesome_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

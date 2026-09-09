@@ -1,6 +1,6 @@
 # investi
 
-Learn investing, step by step. The current product teaches Returns through three guided, interactive lessons with persisted progress.
+Learn investing, step by step. The current product teaches Investing Foundations and Returns & Compounding through six guided, interactive lessons with persisted progress and personalized onboarding.
 
 ## Foundation
 
@@ -37,17 +37,19 @@ npm test
 npm run build
 ```
 
-`db:seed` is idempotent and publishes the Returns module sequence, including the first three authored lessons.
+`db:seed` is idempotent and publishes the first three lessons in each module, retaining the remaining lesson entries as upcoming. Apply the included migrations before seeding.
 
 
-All production routes share the validated `ql-*` learning theme and Nunito Sans. Home remains at `/dashboard`; `/learn` presents the curriculum and `/progress` shows completed and active learning. The Returns overview includes six planned lessons; Home and Progress clearly count the three currently available lessons.
+All production routes share the validated `ql-*` learning theme and Nunito Sans. Home remains at `/dashboard`; `/learn` presents the curriculum and `/progress` shows completed and active learning. Investing Foundations comes first with three available and five upcoming lessons. Returns & Compounding has three available and three upcoming lessons. Home preserves active learning continuity; Progress counts only the six available lessons.
 
 Local browser validation (requires the running app and local PostgreSQL):
 
 ```bash
+BROWSER_CHANNEL=chrome node scripts/validate-foundations.mjs
+BROWSER_CHANNEL=chrome node scripts/validate-onboarding.mjs
 BROWSER_CHANNEL=chrome node scripts/validate-product-migration.mjs
 BROWSER_CHANNEL=chrome node scripts/validate-returns-flow.mjs
 BROWSER_CHANNEL=chrome node scripts/validate-design-system.mjs
 ```
 
-Omit `BROWSER_CHANNEL` if Playwright Chromium is installed. Product tests create and remove only their own disposable accounts. Screenshots default to `/tmp/investi-product-qa`. See [the migration report](docs/investi-migration.md) for scope and validation.
+Omit `BROWSER_CHANNEL` if Playwright Chromium is installed. Product tests create and remove only their own disposable accounts. Screenshots default to `/tmp/investi-product-qa`. See [the Foundations implementation report](docs/investing-foundations.md) for scope and validation.

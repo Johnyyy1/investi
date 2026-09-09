@@ -1,29 +1,49 @@
 import { describe, expect, it } from "vitest";
 import { getLearnerSummary, type LearnerState } from "./learner-summary";
-import { returnsLessons } from "../lessons/returns/manifest";
-const row = (index: number, status: LearnerState["status"], day = 1): LearnerState => ({ lessonId: returnsLessons[index].id, status, lastPosition: 3, updatedAt: new Date(2026, 8, day), completedAt: status === "completed" ? new Date(2026, 8, day) : null });
+import { availableLessons, curriculumLessons, getModulePath } from "./catalog";
+const row = (id: string, status: LearnerState["status"], day = 1, lastPosition = 3): LearnerState => ({ lessonId: id, status, lastPosition, updatedAt: new Date(2026, 8, day), completedAt: status === "completed" ? new Date(2026, 8, day) : null });
 describe("real learner summary", () => {
-  it("starts with the first available lesson and no rewards", () => {
-    const summary = getLearnerSummary([]);
-    expect(summary.next.id).toBe(returnsLessons[0].id);
-    expect(summary.percentage).toBe(0);
-    expect(summary.recent).toEqual([]);
+  it("starts at the recommended implemented module", () => {
+    expect(getLearnerSummary([]).next.id).toBe("foundations-why-invest");
+    expect(getLearnerSummary([], "returns").next.id).toBe("returns-what-is-a-return");
+    expect(getLearnerSummary([]).percentage).toBe(0);
+    expect(getLearnerSummary([]).recent).toEqual([]);
   });
-  it("resumes the most recently active lesson even when earlier lessons are untouched", () => {
-    const summary = getLearnerSummary([row(1, "in_progress", 1), row(2, "in_progress", 2)]);
-    expect(summary.next.id).toBe(returnsLessons[2].id);
-    expect(summary.position).toBe(3);
+  it("prioritizes active Returns over a beginner recommendation", () => {
+    expect(getLearnerSummary([row("returns-simple-returns", "in_progress")]).next.id).toBe("returns-simple-returns");
   });
-  it("advances to the next unfinished lesson after completion", () => {
-    const summary = getLearnerSummary([row(0, "completed")]);
-    expect(summary.next.id).toBe(returnsLessons[1].id);
-    expect(summary.percentage).toBe(33);
+  it("uses recency across modules and clamps the cursor", () => {
+    const states = [row("returns-compounding", "in_progress", 1), row("foundations-stocks", "in_progress", 2, 999)];
+    const summary = getLearnerSummary(states);
+    expect(summary.next.id).toBe("foundations-stocks");
+    expect(summary.position).toBe(summary.stepCount - 1);
+    expect(states[0].lessonId).toBe("returns-compounding");
   });
-  it("counts only available lessons and offers review after all available learning", () => {
-    const summary = getLearnerSummary([row(0, "completed", 1), row(1, "completed", 3), row(2, "completed", 2), row(3, "completed", 4)]);
+  it("breaks equal timestamps in curriculum order", () => {
+    expect(getLearnerSummary([row("returns-compounding", "in_progress"), row("foundations-stocks", "in_progress")]).next.id).toBe("foundations-stocks");
+  });
+  it("continues a module after completion even if the recommendation changed", () => {
+    const summary = getLearnerSummary([row("returns-what-is-a-return", "completed")]);
+    expect(summary.next.id).toBe("returns-simple-returns");
+    expect(summary.percentage).toBe(17);
+    expect(getLearnerSummary([row("foundations-why-invest", "completed")], "returns").next.id).toBe("foundations-stocks");
+  });
+  it("moves to Returns when all available Foundations lessons are completed", () => {
+    expect(getLearnerSummary(availableLessons.filter((lesson) => lesson.moduleSlug === "investing-foundations").map((lesson) => row(lesson.id, "completed"))).next.id).toBe("returns-what-is-a-return");
+  });
+  it("counts only implemented learning and offers review when all six are complete", () => {
+    const summary = getLearnerSummary(curriculumLessons.map((lesson) => row(lesson.id, "completed")));
     expect(summary.percentage).toBe(100);
     expect(summary.allComplete).toBe(true);
-    expect(summary.completed).toHaveLength(3);
-    expect(summary.recent[0].lessonId).toBe(returnsLessons[1].id);
+    expect(summary.completed).toHaveLength(6);
+    expect(summary.recent).toHaveLength(6);
+  });
+  it("ignores unknown/planned progress and never unlocks upcoming lessons", () => {
+    const states = [row("foundations-bonds-cash", "completed"), row("unknown", "in_progress")];
+    expect(getLearnerSummary(states).completed).toEqual([]);
+    expect(getLearnerSummary(states).next.id).toBe("foundations-why-invest");
+    const path = getModulePath("investing-foundations", states);
+    expect(path).toHaveLength(8);
+    expect(path.slice(3).every((item) => item.state === "locked")).toBe(true);
   });
 });

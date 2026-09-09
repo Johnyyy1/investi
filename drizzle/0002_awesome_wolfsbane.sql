@@ -1,0 +1,1 @@
+ALTER TYPE "public"."recommended_start" ADD VALUE 'investing-foundations';

@@ -52,8 +52,8 @@ try {
   await heading("Learn investing, step by step");
   assert.equal(await page.locator(".learning-theme").count(), 1, "Learn uses the shared theme");
   await page.locator('a[href="/learn/returns"]').click();
-  await heading("Returns");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 6 lessons complete");
+  await heading("Returns & Compounding");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 3 available lessons complete");
   const compounding = page.getByRole("listitem").filter({ hasText: "Compounding & cumulative returns" });
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -69,7 +69,7 @@ try {
   assert.equal((await row()).status, "in_progress");
   assert.equal((await row()).last_position, 1);
   await page.goto(`${baseURL}/learn/returns`);
-  await heading("Returns");
+  await heading("Returns & Compounding");
   assert.equal(await compounding.getByRole("button", { name: "Continue lesson", exact: true }).isVisible(), true);
   await compounding.getByRole("button", { name: "Continue lesson", exact: true }).click();
   await heading("Make a prediction");
@@ -145,20 +145,20 @@ try {
   assert.equal((await row()).status, "in_progress", "Reaching the end does not auto-complete");
   await page.getByRole("button", { name: "Mark lesson complete", exact: true }).click();
   await heading("Lesson complete");
-  assert.match(await page.getByTestId("completion-progress").textContent(), /1 of 6/);
+  assert.match(await page.getByTestId("completion-progress").textContent(), /1 of 3/);
   const completed = await row();
   assert.equal(completed.status, "completed");
-  await page.getByRole("button", { name: "Back to Returns", exact: true }).click();
-  await heading("Returns");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 6 lessons complete");
+  await page.getByRole("button", { name: "Back to Returns & Compounding", exact: true }).click();
+  await heading("Returns & Compounding");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 3 available lessons complete");
   await page.reload();
-  await heading("Returns");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 6 lessons complete");
+  await heading("Returns & Compounding");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 3 available lessons complete");
   await signOut();
   await signIn();
   await page.goto(`${baseURL}/learn/returns`);
-  await heading("Returns");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 6 lessons complete");
+  await heading("Returns & Compounding");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 of 3 available lessons complete");
   await compounding.getByRole("button", { name: "Review lesson" }).click();
   await heading("From one period to a sequence");
   await page.emulateMedia({ reducedMotion: "reduce" });

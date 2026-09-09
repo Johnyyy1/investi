@@ -8,6 +8,7 @@ describe("shared guided lessons", () => {
     const steps = getGuidedSteps(lesson);
     expect(steps.length).toBeGreaterThanOrEqual(6);
     expect(steps.length).toBeLessThanOrEqual(10);
+    expect(new Set(lesson.blocks.map((block) => block.id)).size).toBe(lesson.blocks.length);
     expect(steps.flatMap((step) => step.blocks)).toEqual(lesson.blocks);
     for (const step of steps) {
       const questions = step.blocks.filter(isQuestion);
@@ -17,7 +18,7 @@ describe("shared guided lessons", () => {
     expect(steps.at(-1)?.blocks.some(isQuestion)).toBe(false);
   });
   it("only removes navigation for implemented lessons", () => {
-    for (const lesson of authoredLessons) expect(isFocusedLesson(`/learn/returns/${lesson.slug}`)).toBe(true);
+    for (const lesson of authoredLessons) expect(isFocusedLesson(`/learn/${lesson.moduleSlug}/${lesson.slug}`)).toBe(true);
     for (const route of ["/dashboard", "/learn", "/learn/returns", "/progress", "/learn/returns/log-returns"]) expect(isFocusedLesson(route)).toBe(false);
     expect(() => getStepDefinitions("returns-log")).toThrow();
   });

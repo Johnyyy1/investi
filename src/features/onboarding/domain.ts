@@ -56,22 +56,23 @@ export const draftPayloadSchema = z.object({ answers: draftSchema, step: z.numbe
   .refine(({ answers, step }) => resumeStep(answers, step) === step);
 
 export type LearningRecommendation = {
-  recommendedModule: { slug: "returns"; title: string; href: "/learn/returns" };
+  recommendedModule: { slug: "returns" | "investing-foundations"; title: string; href: "/learn/returns" | "/learn/investing-foundations" };
   reason: string;
   futureTargets: string[];
 };
-/** The only published module is Returns. Future targets deliberately have no URLs. */
+/** Recommendations link only to implemented modules; future targets have no URLs. */
 export function recommendLearningPath({ experienceLevel, goals, interests }: Pick<Preferences, "experienceLevel" | "goals" | "interests">): LearningRecommendation {
   const targets: string[] = [];
   if (goals.includes("PORTFOLIO") || interests.includes("PORTFOLIO") || interests.includes("ETFS")) targets.push("Portfolio Construction");
   if (goals.includes("QUANT") || interests.includes("QUANT")) targets.push("Quantitative Investing");
   if (goals.includes("COMPANIES") || interests.includes("FUNDAMENTALS") || interests.includes("STOCKS")) targets.push("Fundamental Analysis");
   if (goals.includes("MARKETS") || interests.includes("MARKETS")) targets.push("Markets & Economics");
+  const foundations = experienceLevel === "BEGINNER" || (experienceLevel === "BASIC" && (goals.includes("CONFIDENCE") || (interests.includes("ETFS") && !goals.includes("QUANT") && !goals.includes("KNOWLEDGE"))));
   const reason = {
-    BEGINNER: "You’re starting fresh, so begin with what an investment return means. These short lessons introduce returns and compounding one idea at a time. Investing Foundations is planned for later.",
-    BASIC: "You know some basics. Returns and compounding are a useful next step toward understanding how investments change in value.",
+    BEGINNER: "You told us you’re new to investing, so we’ll start with the concepts that make everything else easier to understand.",
+    BASIC: foundations ? "Build confidence with the ideas behind investing, company ownership, and funds before comparing investment returns." : "You know some basics. Returns and compounding are a useful next step toward understanding how investments change in value.",
     INVESTOR: "Since you already invest, start by strengthening how you compare returns and understand compounding before exploring your chosen topics.",
     ADVANCED: "Start with a shared foundation in returns and compounding, then build toward your chosen topics as the curriculum grows.",
   }[experienceLevel];
-  return { recommendedModule: { slug: "returns", title: "Returns & Compounding", href: "/learn/returns" }, reason, futureTargets: targets.slice(0, 2) };
+  return { recommendedModule: foundations ? { slug: "investing-foundations", title: "Investing Foundations", href: "/learn/investing-foundations" } : { slug: "returns", title: "Returns & Compounding", href: "/learn/returns" }, reason, futureTargets: targets.slice(0, 2) };
 }

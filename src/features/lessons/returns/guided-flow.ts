@@ -1,5 +1,7 @@
 import type { AuthoredLesson } from "../types";
 import { compoundingSteps } from "./compounding-flow";
+import { foundationsSteps } from "../foundations/content";
+import { availableLessons } from "../../learning/catalog";
 import { returnsLessons } from "./manifest";
 
 type Step = { title: string; blocks: readonly string[] };
@@ -30,6 +32,7 @@ export function getStepDefinitions(lessonId: string): readonly Step[] {
   if (lessonId === returnsLessons[0].id) return introductionSteps;
   if (lessonId === returnsLessons[1].id) return simpleSteps;
   if (lessonId === returnsLessons[2].id) return compoundingSteps;
+  if (foundationsSteps[lessonId]) return foundationsSteps[lessonId];
   throw new Error("This lesson is not available.");
 }
 /** Presentation only: the authored lessons remain the source of every concept and exercise. */
@@ -41,5 +44,5 @@ export function getGuidedSteps(lesson: AuthoredLesson) {
   }) }));
 }
 export function isFocusedLesson(pathname: string) {
-  return returnsLessons.some((lesson) => lesson.status === "available" && pathname === `/learn/returns/${lesson.slug}`);
+  return availableLessons.some((lesson) => pathname === `/learn/${lesson.moduleSlug}/${lesson.slug}`);
 }

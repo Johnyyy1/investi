@@ -6,7 +6,7 @@ export const compoundingAndCumulativeReturnsLesson: AuthoredLesson = {
   moduleSlug: "returns",
   slug: returnsLessons[2].slug,
   title: returnsLessons[2].title,
-  eyebrow: "Quant Foundations · Returns",
+  eyebrow: "Returns & Compounding",
   position: 3,
   estimatedMinutes: returnsLessons[2].estimatedMinutes,
   sections: [

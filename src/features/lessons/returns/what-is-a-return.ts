@@ -6,7 +6,7 @@ export const whatIsAReturnLesson: AuthoredLesson = {
   moduleSlug: "returns",
   slug: returnsLessons[0].slug,
   title: returnsLessons[0].title,
-  eyebrow: "Quant Foundations · Returns",
+  eyebrow: "Returns & Compounding",
   position: 1,
   estimatedMinutes: returnsLessons[0].estimatedMinutes,
   sections: [

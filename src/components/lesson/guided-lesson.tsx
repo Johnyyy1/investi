@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CompletionScreen } from "@/components/learning/completion-screen";
-import { LearningButton } from "@/components/learning/learning-button";
+import { LearningButton, LearningLink } from "@/components/learning/learning-button";
 import { LessonProgress, LearningProgressBar } from "@/components/learning/lesson-progress";
 import { getGuidedSteps } from "@/features/lessons/returns/guided-flow";
-import { returnsLessons } from "@/features/lessons/returns/manifest";
+import { getModuleBySlug, getModuleLessons } from "@/features/learning/catalog";
 import { isQuestion } from "@/features/lessons/question-evaluation";
 import type { AuthoredLesson } from "@/features/lessons/types";
 import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "@/features/progress/actions";
@@ -17,6 +17,10 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
   lesson: AuthoredLesson; initialStatus: "not_started" | "in_progress" | "completed"; initialPosition: number; initialCompletedLessons: number;
 }) {
   const router = useRouter();
+  const learningModule = getModuleBySlug(lesson.moduleSlug)!;
+  const moduleLessons = getModuleLessons(lesson.moduleSlug).filter((item) => item.status === "available");
+  const nextLesson = moduleLessons[moduleLessons.findIndex((item) => item.id === lesson.id) + 1];
+  const moduleHref = `/learn/${lesson.moduleSlug}`;
   const steps = getGuidedSteps(lesson);
   // A server revalidation after completion must not relabel this attempt as review.
   const [review] = useState(initialStatus === "completed");
@@ -75,14 +79,15 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
   const step = steps[position];
   const question = step.blocks.find(isQuestion);
   return <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
-    <LessonProgress step={finished ? steps.length + 1 : position + 1} total={steps.length + 1} onBack={() => router.push("/learn/returns")} />
-    <p className="mt-6 text-ql-meta font-semibold text-ql-link">RETURNS · LESSON {lesson.position}{review ? " · REVIEW" : ""}</p>
+    <LessonProgress step={finished ? steps.length + 1 : position + 1} total={steps.length + 1} onBack={() => router.push(moduleHref)} />
+    <p className="mt-6 text-ql-meta font-semibold text-ql-link">{learningModule.title} · LESSON {lesson.position}{review ? " · REVIEW" : ""}</p>
     <h1 className="mt-2 text-ql-title font-semibold">{lesson.title}</h1>
     {review ? <p className="mt-2 text-ql-small text-ql-secondary">Already completed. Reviewing will not change your saved completion.</p> : <p className="mt-2 text-ql-small text-ql-secondary">Your place is saved when you continue. Answers and explorer inputs reset on refresh.</p>}
     {error ? <p role="alert" className="mt-5 rounded-ql-md border border-ql-danger bg-ql-danger-bg p-4 text-ql-small text-ql-danger-ink">{error}</p> : null}
     {finished ? <div className="mt-8 rounded-ql-xl bg-ql-surface">
-      <CompletionScreen autoFocusAction title="Lesson complete" description={lesson.title} actionLabel="Back to Returns" onContinue={() => { router.push("/learn/returns"); router.refresh(); }} />
-      <div className="px-6 pb-8 sm:px-10"><p className="mb-3 text-ql-small text-ql-secondary" data-testid="completion-progress">{completedLessons} of {returnsLessons.length} Returns lessons complete · Saved to your account</p><LearningProgressBar value={completedLessons} total={returnsLessons.length} label="Returns module progress" /></div>
+      <CompletionScreen autoFocusAction title="Lesson complete" description={lesson.title} actionLabel={`Back to ${learningModule.title}`} onContinue={() => { router.push(moduleHref); router.refresh(); }} />
+      {nextLesson ? <div className="px-6 pb-6 sm:px-10"><LearningLink href={`${moduleHref}/${nextLesson.slug}`}>Next lesson: {nextLesson.title}</LearningLink></div> : lesson.moduleSlug === "investing-foundations" ? <div className="px-6 pb-6 sm:px-10"><p className="mb-4 text-ql-small text-ql-secondary">You’ve reached the end of the available Foundations sequence. Five more lessons are planned.</p><LearningLink href="/learn/returns">Explore Returns &amp; Compounding</LearningLink></div> : null}
+      <div className="px-6 pb-8 sm:px-10"><p className="mb-3 text-ql-small text-ql-secondary" data-testid="completion-progress">{completedLessons} of {moduleLessons.length} available {learningModule.title} lessons complete · Saved to your account</p><LearningProgressBar value={completedLessons} total={moduleLessons.length} label={`${learningModule.title} available lesson progress`} /></div>
     </div> : <>
       {position > 0 ? <LearningButton className="mt-4" variant="ghost" disabled={pending} onClick={() => void move(position - 1)}>Previous step</LearningButton> : null}
       <section key={position} className="mt-6 min-w-0 rounded-ql-xl bg-ql-surface" aria-labelledby="step-title">

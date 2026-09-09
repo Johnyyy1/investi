@@ -62,7 +62,7 @@ try {
   await layouts("experience");
   // Invalid payload reaches the real server; client validation cannot be the boundary.
   await page.route("**/onboarding", (route) => route.request().method() === "POST" ? route.continue({ postData: route.request().postData().replace('"BASIC"', '"INVALID"') }) : route.continue());
-  await button("Continue").click(); await page.getByRole("alert").waitFor();
+  await button("Continue").click(); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   assert.equal((await row()).experience_level, null);
   await page.unroute("**/onboarding");
   await next("What would you like to get better at?");
@@ -71,7 +71,7 @@ try {
   await layouts("goals");
   // Network failure preserves both answers and current step for retry.
   await page.route("**/onboarding", (route) => route.request().method() === "POST" ? route.abort() : route.continue());
-  await button("Continue").click(); await page.getByRole("alert").waitFor();
+  await button("Continue").click(); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   assert.equal(await page.getByLabel("Build a better portfolio", { exact: true }).isChecked(), true);
   assert.equal((await row()).onboarding_step, 2);
   await page.unroute("**/onboarding");
@@ -109,7 +109,7 @@ try {
   const stalePage = await staleContext.newPage();
   await stalePage.goto(`${baseURL}/onboarding`); await stalePage.getByRole("button", { name: "Start learning", exact: true }).waitFor();
   await page.route("**/onboarding", (route) => route.request().method() === "POST" ? route.abort() : route.continue());
-  await button("Start learning").click(); await page.getByRole("alert").waitFor();
+  await button("Start learning").click(); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   assert.equal((await row()).onboarding_completed_at, null);
   await page.unroute("**/onboarding");
   await button("Start learning").click(); await page.waitForURL("**/dashboard");
@@ -127,7 +127,7 @@ try {
   await page.getByLabel("Portfolio building", { exact: true }).uncheck();
   await layouts("preferences");
   await page.route("**/settings", (route) => route.request().method() === "POST" ? route.abort() : route.continue());
-  await button("Save preferences").click(); await page.getByRole("alert").waitFor();
+  await button("Save preferences").click(); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   assert.equal((await row()).daily_goal_minutes, 15);
   await page.unroute("**/settings");
   await button("Save preferences").click(); await page.getByRole("status").waitFor();

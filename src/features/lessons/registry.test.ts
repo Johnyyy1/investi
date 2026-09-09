@@ -14,3 +14,18 @@ describe("authored lesson registry", () => {
     expect(getAuthoredLesson("returns", "log-returns")).toBeUndefined();
   });
 });
+
+describe("published curriculum integrity", () => {
+  it("has exactly one authored lesson per available manifest entry", async () => {
+    const { availableLessons, curriculumLessons } = await import("../learning/catalog");
+    const { authoredLessons } = await import("./registry");
+    expect(new Set(authoredLessons.map((lesson) => lesson.id)).size).toBe(authoredLessons.length);
+    expect(authoredLessons.map((lesson) => lesson.id).sort()).toEqual(availableLessons.map((lesson) => lesson.id).sort());
+    for (const definition of availableLessons) {
+      expect(getAuthoredLesson(definition.moduleSlug, definition.slug)).toMatchObject({ id: definition.id, title: definition.title, estimatedMinutes: definition.estimatedMinutes });
+    }
+    for (const definition of curriculumLessons.filter((lesson) => lesson.status === "planned")) {
+      expect(getAuthoredLesson(definition.moduleSlug, definition.slug)).toBeUndefined();
+    }
+  });
+});

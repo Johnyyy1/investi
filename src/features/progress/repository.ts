@@ -54,6 +54,6 @@ export async function getLessonProgress(userId: string, lessonId: string) {
 }
 
 export async function getModuleProgress(userId: string, moduleId: string) {
-  const [result] = await db.select({ completed: count() }).from(lessonProgress).innerJoin(lesson, eq(lessonProgress.lessonId, lesson.id)).where(and(eq(lessonProgress.userId, userId), eq(lesson.moduleId, moduleId), eq(lessonProgress.status, "completed")));
+  const [result] = await db.select({ completed: count() }).from(lessonProgress).innerJoin(lesson, eq(lessonProgress.lessonId, lesson.id)).where(and(eq(lessonProgress.userId, userId), eq(lesson.moduleId, moduleId), eq(lesson.isPublished, true), eq(lessonProgress.status, "completed")));
   return Number(result?.completed ?? 0);
 }

@@ -1,21 +1,15 @@
 import { notFound } from "next/navigation";
-import { ReturnsOverview } from "@/components/learning/returns-overview";
-import { getModuleBySlug } from "@/features/learning/catalog";
-import { getReturnsPath } from "@/features/learning/returns-path";
-import { RETURNS_MODULE_ID, returnsLessons } from "@/features/lessons/returns/manifest";
-import { getLessonProgress, getModuleProgress } from "@/features/progress/repository";
-import { getCurrentUser } from "@/lib/session";
+import { ModuleOverview } from "@/components/learning/module-overview";
+import { getModuleBySlug, getModulePath } from "@/features/learning/catalog";
+import { loadLearner } from "@/features/learning/load-learner";
 
-export const metadata = { title: "Returns" };
-
-export default async function ModulePage({ params }: { params: Promise<{ moduleSlug: string }> }) {
+type Props = { params: Promise<{ moduleSlug: string }> };
+export async function generateMetadata({ params }: Props) { return { title: getModuleBySlug((await params).moduleSlug)?.title ?? "Module unavailable" }; }
+export default async function ModulePage({ params }: Props) {
   const { moduleSlug } = await params;
   const learningModule = getModuleBySlug(moduleSlug);
-  if (!learningModule || learningModule.status !== "available" || moduleSlug !== "returns") notFound();
-  const user = await getCurrentUser();
-  const [completedLessons, states] = user ? await Promise.all([
-    getModuleProgress(user.id, RETURNS_MODULE_ID),
-    Promise.all(returnsLessons.filter((lesson) => lesson.status === "available").map((lesson) => getLessonProgress(user.id, lesson.id))),
-  ]) : [0, []];
-  return <ReturnsOverview completedLessons={completedLessons} items={getReturnsPath(states.filter((state) => state !== undefined))} />;
+  if (!learningModule || learningModule.status !== "available") notFound();
+  const summary = await loadLearner();
+  const items = getModulePath(moduleSlug, summary.states);
+  return <ModuleOverview slug={moduleSlug} completedLessons={items.filter((item) => item.state === "completed").length} items={items} />;
 }

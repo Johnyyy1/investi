@@ -131,7 +131,7 @@ export const lessonProgress = pgTable(
 export const experienceLevelEnum = pgEnum("experience_level", experienceValues);
 export const learningGoalEnum = pgEnum("learning_goal", goalValues);
 export const learningInterestEnum = pgEnum("learning_interest", interestValues);
-export const recommendedStartEnum = pgEnum("recommended_start", ["returns"]);
+export const recommendedStartEnum = pgEnum("recommended_start", ["returns", "investing-foundations"]);
 
 /** One learning profile per account; nullable answers allow resumable onboarding. */
 export const learningProfile = pgTable("learning_profile", {
