@@ -1,3 +1,4 @@
+import { finishOnboarding } from "./onboarding-helper.mjs";
 // Local integration test: creates and removes only its own disposable learner.
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -43,6 +44,7 @@ try {
   await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
   await page.getByRole("textbox", { name: "Password", exact: true }).fill(password);
   await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await finishOnboarding(page);
   await page.getByRole("heading", { name: /^(Good morning|Good afternoon|Good evening|Welcome),/ }).waitFor();
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   assert.equal(await page.locator(".learning-theme").count(), 1, "Dashboard uses the shared theme");

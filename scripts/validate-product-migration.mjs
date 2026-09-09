@@ -1,3 +1,4 @@
+import { finishOnboarding } from "./onboarding-helper.mjs";
 // Local product regression: exercises the actual UI and removes only its own disposable account.
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -54,6 +55,7 @@ try {
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await button("Create account").click();
+  await finishOnboarding(page);
   await page.waitForURL("**/dashboard"); await heading("Continue learning");
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   await layouts("home-empty");
@@ -147,7 +149,8 @@ try {
   await page.goto(`${baseURL}/learn/returns/log-returns`); await heading("This page isn’t available"); await layouts("unavailable");
   await page.goto(`${baseURL}/dashboard`); await heading("Your foundations are growing"); await button("Sign out").click(); await heading("Welcome back");
   await page.getByRole("link", { name: "Create an account" }).click(); await heading("Build your investing foundations");
-  await page.getByLabel("Name", { exact: true }).fill("Duplicate QA"); await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password); await button("Create account").click(); await page.getByRole("alert").filter({ hasText: /.+/ }).waitFor();
+  await page.getByLabel("Name", { exact: true }).fill("Duplicate QA"); await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password); await button("Create account").click();
+  await page.getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   assert.deepEqual(errors, [], "No hydration or browser errors");
   console.log("PASS: sign-up, auth errors, lessons 1–3, refresh, explicit completion, Home, Progress, sign-out/in, review, unavailable routes, all six widths. Screenshots:", screenshotDir);
 } finally {

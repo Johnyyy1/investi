@@ -19,10 +19,10 @@ export function SignUpForm() {
       name: String(formData.get("name") ?? ""),
       email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
-      callbackURL: "/dashboard",
+      callbackURL: "/onboarding",
     });
     if (error) { setErrorMessage(getAuthErrorMessage(error, "We could not create your account. Please try again.")); setIsSubmitting(false); return; }
-    router.replace("/dashboard"); router.refresh();
+    router.replace("/onboarding"); router.refresh();
     } catch { setErrorMessage("We could not connect. Please try again."); }
     finally { setIsSubmitting(false); }
   }

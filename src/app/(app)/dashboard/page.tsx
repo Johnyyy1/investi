@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getLearningProfile } from "@/features/onboarding/repository";
 import { loadLearner } from "@/features/learning/load-learner";
 import { ContinueLearning } from "@/components/learning/continue-learning";
 import { ReturnsPathPreview } from "@/components/learning/returns-path-preview";
@@ -8,8 +9,9 @@ import { LearningProgressBar } from "@/components/learning/lesson-progress";
 export const metadata = { title: "Home" };
 export default async function DashboardPage() {
   const summary = await loadLearner();
+  const profile = summary.user ? await getLearningProfile(summary.user.id) : undefined;
   return <main className="mx-auto max-w-5xl space-y-10 px-5 py-8 sm:px-10 lg:py-12">
-    <header><LearnerGreeting name={summary.user?.name ?? "learner"} /><p className="mt-3 text-ql-body text-ql-secondary">Small steps. Strong foundations.</p></header>
+    <header><LearnerGreeting name={summary.user?.name ?? "learner"} /><p className="mt-3 text-ql-body text-ql-secondary">Small steps. Strong foundations.</p>{profile?.dailyGoalMinutes && <p className="mt-3 text-ql-small text-ql-secondary">Your daily learning goal: {profile.dailyGoalMinutes === 20 ? "20+" : profile.dailyGoalMinutes} minutes · <Link href="/settings" className="text-ql-link underline underline-offset-4">Learning preferences</Link></p>}</header>
     <ContinueLearning summary={summary} />
     <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_16rem]">
       <section aria-labelledby="path-heading"><div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 id="path-heading" className="text-ql-section font-semibold">Your learning path</h2><Link className="inline-flex min-h-12 items-center text-ql-small text-ql-link underline underline-offset-4" href="/learn">Browse curriculum</Link></div><ReturnsPathPreview states={summary.states} /></section>

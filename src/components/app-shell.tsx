@@ -14,7 +14,7 @@ export function AppShell({ children, userName }: { children: React.ReactNode; us
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
-  const activeId = pathname.startsWith("/learn") ? "learn" : pathname === "/progress" ? "progress" : "home";
+  const activeId = pathname.startsWith("/learn") ? "learn" : pathname === "/progress" ? "progress" : pathname.startsWith("/settings") ? "settings" : "home";
   async function signOut() {
     setPending(true); setError(undefined);
     try {

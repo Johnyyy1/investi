@@ -1,3 +1,4 @@
+import { experienceValues, goalValues, interestValues } from "../features/onboarding/domain";
 import {
   boolean,
   index,
@@ -126,3 +127,21 @@ export const lessonProgress = pgTable(
     index("lesson_progress_user_idx").on(table.userId),
   ],
 );
+
+export const experienceLevelEnum = pgEnum("experience_level", experienceValues);
+export const learningGoalEnum = pgEnum("learning_goal", goalValues);
+export const learningInterestEnum = pgEnum("learning_interest", interestValues);
+export const recommendedStartEnum = pgEnum("recommended_start", ["returns"]);
+
+/** One learning profile per account; nullable answers allow resumable onboarding. */
+export const learningProfile = pgTable("learning_profile", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  experienceLevel: experienceLevelEnum("experience_level"),
+  goals: learningGoalEnum("goals").array().notNull().default([]),
+  interests: learningInterestEnum("interests").array().notNull().default([]),
+  dailyGoalMinutes: integer("daily_goal_minutes"),
+  recommendedStart: recommendedStartEnum("recommended_start"),
+  onboardingStep: integer("onboarding_step").notNull().default(0),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
