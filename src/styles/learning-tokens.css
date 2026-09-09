@@ -1,4 +1,4 @@
-/* Opt-in foundation: existing product routes retain their current theme. */
+/* Validated visual foundation shared by every product route. */
 @theme {
   --color-ql-page: #f7fbff;
   --color-ql-surface: #ffffff;

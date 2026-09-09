@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { LearningButton } from "@/components/learning/learning-button";
+import { TextInput } from "@/components/learning/text-input";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-error";
 
@@ -12,14 +13,17 @@ export function SignInForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   async function onSubmit(formData: FormData) {
     setIsSubmitting(true); setErrorMessage(undefined);
+    try {
     const { error } = await authClient.signIn.email({ email: String(formData.get("email") ?? ""), password: String(formData.get("password") ?? ""), callbackURL: "/dashboard" });
     if (error) { setErrorMessage(getAuthErrorMessage(error, "We could not sign you in. Please try again.")); setIsSubmitting(false); return; }
     router.replace("/dashboard"); router.refresh();
+    } catch { setErrorMessage("We could not connect. Please try again."); }
+    finally { setIsSubmitting(false); }
   }
   return <form action={onSubmit} className="mt-9 space-y-5">
-    <label className="block space-y-2"><span className="text-sm font-medium">Email</span><input className="h-11 w-full border border-neutral-300 bg-white px-3 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-950" type="email" name="email" autoComplete="email" placeholder="you@example.com" required /></label>
-    <label className="block space-y-2"><span className="text-sm font-medium">Password</span><input className="h-11 w-full border border-neutral-300 bg-white px-3 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-950" type="password" name="password" autoComplete="current-password" required /></label>
-    {errorMessage ? <p className="text-sm text-red-700" role="alert">{errorMessage}</p> : null}
-    <Button className="w-full" type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in"}</Button>
+    <TextInput label="Email" type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
+    <TextInput label="Password" type="password" name="password" autoComplete="current-password" required />
+    {errorMessage ? <p className="text-ql-small text-ql-danger-ink" role="alert">{errorMessage}</p> : null}
+    <LearningButton className="w-full" type="submit" loading={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in"}</LearningButton>
   </form>;
 }

@@ -24,7 +24,3 @@ export function getCompoundingSteps(lesson: AuthoredLesson) {
     return block;
   }) }));
 }
-
-export function usesLearningShell(pathname: string) {
-  return pathname === "/learn/returns" || pathname === compoundingRoute;
-}

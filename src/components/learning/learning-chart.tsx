@@ -8,8 +8,9 @@ export const learningChartStyle = {
   tooltip: { background: "var(--color-ql-surface)", color: "var(--color-ql-text)", border: "1px solid var(--color-ql-border)", borderRadius: "var(--radius-ql-md)", boxShadow: "var(--shadow-ql-sm)", fontSize: 14 },
   colors: { primary: "var(--color-ql-blue-600)", positive: "var(--color-ql-success-ink)", negative: "var(--color-ql-danger-ink)" },
 };
-export function LearningChart({ data, title, description, valueLabel = "Value", sentiment = "primary", formatValue = String }: {
+export function LearningChart({ data, title, description, valueLabel = "Value", sentiment = "primary", formatValue = String, yDomain }: {
   data: LearningChartPoint[]; title: string; description: string; valueLabel?: string;
+  yDomain?: [number, number];
   sentiment?: keyof typeof learningChartStyle.colors; formatValue?: (value: number) => string;
 }) {
   if (!data.length) return <figure className="rounded-ql-lg border border-ql-border bg-ql-surface p-6"><figcaption className="text-ql-title font-semibold">{title}</figcaption><p className="mt-4 text-ql-small text-ql-secondary" role="status">No data to display yet.</p></figure>;
@@ -21,7 +22,7 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
         <LineChart accessibilityLayer data={data} margin={learningChartStyle.margin}>
           <CartesianGrid stroke="var(--color-ql-border)" vertical={false} />
           <XAxis dataKey="label" tick={learningChartStyle.axis} tickLine={false} axisLine={false} />
-          <YAxis tick={learningChartStyle.axis} tickLine={false} axisLine={false} width={64} tickFormatter={formatValue} />
+          <YAxis domain={yDomain} tick={learningChartStyle.axis} tickLine={false} axisLine={false} width={64} tickFormatter={formatValue} />
           <Tooltip contentStyle={learningChartStyle.tooltip} formatter={(value) => [formatValue(Number(value)), valueLabel]} />
           <Line name={valueLabel} type="linear" dataKey="value" stroke={learningChartStyle.colors[sentiment]} strokeWidth={2} dot={{ r: 4 }} isAnimationActive={false} />
         </LineChart>

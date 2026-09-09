@@ -1,6 +1,6 @@
-# Quantlearn
+# investi
 
-Quantlearn is an editorial, data-led learning product for quantitative finance.
+Learn investing, step by step. The current product teaches Returns through three guided, interactive lessons with persisted progress.
 
 ## Foundation
 
@@ -37,4 +37,17 @@ npm test
 npm run build
 ```
 
-`db:seed` is idempotent and publishes the Returns module sequence, including the first two authored lessons.
+`db:seed` is idempotent and publishes the Returns module sequence, including the first three authored lessons.
+
+
+All production routes share the validated `ql-*` learning theme and Nunito Sans. Home remains at `/dashboard`; `/learn` presents the curriculum and `/progress` shows completed and active learning. The Returns overview includes six planned lessons; Home and Progress clearly count the three currently available lessons.
+
+Local browser validation (requires the running app and local PostgreSQL):
+
+```bash
+BROWSER_CHANNEL=chrome node scripts/validate-product-migration.mjs
+BROWSER_CHANNEL=chrome node scripts/validate-returns-flow.mjs
+BROWSER_CHANNEL=chrome node scripts/validate-design-system.mjs
+```
+
+Omit `BROWSER_CHANNEL` if Playwright Chromium is installed. Product tests create and remove only their own disposable accounts. Screenshots default to `/tmp/investi-product-qa`. See [the migration report](docs/investi-migration.md) for scope and validation.

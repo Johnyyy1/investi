@@ -1,15 +1,21 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { ProgressBar } from "@/components/ui/progress-bar";
-import { RETURNS_MODULE_ID, returnsLessons } from "@/features/lessons/returns/manifest";
-import { getLessonProgress, getModuleProgress } from "@/features/progress/repository";
-import { getCurrentUser } from "@/lib/session";
+import { loadLearner } from "@/features/learning/load-learner";
+import { ContinueLearning } from "@/components/learning/continue-learning";
+import { ReturnsPathPreview } from "@/components/learning/returns-path-preview";
+import { LearnerGreeting } from "@/components/learning/learner-greeting";
+import { LearningProgressBar } from "@/components/learning/lesson-progress";
 
+export const metadata = { title: "Home" };
 export default async function DashboardPage() {
-  const user = await getCurrentUser();
-  const [completedLessons, lessonStates] = user ? await Promise.all([getModuleProgress(user.id, RETURNS_MODULE_ID), Promise.all(returnsLessons.slice(0, 3).map((lesson) => getLessonProgress(user.id, lesson.id)))]) : [0, []];
-  const percentage = Math.round((completedLessons / returnsLessons.length) * 100);
-  const nextLessonIndex = lessonStates.findIndex((lesson) => lesson?.status !== "completed");
-  const firstLesson = returnsLessons[nextLessonIndex === -1 ? 2 : nextLessonIndex];
-  return <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 lg:px-12 lg:py-14"><p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Dashboard</p><div className="mt-4 flex flex-col justify-between gap-6 border-b border-line pb-10 sm:flex-row sm:items-end"><div><h1 className="text-3xl font-semibold tracking-[-0.05em] sm:text-4xl">Your learning practice</h1><p className="mt-3 max-w-xl text-base leading-7 text-neutral-600">A focused place to develop judgment with numbers, evidence, and repeatable reasoning.</p></div><Link href="/learn" className="inline-flex shrink-0 items-center gap-2 text-sm font-medium underline underline-offset-4">Browse curriculum <ArrowUpRight size={15} /></Link></div><section className="grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_17rem]" aria-labelledby="continue-heading"><div><div className="flex items-baseline justify-between gap-4"><h2 id="continue-heading" className="text-lg font-semibold tracking-[-0.03em]">{completedLessons ? "Continue" : "Start here"}</h2><span className="text-sm text-muted">Returns · {firstLesson.estimatedMinutes} min</span></div><Link href={`/learn/returns/${firstLesson.slug}`} className="mt-5 block border-y border-line py-6 transition-colors hover:bg-white"><p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Quant Foundations · Module 01</p><div className="mt-2 flex items-center justify-between gap-6"><div><h3 className="text-xl font-semibold tracking-[-0.04em]">{firstLesson.title}</h3><p className="mt-2 text-sm leading-6 text-neutral-600">Move from price changes to comparable investment outcomes.</p></div><ArrowUpRight className="shrink-0" size={18} aria-hidden="true" /></div></Link></div><div className="border-l border-line pl-6"><p className="text-sm font-medium">Returns progress</p><ProgressBar value={percentage} label="Returns learning progress" className="mt-5" /><p className="mt-6 text-sm leading-6 text-neutral-600">{completedLessons} of {returnsLessons.length} planned lessons complete.</p></div></section></main>;
+  const summary = await loadLearner();
+  return <main className="mx-auto max-w-5xl space-y-10 px-5 py-8 sm:px-10 lg:py-12">
+    <header><LearnerGreeting name={summary.user?.name ?? "learner"} /><p className="mt-3 text-ql-body text-ql-secondary">Small steps. Strong foundations.</p></header>
+    <ContinueLearning summary={summary} />
+    <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_16rem]">
+      <section aria-labelledby="path-heading"><div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 id="path-heading" className="text-ql-section font-semibold">Your learning path</h2><Link className="inline-flex min-h-12 items-center text-ql-small text-ql-link underline underline-offset-4" href="/learn">Browse curriculum</Link></div><ReturnsPathPreview states={summary.states} /></section>
+      <section aria-labelledby="recent-heading" className="border-t border-ql-border pt-6 xl:border-t-0 xl:pt-0"><h2 id="recent-heading" className="text-ql-title font-semibold">Your progress</h2><p className="mt-3 mb-4 text-ql-small text-ql-secondary">{summary.completed.length} of {summary.lessons.length} available lessons complete</p><LearningProgressBar value={summary.completed.length} total={summary.lessons.length} label="Available learning progress" />
+        <h3 className="mt-8 text-ql-small font-semibold">Recently completed</h3>{summary.recent.length ? <ul className="mt-3 space-y-4">{summary.recent.map((state) => { const lesson = summary.lessons.find((lesson) => lesson.id === state.lessonId)!; return <li key={state.lessonId}><Link className="text-ql-small text-ql-link underline underline-offset-4" href={`/learn/returns/${lesson.slug}`}>{lesson.title}</Link><p className="mt-1 text-ql-meta text-ql-secondary">Completed · Ready to review</p></li>; })}</ul> : <p className="mt-3 text-ql-small text-ql-secondary">Your first completed lesson will appear here. Start with what a return measures.</p>}
+      </section>
+    </div>
+  </main>;
 }

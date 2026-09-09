@@ -9,7 +9,7 @@ import * as schema from "@/db/schema";
 import { env } from "@/lib/env";
 
 export const auth = betterAuth({
-  appName: "Quantlearn",
+  appName: "investi",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema }),

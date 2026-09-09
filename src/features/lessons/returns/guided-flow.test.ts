@@ -1,0 +1,24 @@
+import { describe, expect, it } from "vitest";
+import { authoredLessons } from "../registry";
+import { isQuestion } from "../question-evaluation";
+import { getGuidedSteps, getStepDefinitions, isFocusedLesson } from "./guided-flow";
+
+describe("shared guided lessons", () => {
+  it.each(authoredLessons)("preserves every authored block in $title", (lesson) => {
+    const steps = getGuidedSteps(lesson);
+    expect(steps.length).toBeGreaterThanOrEqual(6);
+    expect(steps.length).toBeLessThanOrEqual(10);
+    expect(steps.flatMap((step) => step.blocks)).toEqual(lesson.blocks);
+    for (const step of steps) {
+      const questions = step.blocks.filter(isQuestion);
+      expect(questions.length).toBeLessThanOrEqual(1);
+      if (questions.length) expect(step.blocks.at(-1)).toBe(questions[0]);
+    }
+    expect(steps.at(-1)?.blocks.some(isQuestion)).toBe(false);
+  });
+  it("only removes navigation for implemented lessons", () => {
+    for (const lesson of authoredLessons) expect(isFocusedLesson(`/learn/returns/${lesson.slug}`)).toBe(true);
+    for (const route of ["/dashboard", "/learn", "/learn/returns", "/progress", "/learn/returns/log-returns"]) expect(isFocusedLesson(route)).toBe(false);
+    expect(() => getStepDefinitions("returns-log")).toThrow();
+  });
+});

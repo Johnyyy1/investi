@@ -1,0 +1,157 @@
+// Local product regression: exercises the actual UI and removes only its own disposable account.
+import "dotenv/config";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { mkdir } from "node:fs/promises";
+import postgres from "postgres";
+import { chromium } from "playwright";
+
+const baseURL = process.env.RETURNS_TEST_URL ?? "http://localhost:3000";
+const local = (host) => ["localhost", "127.0.0.1", "[::1]"].includes(host);
+assert.ok(local(new URL(baseURL).hostname) && local(new URL(process.env.DATABASE_URL).hostname), "Requires a local app and database.");
+const sql = postgres(process.env.DATABASE_URL, { prepare: false });
+const email = `investi-product-${randomUUID()}@example.com`;
+const password = randomUUID();
+const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+const screenshotDir = process.env.PRODUCT_SCREENSHOT_DIR ?? "/tmp/investi-product-qa";
+await mkdir(screenshotDir, { recursive: true });
+let userId;
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const heading = (name) => page.getByRole("heading", { name, exact: true }).waitFor();
+  const button = (name) => page.getByRole("button", { name, exact: true });
+  async function layouts(label) {
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label} overflow at ${width}`);
+      assert.equal(await page.locator("h1").count(), 1, `${label} has one page heading`);
+      if ([320, 390, 1440].includes(width)) await page.screenshot({ path: `${screenshotDir}/${label}-${width}.png`, fullPage: true });
+    }
+  }
+  const row = async (id) => (await sql`select status,last_position,completed_at,updated_at from lesson_progress where user_id = ${userId} and lesson_id = ${id}`)[0];
+  const progressRowCount = async (id) => Number((await sql`select count(*)::int as count from lesson_progress where user_id = ${userId} and lesson_id = ${id}`)[0].count);
+  const waitForFocusedAction = (name) => page.waitForFunction((label) => [...document.querySelectorAll("button")].some((element) => element.textContent?.trim() === label && element === document.activeElement), name);
+  async function next(title) { await button("Continue").click(); await heading(title); }
+  async function check(value, correct = true) {
+    const radios = page.getByRole("radio");
+    if (await radios.count()) await radios.nth(value).check();
+    else await page.getByRole("textbox", { name: "Your answer", exact: true }).fill(String(value));
+    await button("Check answer").click();
+    await heading(correct ? "That’s right" : "Let’s work through it");
+    assert.equal(await button("Continue").evaluate((element) => element === document.activeElement), true, "Feedback hands focus to Continue");
+  }
+  async function signIn(pass = password) {
+    await page.goto(`${baseURL}/sign-in`); await heading("Welcome back");
+    await page.getByLabel("Email", { exact: true }).fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(pass);
+    await button("Sign in").click();
+  }
+  await page.goto(`${baseURL}/sign-up`); await heading("Build your investing foundations");
+  await layouts("sign-up");
+  await page.getByLabel("Name", { exact: true }).fill("Product QA");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await button("Create account").click();
+  await page.waitForURL("**/dashboard"); await heading("Continue learning");
+  [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
+  await layouts("home-empty");
+  await page.getByRole("link", { name: "Browse curriculum" }).click(); await heading("Learn investing, step by step"); await layouts("learn");
+  await page.getByRole("link", { name: "Explore Returns" }).click(); await heading("Returns"); await layouts("returns-empty");
+  await page.getByRole("listitem").filter({ hasText: "What is a return?" }).getByRole("button", { name: "Start lesson" }).click();
+  await heading("What does a return measure?"); await layouts("lesson-1-intro");
+  assert.equal(await page.getByRole("navigation").count(), 0);
+  await page.route("**/learn/returns/what-is-a-return", (route) => route.request().method() === "POST" ? route.abort() : route.continue());
+  await button("Continue").click();
+  await page.getByRole("alert").filter({ hasText: "Your place could not be saved" }).waitFor();
+  await heading("What does a return measure?");
+  await waitForFocusedAction("Continue");
+  assert.equal(await progressRowCount("returns-what-is-a-return"), 1, "A failed save does not create a duplicate progress row");
+  await page.unroute("**/learn/returns/what-is-a-return");
+  await next("Put the change in context"); await layouts("lesson-1-formula");
+  assert.equal(await progressRowCount("returns-what-is-a-return"), 1, "Retrying a save reuses the existing progress row");
+  assert.equal(await page.locator("math").count(), 2);
+  await next("Follow a worked example");
+  await page.reload(); await heading("Follow a worked example");
+  assert.equal((await row("returns-what-is-a-return")).last_position, 2);
+  await next("Compare percentage changes");
+  await next("Make a prediction");
+  await page.getByRole("radio").first().press("Space");
+  await page.getByRole("radio").first().press("ArrowDown");
+  await page.getByRole("radio").nth(1).press("Tab");
+  assert.equal(await button("Check answer").evaluate((element) => element === document.activeElement && element.matches(":focus-visible")), true);
+  await button("Check answer").press("Enter"); await heading("Let’s work through it");
+  await next("Try the return calculator"); await layouts("lesson-1-calculator");
+  await page.getByRole("textbox", { name: "Starting price" }).fill("0");
+  await page.getByRole("alert").filter({ hasText: /.+/ }).waitFor();
+  assert.equal(await page.getByRole("textbox", { name: "Starting price" }).getAttribute("aria-invalid"), "true");
+  await page.getByRole("textbox", { name: "Starting price" }).fill("100");
+  await page.getByRole("textbox", { name: "Ending price" }).fill("110");
+  await page.getByText("+10.00%", { exact: true }).waitFor();
+  await next("Calculate a return"); await check(15); await next("Check your understanding"); await check(1);
+  await next("Bring it together");
+  assert.equal((await row("returns-what-is-a-return")).status, "in_progress");
+  const repeatContext = await browser.newContext({ storageState: await page.context().storageState() });
+  const repeatAttempt = await repeatContext.newPage();
+  await repeatAttempt.goto(`${baseURL}/learn/returns/what-is-a-return`);
+  await repeatAttempt.getByRole("heading", { name: "Bring it together", exact: true }).waitFor();
+  await page.route("**/learn/returns/what-is-a-return", (route) => route.request().method() === "POST" ? route.abort() : route.continue());
+  await button("Mark lesson complete").click();
+  await page.getByRole("alert").filter({ hasText: "Completion could not be saved" }).waitFor();
+  await heading("Bring it together");
+  await waitForFocusedAction("Mark lesson complete");
+  assert.equal((await row("returns-what-is-a-return")).status, "in_progress", "A failed completion does not falsely complete the lesson");
+  assert.equal(await progressRowCount("returns-what-is-a-return"), 1, "A failed completion does not create a duplicate progress row");
+  await page.unroute("**/learn/returns/what-is-a-return");
+  await button("Mark lesson complete").click(); await heading("Lesson complete");
+  assert.equal(await page.getByText("Already completed. Reviewing will not change your saved completion.").count(), 0, "Completion is not relabeled as review");
+  const completedOnce = await row("returns-what-is-a-return");
+  await repeatAttempt.getByRole("button", { name: "Mark lesson complete", exact: true }).click();
+  await repeatAttempt.getByRole("heading", { name: "Lesson complete", exact: true }).waitFor();
+  assert.deepEqual(await row("returns-what-is-a-return"), completedOnce, "Repeated completion preserves the first completion timestamp");
+  assert.equal(await progressRowCount("returns-what-is-a-return"), 1, "Repeated completion does not duplicate progress");
+  await repeatContext.close();
+  await layouts("completion");
+  await button("Back to Returns").click(); await heading("Returns");
+  assert.match(await page.getByTestId("module-progress").textContent(), /1 of 6/);
+  await page.getByRole("listitem").filter({ hasText: "Simple returns" }).getByRole("button", { name: "Start lesson" }).click();
+  await heading("One period at a time"); await next("Use the previous price"); await next("Follow the changing denominator"); await next("Explore a price series");
+  await layouts("lesson-2-explorer");
+  await button("Inspect Day 2").click(); await page.getByRole("heading", { name: "Day 1 → Day 2", exact: true }).waitFor();
+  await page.getByText("View data table", { exact: true }).press("Enter");
+  assert.equal(await page.getByRole("table").count(), 2, "Chart provides complete data fallback");
+  await page.reload(); await heading("Explore a price series");
+  assert.equal((await row("returns-simple-returns")).last_position, 3);
+  await next("Calculate a gain"); await check(5); await next("Calculate a loss"); await check(-10); await next("Decimals and percentages"); await check(-12); await next("Compare two investments"); await check(0); await next("Reason through two periods");
+  await page.getByRole("textbox", { name: "100 → 110", exact: true }).fill("10");
+  assert.equal(await button("Check answer").isDisabled(), true);
+  await page.getByRole("textbox", { name: "110 → 99", exact: true }).fill("-10");
+  await button("Check answer").click(); await heading("That’s right"); await next("Bring it together");
+  await button("Mark lesson complete").click(); await heading("Lesson complete"); await button("Back to Returns").click(); await heading("Returns");
+  await page.getByRole("listitem").filter({ hasText: "Compounding & cumulative returns" }).getByRole("button", { name: "Start lesson" }).click();
+  await heading("From one period to a sequence"); await next("Make a prediction"); await check(1); await next("The starting value changes"); await next("Think in growth factors"); await next("Multiply the growth factors"); await next("Explore compounding"); await check(21); await next("Connect returns to prices");
+  for (const [label, answer] of [["100 → 110", "10"], ["110 → 99", "-10"], ["Cumulative return", "-1"]]) await page.getByRole("textbox", { name: label, exact: true }).fill(answer);
+  await button("Check answer").click(); await heading("That’s right"); await next("Recovering from a loss"); await check(100); await next("Check your understanding"); await check(0); await next("Bring it together"); await button("Mark lesson complete").click(); await heading("Lesson complete"); await button("Back to Returns").click(); await heading("Returns");
+  assert.match(await page.getByTestId("module-progress").textContent(), /3 of 6/); await layouts("returns-completed");
+  await page.getByRole("link", { name: "Home", exact: true }).click(); await heading("Your foundations are growing"); await layouts("home-completed");
+  await page.getByRole("link", { name: "Progress", exact: true }).click(); await heading("Your progress");
+  assert.match(await page.getByTestId("available-progress").textContent(), /3 of 3 available lessons complete · 100%/); await layouts("progress-completed");
+  await button("Sign out").click(); await heading("Welcome back"); await layouts("sign-in");
+  await signIn("incorrect-password"); await page.getByRole("alert").filter({ hasText: /.+/ }).waitFor();
+  await signIn(); await page.waitForURL("**/dashboard"); await heading("Your foundations are growing");
+  const saved = await row("returns-what-is-a-return");
+  await page.goto(`${baseURL}/learn/returns/what-is-a-return`); await heading("What does a return measure?");
+  await next("Put the change in context");
+  assert.deepEqual(await row("returns-what-is-a-return"), saved, "Review does not alter completion or position");
+  await page.goto(`${baseURL}/learn/returns/log-returns`); await heading("This page isn’t available"); await layouts("unavailable");
+  await page.goto(`${baseURL}/dashboard`); await heading("Your foundations are growing"); await button("Sign out").click(); await heading("Welcome back");
+  await page.getByRole("link", { name: "Create an account" }).click(); await heading("Build your investing foundations");
+  await page.getByLabel("Name", { exact: true }).fill("Duplicate QA"); await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password); await button("Create account").click(); await page.getByRole("alert").filter({ hasText: /.+/ }).waitFor();
+  assert.deepEqual(errors, [], "No hydration or browser errors");
+  console.log("PASS: sign-up, auth errors, lessons 1–3, refresh, explicit completion, Home, Progress, sign-out/in, review, unavailable routes, all six widths. Screenshots:", screenshotDir);
+} finally {
+  await browser.close();
+  if (userId) await sql`delete from "user" where id = ${userId} and email = ${email}`;
+  await sql.end();
+}

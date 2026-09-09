@@ -43,7 +43,7 @@ export async function completeLesson(userId: string, lessonId: string) {
   const now = new Date();
   await db.insert(lessonProgress).values({ userId, lessonId, status: "completed", lastPosition: 0, completedAt: now, updatedAt: now }).onConflictDoUpdate({
     target: [lessonProgress.userId, lessonProgress.lessonId],
-    set: { status: "completed", completedAt: now, updatedAt: now },
+    set: { status: "completed", completedAt: sql`coalesce(${lessonProgress.completedAt}, ${now.toISOString()}::timestamptz)`, updatedAt: sql`case when ${lessonProgress.status} = 'completed' then ${lessonProgress.updatedAt} else ${now.toISOString()}::timestamptz end` },
   });
 }
 

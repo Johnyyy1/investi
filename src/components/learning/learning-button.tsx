@@ -1,4 +1,5 @@
-import type { ComponentProps } from "react";
+import Link from "next/link";
+import type { ComponentProps, Ref } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -12,10 +13,15 @@ const variants = cva(
     ghost: "border-transparent bg-transparent text-ql-link hover:bg-ql-subtle",
   } }, defaultVariants: { variant: "primary" } },
 );
-export type LearningButtonProps = ComponentProps<"button"> & VariantProps<typeof variants> & { loading?: boolean };
-export function LearningButton({ variant, loading = false, disabled, className, children, type = "button", ...props }: LearningButtonProps) {
-  return <button {...props} type={type} disabled={disabled || loading} aria-busy={loading || undefined} className={cn(variants({ variant }), className)}>
+export type LearningButtonProps = ComponentProps<"button"> & VariantProps<typeof variants> & { loading?: boolean; buttonRef?: Ref<HTMLButtonElement> };
+export function LearningButton({ variant, loading = false, disabled, className, children, type = "button", buttonRef, ...props }: LearningButtonProps) {
+  return <button {...props} ref={buttonRef} type={type} disabled={disabled || loading} aria-busy={loading || undefined} className={cn(variants({ variant }), className)}>
     {loading ? <span aria-hidden="true" className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" /> : null}
     {children}
   </button>;
+}
+
+/** Navigation with the same sizing, focus and visual treatment as an action. */
+export function LearningLink({ variant, className, ...props }: ComponentProps<typeof Link> & VariantProps<typeof variants>) {
+  return <Link {...props} className={cn(variants({ variant }), className)} />;
 }

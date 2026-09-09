@@ -5,26 +5,28 @@ import { useRouter } from "next/navigation";
 import { CompletionScreen } from "@/components/learning/completion-screen";
 import { LearningButton } from "@/components/learning/learning-button";
 import { LessonProgress, LearningProgressBar } from "@/components/learning/lesson-progress";
-import { getCompoundingSteps } from "@/features/lessons/returns/compounding-flow";
+import { getGuidedSteps } from "@/features/lessons/returns/guided-flow";
 import { returnsLessons } from "@/features/lessons/returns/manifest";
 import { isQuestion } from "@/features/lessons/question-evaluation";
 import type { AuthoredLesson } from "@/features/lessons/types";
-import { completeLessonAction, markLessonStartedAction, saveCompoundingPositionAction } from "@/features/progress/actions";
+import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "@/features/progress/actions";
 import { GuidedBlock } from "./guided-block";
 import { GuidedQuestion } from "./guided-question";
 
-export function CompoundingLesson({ lesson, initialStatus, initialPosition, initialCompletedLessons }: {
+export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCompletedLessons }: {
   lesson: AuthoredLesson; initialStatus: "not_started" | "in_progress" | "completed"; initialPosition: number; initialCompletedLessons: number;
 }) {
   const router = useRouter();
-  const steps = getCompoundingSteps(lesson);
-  const review = initialStatus === "completed";
+  const steps = getGuidedSteps(lesson);
+  // A server revalidation after completion must not relabel this attempt as review.
+  const [review] = useState(initialStatus === "completed");
   const [position, setPosition] = useState(review ? 0 : Math.min(Math.max(initialPosition, 0), steps.length - 1));
   const [finished, setFinished] = useState(false);
   const [completedLessons, setCompletedLessons] = useState(initialCompletedLessons);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const retryActionRef = useRef<HTMLButtonElement>(null);
   const movedRef = useRef(false);
   const busyRef = useRef(false);
 
@@ -39,13 +41,18 @@ export function CompoundingLesson({ lesson, initialStatus, initialPosition, init
       headingRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
     }
   }, [position, finished]);
+  useEffect(() => {
+    if (!error) return;
+    const frame = requestAnimationFrame(() => retryActionRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [error]);
 
   async function move(next: number) {
     if (busyRef.current) return;
     busyRef.current = true; setPending(true); setError(undefined);
     try {
       if (!review) {
-        const result = await saveCompoundingPositionAction(next);
+        const result = await saveLessonPositionAction(lesson.id, next);
         if (!result.ok) { setError(result.message); return; }
       }
       movedRef.current = true; setPosition(next);
@@ -83,7 +90,7 @@ export function CompoundingLesson({ lesson, initialStatus, initialPosition, init
           <h2 ref={headingRef} id="step-title" tabIndex={-1} className="scroll-mt-8 text-ql-section font-semibold">{step.title}</h2>
           {step.blocks.filter((block) => !isQuestion(block)).map((block) => <GuidedBlock key={block.id} block={block} />)}
         </div>
-        {question ? <GuidedQuestion block={question} pending={pending} onContinue={() => void move(position + 1)} /> : <div className="sticky bottom-0 z-20 rounded-b-ql-xl border-t border-ql-border bg-ql-surface px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-10"><LearningButton className="w-full sm:w-auto" loading={pending} onClick={() => void (position === steps.length - 1 ? complete() : move(position + 1))}>{position === steps.length - 1 ? review ? "Finish review" : "Mark lesson complete" : "Continue"}</LearningButton></div>}
+        {question ? <GuidedQuestion block={question} pending={pending} continueButtonRef={retryActionRef} onContinue={() => void move(position + 1)} /> : <div className="sticky bottom-0 z-20 rounded-b-ql-xl border-t border-ql-border bg-ql-surface px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-10"><LearningButton buttonRef={retryActionRef} className="w-full sm:w-auto" loading={pending} onClick={() => void (position === steps.length - 1 ? complete() : move(position + 1))}>{position === steps.length - 1 ? review ? "Finish review" : "Mark lesson complete" : "Continue"}</LearningButton></div>}
       </section>
     </>}
   </main>;

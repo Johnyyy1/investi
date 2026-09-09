@@ -1,23 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, LayoutDashboard } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { usesLearningShell } from "@/features/lessons/returns/compounding-flow";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { AppSidebar } from "./shell/app-sidebar";
+import { MobileNav } from "./shell/mobile-nav";
+import { LearningButton } from "./learning/learning-button";
+import { isFocusedLesson } from "@/features/lessons/returns/guided-flow";
+import { authClient } from "@/lib/auth-client";
 
-type AppShellProps = { children: React.ReactNode; userName: string };
-const navigation = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/learn", label: "Learn", icon: BookOpen }];
-
-export function AppShell({ children, userName }: AppShellProps) {
+export function AppShell({ children, userName }: { children: React.ReactNode; userName: string }) {
   const pathname = usePathname();
-  if (usesLearningShell(pathname)) return children;
-  return <div className="min-h-screen bg-background lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
-    <aside className="hidden border-r border-line bg-surface lg:flex lg:flex-col">
-      <div className="border-b border-line px-7 py-7"><Link href="/dashboard" className="text-base font-semibold tracking-[-0.04em]">Quantlearn</Link><p className="mt-1 text-xs text-muted">Quantitative finance, clearly.</p></div>
-      <nav className="flex-1 px-4 py-5" aria-label="Primary navigation">{navigation.map(({ href, label, icon: Icon }) => <Link className={cn("mb-1 flex items-center gap-3 px-3 py-2 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950", href === "/dashboard" && "bg-neutral-100 text-neutral-950")} href={href} key={href}><Icon aria-hidden="true" size={16} strokeWidth={1.7} />{label}</Link>)}</nav>
-      <div className="border-t border-line px-7 py-5"><p className="truncate text-sm font-medium">{userName}</p><p className="mt-1 text-xs text-muted">Learner</p></div>
-    </aside>
-    <div className="min-w-0"><header className="flex min-h-15 items-center justify-between gap-3 border-b border-line bg-surface px-5 lg:hidden"><Link href="/dashboard" className="text-base font-semibold tracking-[-0.04em]">Quantlearn</Link><nav className="flex items-center gap-4 text-sm text-neutral-600" aria-label="Primary navigation"><Link href="/dashboard" className="hover:text-neutral-950">Dashboard</Link><Link href="/learn" className="hover:text-neutral-950">Learn</Link></nav></header>{children}</div>
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  const activeId = pathname.startsWith("/learn") ? "learn" : pathname === "/progress" ? "progress" : "home";
+  async function signOut() {
+    setPending(true); setError(undefined);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error("Sign out failed");
+      router.replace("/sign-in"); router.refresh();
+    } catch { setError("Could not sign out. Please try again."); setPending(false); }
+  }
+  if (isFocusedLesson(pathname)) return children;
+  return <div className="min-h-screen lg:flex">
+    <a href="#main-content" className="sr-only z-50 bg-ql-surface p-4 focus:not-sr-only focus:fixed">Skip to content</a>
+    <div className="hidden lg:flex"><AppSidebar activeId={activeId} /></div>
+    <div className="min-w-0 flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <header className="flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-ql-border px-5 sm:px-10">
+        <Link href="/dashboard" className="text-ql-title font-bold lg:hidden">investi<span className="text-ql-link">.</span></Link>
+        <p className="min-w-0 max-w-48 truncate text-ql-small text-ql-secondary">{userName}</p>
+        <LearningButton variant="ghost" loading={pending} onClick={() => void signOut()}>Sign out</LearningButton>
+        {error ? <p role="alert" className="w-full pb-3 text-ql-small text-ql-danger-ink">{error}</p> : null}
+      </header>
+      <div id="main-content" tabIndex={-1}>{children}</div>
+    </div>
+    <MobileNav activeId={activeId} />
   </div>;
 }

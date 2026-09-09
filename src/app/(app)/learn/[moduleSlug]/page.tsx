@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { LearningTheme } from "@/components/learning/learning-theme";
 import { ReturnsOverview } from "@/components/learning/returns-overview";
 import { getModuleBySlug } from "@/features/learning/catalog";
 import { getReturnsPath } from "@/features/learning/returns-path";
 import { RETURNS_MODULE_ID, returnsLessons } from "@/features/lessons/returns/manifest";
 import { getLessonProgress, getModuleProgress } from "@/features/progress/repository";
 import { getCurrentUser } from "@/lib/session";
+
+export const metadata = { title: "Returns" };
 
 export default async function ModulePage({ params }: { params: Promise<{ moduleSlug: string }> }) {
   const { moduleSlug } = await params;
@@ -16,5 +17,5 @@ export default async function ModulePage({ params }: { params: Promise<{ moduleS
     getModuleProgress(user.id, RETURNS_MODULE_ID),
     Promise.all(returnsLessons.filter((lesson) => lesson.status === "available").map((lesson) => getLessonProgress(user.id, lesson.id))),
   ]) : [0, []];
-  return <LearningTheme><ReturnsOverview completedLessons={completedLessons} items={getReturnsPath(states.filter((state) => state !== undefined))} /></LearningTheme>;
+  return <ReturnsOverview completedLessons={completedLessons} items={getReturnsPath(states.filter((state) => state !== undefined))} />;
 }

@@ -41,9 +41,9 @@ export function DesignSystemShowcase() {
   return <>
     <a href="#showcase-main" className="sr-only z-50 rounded-ql-xs bg-ql-surface p-4 focus:not-sr-only focus:fixed focus:top-4 focus:left-4">Skip to components</a>
     <div className="mx-auto max-w-7xl px-5 sm:px-10">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ql-border py-6"><p className="text-ql-title font-semibold">QuantLearn<span className="text-ql-blue-600">.</span></p><p className="text-ql-meta text-ql-secondary">DESIGN SYSTEM / DEVELOPMENT ONLY</p></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ql-border py-6"><p className="text-ql-title font-semibold">investi<span className="text-ql-blue-600">.</span></p><p className="text-ql-meta text-ql-secondary">DESIGN SYSTEM / DEVELOPMENT ONLY</p></div>
       <main id="showcase-main">
-        <div className="py-10 sm:py-16"><p className="mb-4 text-ql-small font-semibold text-ql-link">A clearer path to understanding.</p><AppHeader title="Small steps. Strong foundations." description="A lighter learning language for QuantLearn. Explore the components, try a question, and see how the system works together." />
+        <div className="py-10 sm:py-16"><p className="mb-4 text-ql-small font-semibold text-ql-link">A clearer path to understanding.</p><AppHeader title="Small steps. Strong foundations." description="A lighter learning language for investi. Explore the components, try a question, and see how the system works together." />
           <nav aria-label="Showcase sections" className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-ql-small text-ql-link">{[["foundations", "Foundations"], ["practice", "Learning flow"], ["controls", "Controls"], ["explanations", "Explanations"], ["data", "Data"], ["motivation", "Motivation"], ["shell", "Shell"]].map(([id, label]) => <a key={id} href={`#${id}`} className="underline decoration-ql-border-strong underline-offset-4">{label}</a>)}</nav>
         </div>
         <Section id="foundations" index="01" title="Calm, with a little optimism" description="Soft surfaces, clear type, and color with a purpose. Nunito Sans at weights 400–700.">
@@ -73,7 +73,7 @@ export function DesignSystemShowcase() {
           <div className="mt-6 overflow-hidden rounded-ql-lg border border-ql-border"><MobileNav activeId="learn" preview /></div>
         </Section>
       </main>
-      <footer className="border-t border-ql-border py-8 text-ql-small text-ql-secondary">QuantLearn / Foundation 01 · Preview data only</footer>
+      <footer className="border-t border-ql-border py-8 text-ql-small text-ql-secondary">investi / Foundation 01 · Preview data only</footer>
     </div>
   </>;
 }
