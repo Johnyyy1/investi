@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { annualCoupon, marketCapitalization, ownershipPercentage, simpleBondCashflows, totalCouponPayments } from "./foundations";
+import { annualCoupon, bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, simpleBondCashflows, totalCouponPayments } from "./foundations";
 import { compoundValue } from "./returns";
 describe("beginner financial examples", () => {
   it("distinguishes fractions from percentages", () => {
@@ -29,4 +29,17 @@ describe("beginner financial examples", () => {
     expect(annualCoupon(1_000, 0)).toBe(0);
   });
   it.each([[0, 0.05, 5], [-1, 0.05, 5], [1_000, -0.01, 5], [1_000, 0.05, 0], [1_000, 0.05, -1], [Infinity, 0.05, 5], [1_000, Infinity, 5], [1_000, 0.05, NaN]])("rejects invalid simplified bond cash flows %s, %s, %s", (principal, rate, years) => expect(() => simpleBondCashflows(principal, rate, years)).toThrow());
+  it("calculates a valid bid-ask spread", () => {
+    expect(bidAskSpread(99, 100)).toBe(1);
+    expect(bidAskSpread(49.8, 50)).toBeCloseTo(0.2);
+    expect(bidAskSpread(100, 100)).toBe(0);
+  });
+  it.each([[100, 99], [-1, 100], [0, 0], [NaN, 1], [1, Infinity]])("rejects invalid bid and ask quotes %s, %s", (bid, ask) => expect(() => bidAskSpread(bid, ask)).toThrow());
+  it("calculates drawdown from a peak and clamps values above that peak to zero", () => {
+    expect(drawdownFromPeak(10_000, 7_500)).toBe(0.25);
+    expect(drawdownFromPeak(10_000, 10_000)).toBe(0);
+    expect(drawdownFromPeak(10_000, 12_000)).toBe(0);
+    expect(drawdownFromPeak(3, 2)).toBeCloseTo(1 / 3);
+  });
+  it.each([[0, 0], [-1, 0], [100, -1], [Infinity, 100], [100, NaN]])("rejects invalid drawdown values %s, %s", (peak, current) => expect(() => drawdownFromPeak(peak, current)).toThrow());
 });

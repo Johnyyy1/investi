@@ -6,13 +6,13 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "./actions";
 describe("shared persisted lesson actions", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.user.mockResolvedValue({ id: "session-owner" }); mocks.count.mockResolvedValue(2); });
-  it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["returns-compounding", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
+  it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["foundations-markets", "module-investing-foundations"], ["foundations-risk-reward", "module-investing-foundations"], ["returns-compounding", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
     expect(await completeLessonAction(id)).toEqual({ ok: true, completedLessons: 2 });
     expect(mocks.complete).toHaveBeenCalledWith("session-owner", id);
     expect(mocks.count).toHaveBeenCalledWith("session-owner", moduleId);
     expect(mocks.revalidate).toHaveBeenCalledWith("/learn", "layout");
   });
-  it.each(["foundations-markets", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
+  it.each(["foundations-portfolio", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
     expect(await markLessonStartedAction(id)).toMatchObject({ ok: false });
     expect(await saveLessonPositionAction(id, 1)).toMatchObject({ ok: false });
     expect(await completeLessonAction(id)).toMatchObject({ ok: false });

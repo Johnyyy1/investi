@@ -5,7 +5,7 @@ import { FinanceInput } from "@/components/learning/finance-input";
 import { ConceptCard } from "@/components/learning/concept-card";
 import { MetricResult } from "@/components/learning/metric-result";
 import { compoundValue, FinancialInputError, parsePrice } from "@/features/finance/returns";
-import { marketCapitalization, ownershipPercentage, simpleBondCashflows } from "@/features/finance/foundations";
+import { bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, simpleBondCashflows } from "@/features/finance/foundations";
 
 const number = (value: number) => value.toLocaleString("en-IE", { maximumSignificantDigits: 8, notation: value !== 0 && (Math.abs(value) < 0.000001 || Math.abs(value) >= 1e15) ? "scientific" : "standard" });
 const euros = (value: number) => value.toLocaleString("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
@@ -119,5 +119,110 @@ export function AssetComparison() {
       <MetricResult label="Common purpose" value={detail.purpose} />
       <MetricResult label="Potential payments / outcome" value={detail.payments} />
     </div>
+  </section>;
+}
+
+const marketChoices = {
+  buy: { label: "Buy now", title: "You meet the ask", detail: "An immediate buyer typically interacts with the lowest current selling interest: the €100 ask. A market order prioritizes trying to execute, not a guaranteed exact price; the quote can change before execution." },
+  sell: { label: "Sell now", title: "You meet the bid", detail: "An immediate seller typically interacts with the highest current buying interest: the €99 bid. The displayed bid is useful intuition, not a promise that every share will execute at that exact price." },
+  limit: { label: "Wait / place limit", title: "You set a price constraint", detail: "A limit buy at €95 says you will buy only at €95 or better. It may not execute at all. This expresses a price condition rather than a priority to trade immediately." },
+} as const;
+
+export function MarketQuoteExplorer() {
+  const [choice, setChoice] = useState<keyof typeof marketChoices>("buy");
+  const selected = marketChoices[choice];
+  return <section aria-label="Bid and ask interaction" className="space-y-6">
+    <div className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-3"><MetricResult label="Bid · current buying interest" value="€99.00" /><MetricResult label="Ask · current selling interest" value="€100.00" /><MetricResult label="Bid-ask spread" value={`€${bidAskSpread(99, 100).toFixed(2)}`} /></div>
+    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Choose a market action">
+      {(Object.keys(marketChoices) as (keyof typeof marketChoices)[]).map((key) => <button key={key} type="button" onClick={() => setChoice(key)} aria-pressed={choice === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${choice === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{marketChoices[key].label}</button>)}
+    </div>
+    <ConceptCard title={selected.title}>{selected.detail}</ConceptCard>
+  </section>;
+}
+
+const riskScenarios = {
+  steady: { name: "Investment A", outcomes: [4, 5, 6], description: "Each equally likely outcome is close to 5%." },
+  wide: { name: "Investment B", outcomes: [-20, 5, 30], description: "Each equally likely outcome still averages 5%, but the possible range is much wider." },
+} as const;
+
+const signedPercent = (value: number) => `${value > 0 ? "+" : ""}${value}%`;
+
+export function RiskScenarioExplorer() {
+  const [scenario, setScenario] = useState<keyof typeof riskScenarios>("steady");
+  const selected = riskScenarios[scenario];
+  const average = selected.outcomes.reduce((sum, value) => sum + value, 0) / selected.outcomes.length;
+  return <section aria-label="Risk scenario explorer" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose an investment scenario">
+      {(Object.keys(riskScenarios) as (keyof typeof riskScenarios)[]).map((key) => <button key={key} type="button" onClick={() => setScenario(key)} aria-pressed={scenario === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${scenario === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{riskScenarios[key].name}</button>)}
+    </div>
+    <div aria-live="polite" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-3"><MetricResult label="Worst listed outcome" value={signedPercent(Math.min(...selected.outcomes))} sentiment="negative" /><MetricResult label="Best listed outcome" value={signedPercent(Math.max(...selected.outcomes))} sentiment="positive" /><MetricResult label="Simple average of listed outcomes" value={signedPercent(average)} /></div>
+    <ConceptCard title={selected.name}>{selected.description} This is a deliberately simple equal-probability illustration, not a forecast. A similar expected outcome can come with very different uncertainty and losses.</ConceptCard>
+  </section>;
+}
+
+export function DrawdownExplorer() {
+  const [peak, setPeak] = useState("10000");
+  const [current, setCurrent] = useState("7500");
+  const errorId = useId();
+  let drawdown: number | undefined;
+  let error: string | undefined;
+  try {
+    const peakValue = parsePrice(peak, "Peak value");
+    const currentValue = parsePrice(current, "Current value");
+    if (peakValue > 1e9 || currentValue > 1e9) throw new FinancialInputError("Use values at most €1,000,000,000 for this illustration.");
+    drawdown = drawdownFromPeak(peakValue, currentValue);
+  } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
+  const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
+  return <section aria-label="Drawdown explorer" className="space-y-6">
+    <div className="grid gap-5 sm:grid-cols-2"><FinanceInput {...invalid} label="Previous peak value" prefix="€" value={peak} onValueChange={setPeak} /><FinanceInput {...invalid} label="Current value" prefix="€" value={current} onValueChange={setCurrent} /></div>
+    {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : drawdown !== undefined ? <div aria-live="polite" aria-atomic="true" className="border-y border-ql-border py-6"><MetricResult label="Drawdown from the stated peak" value={`${(drawdown * 100).toLocaleString("en-IE", { maximumFractionDigits: 2 })}%`} /><p className="mt-3 text-ql-small text-ql-secondary">Drawdown is the decline from a previous peak. If the current value is at or above the stated peak, this illustration shows 0% drawdown from it.</p></div> : null}
+  </section>;
+}
+
+const liquidityExamples = {
+  highlyTraded: { name: "Highly traded large-company stock", detail: "There are typically many active buyers and sellers. It may be easier to trade a modest amount near the prevailing market price, often with a tighter spread. The share can still lose value." },
+  thinlyTraded: { name: "Thinly traded obscure security", detail: "Fewer active participants can mean a wider spread or a larger price impact when trying to trade. It may be harder to sell quickly near the price you expected. Less liquidity does not tell you the investment’s future return." },
+} as const;
+
+export function LiquidityComparison() {
+  const [example, setExample] = useState<keyof typeof liquidityExamples>("highlyTraded");
+  const selected = liquidityExamples[example];
+  return <section aria-label="Liquidity comparison" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose trading conditions to compare">
+      {(Object.keys(liquidityExamples) as (keyof typeof liquidityExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{liquidityExamples[key].name}</button>)}
+    </div>
+    <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>
+  </section>;
+}
+
+const concentrationExamples = {
+  oneCompany: { name: "Portfolio A · one company", detail: "One company’s business problems can dominate the whole result. This has more company-specific concentration risk." },
+  spread: { name: "Portfolio B · many investments", detail: "A range of investments can reduce dependence on one company. They can still fall together, and broad market risk remains." },
+} as const;
+
+export function DiversificationPreview() {
+  const [example, setExample] = useState<keyof typeof concentrationExamples>("oneCompany");
+  const selected = concentrationExamples[example];
+  return <section aria-label="Diversification preview" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose a portfolio concentration example">
+      {(Object.keys(concentrationExamples) as (keyof typeof concentrationExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{concentrationExamples[key].name}</button>)}
+    </div>
+    <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>
+  </section>;
+}
+
+const horizonExamples = {
+  soon: { name: "Needed next month", detail: "A loss shortly before the money is needed may leave little time to recover. This illustrates why the timing of a need belongs in a risk conversation." },
+  later: { name: "Intended for decades later", detail: "A longer horizon may allow more time for outcomes to unfold, but it does not guarantee a gain or make every investment suitable." },
+} as const;
+
+export function TimeHorizonExplorer() {
+  const [example, setExample] = useState<keyof typeof horizonExamples>("soon");
+  const selected = horizonExamples[example];
+  return <section aria-label="Time horizon explorer" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose a time horizon">
+      {(Object.keys(horizonExamples) as (keyof typeof horizonExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{horizonExamples[key].name}</button>)}
+    </div>
+    <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>
   </section>;
 }

@@ -50,3 +50,18 @@ export function simpleBondCashflows(principal: number, couponRate: number, years
 export function totalCouponPayments(principal: number, couponRate: number, years: number) {
   return simpleBondCashflows(principal, couponRate, years).totalCouponPayments;
 }
+
+/** The quoted cost between immediate buying and selling interest. */
+export function bidAskSpread(bid: number, ask: number) {
+  finiteNonnegative(bid, "Bid");
+  positiveAmount(ask, "Ask");
+  if (ask < bid) throw new FinancialInputError("Ask must be greater than or equal to bid.");
+  return ask - bid;
+}
+
+/** A value at or above the supplied peak has no drawdown from that peak. */
+export function drawdownFromPeak(peak: number, current: number) {
+  positiveAmount(peak, "Peak value");
+  finiteNonnegative(current, "Current value");
+  return Math.max(0, (peak - current) / peak);
+}

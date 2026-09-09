@@ -6,7 +6,7 @@ Continues from `9143933` using the existing investi design, typed lesson blocks,
 
 Investing Foundations is the first available module at `/learn/investing-foundations`, followed by Returns & Compounding at the unchanged `/learn/returns` route. Returns lesson IDs and progress remain stable. The catalog combines the two existing-style lesson manifests for routing, paths, seed data, published-lesson validation, and progress selection. There is no second curriculum engine or lesson runner.
 
-Foundations has eight planned lessons. Why invest?, Stocks: owning part of a business, ETFs & indexes, and Bonds & cash are available. How markets work, Risk vs reward, Your first portfolio, and Foundations checkpoint are upcoming, with no actionable navigation. Direct unavailable lesson URLs return the existing not-found page; server actions reject their IDs.
+Foundations has eight planned lessons. Why invest?, Stocks: owning part of a business, ETFs & indexes, Bonds & cash, How markets work, and Risk vs reward are available. Your first portfolio and Foundations checkpoint remain upcoming, with no actionable navigation. Direct unavailable lesson URLs return the existing not-found page; server actions reject their IDs.
 
 ## 2. Lessons implemented
 
@@ -14,6 +14,8 @@ Foundations has eight planned lessons. Why invest?, Stocks: owning part of a bus
 - **Stocks: owning part of a business** — ten guided steps plus completion. Share ownership, editable ownership fraction, share price versus company size, editable market cap, price expectations, dividends, numeric and conceptual practice, daily-control misconception, and takeaway.
 - **ETFs & indexes** — ten guided steps plus completion. The hundreds-of-companies question, diversification, indexes as measurements, a simple index → tracking ETF → investor visual, buyable ETF versus index, active strategies, remaining risk, asset exposure, fees, and takeaway. Checks cover all four required misconceptions.
 - **Bonds & cash** — ten guided steps plus completion. It contrasts cash, ownership, and lending; introduces issuer, principal, coupon, and maturity; includes a validated fixed-cash-flow illustration; explains the interest-rate/price direction without formal pricing; and covers credit, inflation, and liquidity risks. The cash-flow display explicitly is not a yield or total-return calculation.
+- **How markets work** — ten guided steps plus completion. It begins with a buyer and seller whose prices do not meet; explains bid, ask, spread, market versus limit instructions, primary and secondary markets, price discovery, liquidity, and the forces that can move a price. The interactive quote emphasizes that displayed quotes and limit orders do not guarantee execution.
+- **Risk vs reward** — ten guided steps plus completion. It distinguishes expected from realized returns, contrasts equal-average outcome ranges, introduces drawdown and recovery, identifies several forms of risk, previews diversification, and separates time horizon, risk tolerance, and risk capacity without making allocation recommendations.
 
 Authored content maps to the same production Check → Feedback → Continue interaction. Integrity tests enforce one occurrence of every block, at most one question per step, question-last ordering, and a non-question final step. Every available manifest lesson has exactly one matching authored lesson; upcoming lessons have none.
 
@@ -23,7 +25,9 @@ Authored content maps to the same production Check → Feedback → Continue int
 
 The growth interaction reuses `compoundValue` from the existing Returns finance utilities. At €10,000, 5% each year for ten years yields €16,288.95; zero growth stays €10,000. Negative rates are supported. The interface labels this a mathematical illustration, distinguishes its flat cash assumption from interest-bearing savings, and states that inflation, fees, taxes, and new contributions are omitted. It exposes annual values as an accessible expandable list. No new compounding implementation was added.
 
-The content distinguishes amounts from purchasing power, expected from realized returns, equity market value from revenue/profit/cash/enterprise value, dividends from guaranteed extra wealth, and indexes from investable funds. Diversification is described as reducing some risks, not eliminating losses. No investment products are recommended.
+`bidAskSpread` validates finite nonnegative bids, positive asks, and ask ≥ bid. `drawdownFromPeak` validates a positive peak and nonnegative current value; it returns the fractional fall from the stated peak and returns zero when the current value is at or above that peak. Both are pure, unit-tested functions. The market and risk interactions reuse these utilities rather than embedding calculations in React.
+
+The content distinguishes amounts from purchasing power, expected from realized returns, equity market value from revenue/profit/cash/enterprise value, dividends from guaranteed extra wealth, and indexes from investable funds. It presents a market order as an execution priority rather than a guaranteed price, and a limit order as a price constraint rather than a guarantee of execution. Diversification is described as reducing some risks, not eliminating losses. No investment products are recommended.
 
 Editorial reference checks used these primary sources:
 
@@ -33,6 +37,8 @@ Editorial reference checks used these primary sources:
 - [Investor.gov: index funds and tracking differences](https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-4)
 - [Investor.gov: ETF structure and strategies](https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-2)
 - [Investor.gov: diversification limits](https://www.investor.gov/introduction-investing/getting-started/asset-allocation)
+- [Investor.gov: market and limit orders](https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-14)
+- [Investor.gov: time horizon, risk, and diversification](https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset)
 
 ## 4. Onboarding recommendations
 
@@ -52,9 +58,9 @@ Home uses this deterministic priority among implemented lessons:
 3. First incomplete lesson in the recommended starting module.
 4. First incomplete lesson in curriculum order; if everything available is completed, offer review.
 
-Equal timestamps use curriculum order. Unknown or upcoming lesson progress is ignored. Rule 2 keeps an existing Returns learner moving through Returns after explicit completion, even if recomputation now recommends Foundations. When the four available Foundations lessons are finished, Returns becomes the next available learning.
+Equal timestamps use curriculum order. Unknown or upcoming lesson progress is ignored. Rule 2 keeps an existing Returns learner moving through Returns after explicit completion, even if recomputation now recommends Foundations. When the six available Foundations lessons are finished, Returns becomes the next available learning.
 
-Home's path preview follows the selected module, and recent completion links use each lesson's actual module. Learn presents a sequential journey with START HERE, Foundations, THEN Returns & Compounding, and upcoming topic areas. Progress shows both modules separately and seven available lessons overall. The module and completion screens count four available Foundations lessons and three available Returns lessons, with upcoming counts explicitly separated. No planned curriculum percentage, XP, streak, or other fabricated completion data is displayed.
+Home's path preview follows the selected module, and recent completion links use each lesson's actual module. Learn presents a sequential journey with START HERE, Foundations, THEN Returns & Compounding, and upcoming topic areas. Progress shows both modules separately and nine available lessons overall. The module and completion screens count six available Foundations lessons and three available Returns lessons, with upcoming counts explicitly separated. No planned curriculum percentage, XP, streak, or other fabricated completion data is displayed.
 
 ## 6. Persistence, migration, and rollout
 
@@ -69,11 +75,11 @@ npm run db:migrate
 npm run db:seed
 ```
 
-The local migration was applied and the seed executed twice. The seed transaction upserts stable module/lesson IDs, reorders Foundations before Returns, and leaves user progress untouched. Validation confirmed exactly eight Foundations rows with three published lessons. No remote deployment or push was performed.
+The local migration was applied and the seed executed again. The seed transaction upserts stable module/lesson IDs, reorders Foundations before Returns, and leaves user progress untouched. Validation confirmed exactly eight Foundations rows with six published lessons. No remote deployment or push was performed.
 
 ## 7. Responsive and accessibility validation
 
-Chrome browser validation covers 320, 375, 390, 768, 1024, and 1440px. Assertions cover module paths, the lesson runner, growth/ownership/market-cap interactions, formulas, ETF visual, completion, Home/Learn/Progress, no horizontal overflow, one page heading, and actions reachable at the bottom of the page. Existing Returns suites also cover interactive charts and their data fallbacks.
+Chrome browser validation covers 320, 375, 390, 768, 1024, and 1440px. Assertions cover module paths, the lesson runner, growth/ownership/market-cap, bond, market, liquidity, risk-range, drawdown, diversification, and horizon interactions; completion; Home/Learn/Progress; no horizontal overflow; one page heading; and actions reachable at the bottom of the page. Existing Returns suites also cover interactive charts and their data fallbacks.
 
 Keyboard tests use Space, arrow keys, Tab, and Enter; verify focus moving from Check to feedback Continue and then to the next step heading; and verify focus returns to retry actions after failed persistence. Inputs have labels and associated validation errors. Reduced-motion preference is exercised. Mobile and desktop screenshots were visually inspected, including 320px calculator values and the ETF visual.
 
@@ -85,7 +91,7 @@ Passed on 2026-09-09:
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm test` — 152 tests in 18 files.
+- `npm test` — 179 tests in 18 files.
 - `npm run build` — optimized Next.js build succeeded.
 - `BROWSER_CHANNEL=chrome node scripts/validate-foundations.mjs`
 - `BROWSER_CHANNEL=chrome node scripts/validate-onboarding.mjs`
@@ -93,11 +99,11 @@ Passed on 2026-09-09:
 - `BROWSER_CHANNEL=chrome node scripts/validate-product-migration.mjs`
 - `BROWSER_CHANNEL=chrome node scripts/validate-design-system.mjs`
 
-Browser flows use real local signup, sessions, server actions, and PostgreSQL. Foundations validation completes all three lessons, edits and invalidates calculator inputs, retries failed cursor/completion writes, refreshes saved steps, follows next-lesson links, signs out/in, checks review invariance, simulates a legacy completed profile, and verifies active Returns continuity. Disposable accounts and their cascading data are removed in `finally` blocks. Screenshots remain under `/tmp/investi-foundations-qa` and the existing suites' temporary directories; they are not committed.
+Browser flows use real local signup, sessions, server actions, and PostgreSQL. Foundations validation completes all six lessons, edits and invalidates calculator inputs, retries failed cursor/completion writes, refreshes saved steps (including Markets), follows next-lesson links, signs out/in, checks review invariance for the new lessons, simulates a legacy completed profile, and verifies active Returns continuity. Disposable accounts and their cascading data are removed in `finally` blocks. Screenshots remain under `/tmp/investi-foundations-qa` and the existing suites' temporary directories; they are not committed.
 
 ## 9. Known limitations
 
-Only Foundations Lessons 1–3 are implemented. Answers and explorer inputs remain transient and reset on refresh, matching the existing runner; the saved cursor and completion persist. Growth values are deterministic nominal illustrations, not simulated or forecast market paths. The ownership/market-cap examples assume a single class with equal ownership per share. Fees are explained but not calculated.
+Only Foundations Lessons 1–6 are implemented. Answers and explorer inputs remain transient and reset on refresh, matching the existing runner; the saved cursor and completion persist. Market quotes and risk scenarios are deterministic illustrations, not live data or forecasts. The ownership/market-cap examples assume a single class with equal ownership per share. Fees are explained but not calculated.
 
 Browser automation ran against local Next.js development using installed Chrome; the production build was validated separately. Safari, Firefox, physical mobile devices, and screen-reader hardware were not tested. No out-of-scope investing modules, gamification backend, market data, or AI tutor were introduced.
 
