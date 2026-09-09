@@ -5,7 +5,7 @@ type BaseBlock = { id: string };
 export type LessonBlock =
   | (BaseBlock & { type: "heading"; title: string; body?: string })
   | (BaseBlock & { type: "paragraph"; content: string })
-  | (BaseBlock & { type: "formula"; expression: string; variables: { symbol: string; description: string }[] })
+  | (BaseBlock & { type: "formula"; expression: string; latex?: string; variables: { symbol: string; description: string }[] })
   | (BaseBlock & { type: "workedExample"; title: string; introduction?: string; steps: { label: string; value: string; emphasis?: boolean }[]; conclusion: string })
   | (BaseBlock & { type: "conceptCallout"; title: string; content: string })
   | (BaseBlock & { type: "interactiveFigure"; figure: "return-calculator" | "price-series-explorer" | "compounding-explorer" | "recovery-explorer"; title: string; description: string })

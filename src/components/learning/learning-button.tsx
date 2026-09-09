@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ const variants = cva(
     ghost: "border-transparent bg-transparent text-ql-link hover:bg-ql-subtle",
   } }, defaultVariants: { variant: "primary" } },
 );
-export type LearningButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof variants> & { loading?: boolean };
+export type LearningButtonProps = ComponentProps<"button"> & VariantProps<typeof variants> & { loading?: boolean };
 export function LearningButton({ variant, loading = false, disabled, className, children, type = "button", ...props }: LearningButtonProps) {
   return <button {...props} type={type} disabled={disabled || loading} aria-busy={loading || undefined} className={cn(variants({ variant }), className)}>
     {loading ? <span aria-hidden="true" className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" /> : null}

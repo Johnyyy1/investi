@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BookOpen, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usesLearningShell } from "@/features/lessons/returns/compounding-flow";
 
 type AppShellProps = { children: React.ReactNode; userName: string };
 const navigation = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/learn", label: "Learn", icon: BookOpen }];
 
 export function AppShell({ children, userName }: AppShellProps) {
+  const pathname = usePathname();
+  if (usesLearningShell(pathname)) return children;
   return <div className="min-h-screen bg-background lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
     <aside className="hidden border-r border-line bg-surface lg:flex lg:flex-col">
       <div className="border-b border-line px-7 py-7"><Link href="/dashboard" className="text-base font-semibold tracking-[-0.04em]">Quantlearn</Link><p className="mt-1 text-xs text-muted">Quantitative finance, clearly.</p></div>
