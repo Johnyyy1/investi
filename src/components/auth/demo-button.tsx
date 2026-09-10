@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CirclePlay } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { LearningButton } from "@/components/learning/learning-button";
 
-export function DemoButton() {
+export function DemoButton({ compact = false, className, buttonClassName }: { compact?: boolean; className?: string; buttonClassName?: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   const router = useRouter();
@@ -21,9 +21,9 @@ export function DemoButton() {
       router.replace("/learn"); router.refresh();
     } catch { setError("We couldn’t open the demo. Please try again."); setPending(false); }
   }
-  return <div className="mt-6 border-t border-ql-border pt-6">
-    <LearningButton variant="secondary" loading={pending} onClick={() => void explore()} className="w-full">{pending ? "Opening demo…" : "Explore demo"}<ArrowRight aria-hidden="true" className="size-4" /></LearningButton>
-    <p className="mt-3 text-center text-ql-small text-ql-secondary">Jump in with a private practice profile.</p>
+  return <div className={className ?? "mt-6 border-t border-ql-border pt-6"}>
+    <LearningButton variant="secondary" loading={pending} onClick={() => void explore()} className={buttonClassName ?? "w-full"}>{compact && !pending && <CirclePlay aria-hidden="true" />}{pending ? "Opening demo…" : "Explore demo"}{!compact && <ArrowRight aria-hidden="true" className="size-4" />}</LearningButton>
+    {!compact && <p className="mt-3 text-center text-ql-small text-ql-secondary">Jump in with a private practice profile.</p>}
     {error && <p role="alert" className="mt-3 text-ql-small text-ql-danger-ink">{error}</p>}
   </div>;
 }
