@@ -31,13 +31,25 @@ async function layout(page, width, enlarged) {
     const hero = document.querySelector("main > section").getBoundingClientRect();
     const content = document.querySelector("h1").parentElement.getBoundingClientRect();
     const artwork = document.querySelector("[data-asset-state]").getBoundingClientRect();
-    const scene = document.querySelectorAll("main > section")[1].getBoundingClientRect();
+    const sections = [...document.querySelectorAll("main > section")];
+    const scene = sections[1].getBoundingClientRect();
+    const how = sections[2];
+    const lab = sections[3];
+    const howTitle = how.querySelector("h2").getBoundingClientRect();
+    const howPhone = how.querySelector('[role="img"]').getBoundingClientRect();
+    const howFeatures = [...how.querySelectorAll("h3")]
+      .filter((heading) => !heading.closest('[role="img"]'))
+      .map((heading) => heading.parentElement.getBoundingClientRect());
+    const labCopy = lab.querySelector("h2").parentElement.getBoundingClientRect();
+    const labDemo = lab.querySelector('[role="img"]').getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth > innerWidth,
       heroGap: Math.round(scene.top - hero.bottom),
       split: artwork.left > content.left + content.width * 0.75 && artwork.top < content.bottom,
       stacked: artwork.top >= content.bottom && Math.abs(artwork.left + artwork.width / 2 - innerWidth / 2) < 4,
       artworkWidth: Math.round(artwork.width),
+      howMobileOrder: howTitle.bottom <= howPhone.top + 1 && howPhone.bottom <= howFeatures[0].top + 1 && howFeatures[0].bottom <= howFeatures[1].top + 1,
+      labStacked: labDemo.top >= labCopy.bottom - 1,
       clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button")].some((el) => {
         const css = getComputedStyle(el);
         // Display-font descenders can exceed the line box without being clipped.
@@ -51,6 +63,8 @@ async function layout(page, width, enlarged) {
   assert.ok(Math.abs(dimensions.heroGap) <= 1, `Hero meets journey section: ${width}, enlarged=${enlarged}`);
   assert.equal(width >= 920 ? dimensions.split : dimensions.stacked, true, `Responsive hero composition: ${width}, enlarged=${enlarged}`);
   assert.ok(dimensions.artworkWidth >= (width <= 390 ? 280 : 430), `Mascot remains visually meaningful: ${width}, enlarged=${enlarged}`);
+  if (width <= 620) assert.equal(dimensions.howMobileOrder, true, `Walkthrough mobile order: ${width}, enlarged=${enlarged}`);
+  if (width <= 1024 || enlarged) assert.equal(dimensions.labStacked, true, `Portfolio showcase stacks when space is limited: ${width}, enlarged=${enlarged}`);
   await page.screenshot({ path: `${output}/landing-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
   if (width <= 1100) {
     const menu = page.getByLabel("Navigation menu");
@@ -71,8 +85,18 @@ try {
   assert.equal(await page.title(), "Learn investing by doing · investi");
   assert.equal(await page.locator("h1").count(), 1);
   assert.equal(await page.locator("h1").innerText(), "Learn investing\nby doing.");
-  assert.equal(await page.locator("main > section").count(), 2, "Stops after Phase 1");
+  assert.equal(await page.locator("main > section").count(), 4, "Includes the two new product showcase sections");
   assert.deepEqual(await page.locator("article h3").allTextContents(), ["Learn", "Build", "Backtest"]);
+  assert.deepEqual(await page.locator("main > section h2").allTextContents(), [
+    "Learn. Build. Backtest.",
+    "How does Investi work?",
+    "Don’t just read about diversification. Break a portfolio.",
+  ]);
+  assert.equal(await page.getByRole("img", { name: "Investi lesson screen explaining what a stock is" }).count(), 1);
+  assert.equal(await page.getByRole("img", { name: /Portfolio Lab example with 60 percent stocks/ }).count(), 1);
+  for (const removed of ["Knowledge today", "Opportunity tomorrow", "Different choices", "Real outcomes"]) {
+    assert.equal(await page.getByText(removed, { exact: false }).count(), 0, `Removed handwritten copy: ${removed}`);
+  }
   assert.equal(await page.locator("[data-asset-state]").getAttribute("data-asset-state"), "ready");
   assert.equal(await page.locator("[data-asset-state] img").getAttribute("src").then((src) => src.includes("mascot-hero.webp")), true, "Approved mascot is used");
   assert.equal(await page.locator("[data-asset-state] img").getAttribute("alt"), "", "Decorative mascot has empty alt text");
@@ -112,7 +136,7 @@ try {
   await page.getByRole("link", { name: "Sign in", exact: true }).first().click();
   await page.waitForURL("**/sign-in");
   await page.getByRole("heading", { name: "Welcome back" }).waitFor();
-  checks.push("Metadata, one H1, two sections only, skip link, reduced motion, existing signup and sign-in");
+  checks.push("Metadata, one H1, four semantic sections, accessible product visuals, removed handwritten copy, skip link, reduced motion, existing signup and sign-in");
 
   await page.goto(baseURL);
   await page.setViewportSize({ width: 390, height: 1000 });

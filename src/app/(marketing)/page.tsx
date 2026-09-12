@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { Hero } from "@/components/marketing/hero";
 import { JourneyIntro } from "@/components/marketing/journey-intro";
+import { ProductShowcases } from "@/components/marketing/product-showcases";
 import styles from "@/components/marketing/marketing.module.css";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function MarketingPage() {
     <main id="main" tabIndex={-1}>
       <Hero />
       <JourneyIntro />
+      <ProductShowcases />
     </main>
   </>;
 }
