@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
   Building2,
   Coins,
   GraduationCap,
@@ -35,9 +34,9 @@ function LessonPhone() {
         <Share2 />
       </div>
       <div className={styles.phoneScreenContent}>
-        <p className={styles.phoneKicker}>INVESTING FOUNDATIONS</p>
+        <p className={styles.phoneKicker}>Lesson 1 of 6</p>
         <h3>What is a stock?</h3>
-        <p className={styles.phoneDefinition}>A stock represents a small ownership in a real company.</p>
+        <p className={styles.phoneDefinition}>A stock represents a small ownership in a real company. When the company grows, your share can grow in value too.</p>
         <div className={styles.lessonVisual}>
           <span className={styles.lessonBuilding}><Building2 /></span>
           <div>
@@ -45,10 +44,6 @@ function LessonPhone() {
             <strong>A slice of the company</strong>
           </div>
           <span className={styles.lessonPlay}><Play fill="currentColor" /></span>
-        </div>
-        <div className={styles.lessonInsight}>
-          <BookOpen />
-          <p>When the company grows, your share can grow in value too.</p>
         </div>
         <div className={styles.lessonProgress}>
           <span><i /></span>
@@ -68,7 +63,7 @@ function ProductFeature({ kind }: { kind: "learn" | "use" }) {
     <h3>{learn ? "Learn in minutes" : "Actually use it"}</h3>
     <p>{learn
       ? "Clear, interactive lessons that make investing simple."
-      : "Apply what you learn with real tools and live market data."}</p>
+      : "Apply what you learn with real tools and market data."}</p>
   </div>;
 }
 
@@ -129,8 +124,8 @@ export function ProductShowcases() {
     <section aria-labelledby="how-it-works-title" className={styles.howWorks}>
       <h2 id="how-it-works-title" className={styles.howWorksTitle}>How does Investi work?</h2>
       <div className={`${styles.container} ${styles.howWorksGrid}`}>
-        <ProductFeature kind="learn" />
         <div className={styles.phoneStage}><LessonPhone /></div>
+        <ProductFeature kind="learn" />
         <ProductFeature kind="use" />
       </div>
     </section>

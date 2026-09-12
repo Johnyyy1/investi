@@ -203,59 +203,54 @@
 .howWorks {
   position: relative;
   isolation: isolate;
-  padding: 94px 0 112px;
-  background:
-    radial-gradient(circle at 50% 43%, rgb(255 255 255 / 82%) 0 13%, transparent 38%),
-    linear-gradient(180deg, #eef7ff 0%, #e8f3ff 54%, #f4f9ff 100%);
+  height: max(480px, 29rem);
+  overflow: hidden;
+  background: #eef7ff;
 }
-.howWorks::before, .howWorks::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.howWorks::before { width: 420px; height: 420px; top: 24%; left: -260px; background: rgb(120 190 255 / 12%); }
-.howWorks::after { width: 500px; height: 500px; right: -320px; bottom: -180px; background: rgb(117 212 190 / 9%); }
 .howWorksTitle {
-  position: relative;
+  position: absolute;
   z-index: 0;
-  width: min(100% - 48px);
-  margin: 0 auto -28px;
-  color: #c8e2fb;
-  font: 800 clamp(4.25rem, 7vw, 7.1rem)/.92 var(--font-marketing-display), sans-serif;
+  top: 25px;
+  left: 50%;
+  width: calc(100% - 48px);
+  margin: 0;
+  color: #cae4fd;
+  font: 800 clamp(5.75rem, 8vw, 7.5rem)/.9 var(--font-marketing-display), sans-serif;
   letter-spacing: -.06em;
   text-align: center;
   text-wrap: balance;
+  transform: translateX(-50%);
 }
 .howWorksGrid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(190px, 1fr) minmax(270px, 350px) minmax(190px, 1fr);
-  gap: clamp(34px, 5vw, 78px);
-  align-items: center;
+  grid-template-areas: "learn phone use";
+  grid-template-columns: minmax(190px, 1fr) clamp(300px, 23vw, 350px) minmax(190px, 1fr);
+  height: 100%;
+  gap: clamp(28px, 4.25vw, 64px);
+  align-items: start;
 }
-.howFeature { max-width: 300px; }
-.howFeatureLearn { justify-self: end; }
-.howFeatureUse { justify-self: start; }
+.howFeature { width: min(100%, 280px); margin-top: 193px; }
+.howFeatureLearn { grid-area: learn; justify-self: end; }
+.howFeatureUse { grid-area: use; justify-self: start; }
 .howFeatureIcon {
   display: flex;
-  width: 74px;
-  height: 74px;
+  width: 88px;
+  height: 88px;
   align-items: center;
   justify-content: center;
   border: 1px solid rgb(255 255 255 / 84%);
   border-radius: 50%;
   color: var(--deep-blue);
-  background: linear-gradient(145deg, rgb(255 255 255 / 88%), rgb(204 231 255 / 92%));
-  box-shadow: inset 0 1px 0 #fff, 0 13px 26px rgb(56 111 167 / 10%);
+  background: rgb(220 239 255 / 92%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 88%), 0 12px 24px rgb(56 111 167 / 8%);
 }
-.howFeatureIcon svg { width: 34px; height: 34px; stroke-width: 2.4; }
-.howFeature h3 { margin: 25px 0 0; font: 800 clamp(1.8rem, 2.35vw, 2.2rem)/1.04 var(--font-marketing-display), sans-serif; letter-spacing: -.04em; }
-.howFeature p { max-width: 285px; margin-top: 13px; color: #506a83; font-size: 1.05rem; line-height: 1.55; }
-.phoneStage { min-width: 0; justify-self: center; padding: 0 0 9px; }
-.lessonPhone { width: min(100%, 340px); margin-inline: auto; }
+.howFeatureIcon svg { width: 39px; height: 39px; stroke-width: 2.45; }
+.howFeature h3 { margin: 20px 0 0; font: 800 clamp(1.9rem, 2.35vw, 2.25rem)/1.04 var(--font-marketing-display), sans-serif; letter-spacing: -.04em; }
+.howFeature p { max-width: 280px; margin: 12px 0 0; color: #526d86; font-size: 1.08rem; line-height: 1.48; }
+.phoneStage { grid-area: phone; min-width: 0; width: 100%; justify-self: center; margin-top: 44px; }
+.lessonPhone { width: 100%; margin-inline: auto; }
 .phoneHardware {
   position: relative;
   display: flex;
@@ -303,7 +298,7 @@
   border-radius: 0 0 39px 39px;
   color: #102a47;
 }
-.phoneKicker { margin: 0 0 8px; color: #4679c7; font: 800 9px/1.25 var(--font-learning), sans-serif; letter-spacing: .09em; }
+.phoneKicker { margin: 0 0 8px; color: #62768a; font: 800 9px/1.25 var(--font-learning), sans-serif; letter-spacing: .03em; }
 .phoneScreenContent h3 { margin: 0; font: 800 25px/1.05 var(--font-marketing-display), sans-serif; letter-spacing: -.04em; }
 .phoneDefinition { margin: 9px 0 0; color: #62768a; font: 700 12px/1.42 var(--font-learning), sans-serif; }
 .lessonVisual {
@@ -327,10 +322,7 @@
 .lessonFraction { color: #4f6d89; font: 800 9px/1.2 var(--font-learning), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .lessonPlay { position: absolute; z-index: 1; right: 12px; bottom: 12px; display: flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 50%; color: #fff; background: linear-gradient(145deg, #3b8ff7, #1f64df); box-shadow: 0 7px 14px rgb(30 91 202 / 24%); }
 .lessonPlay svg { width: 14px; height: 14px; margin-left: 2px; }
-.lessonInsight { display: grid; grid-template-columns: 29px 1fr; gap: 10px; align-items: center; margin-top: 12px; padding: 10px 12px; border-radius: 14px; color: #3d5f78; background: #f5f9fd; }
-.lessonInsight svg { width: 19px; height: 19px; color: #3774d4; }
-.lessonInsight p { margin: 0; font: 700 10px/1.35 var(--font-learning), sans-serif; }
-.lessonProgress { display: grid; grid-template-columns: 1fr auto; gap: 9px; align-items: center; margin-top: auto; padding-top: 13px; }
+.lessonProgress { display: grid; grid-template-columns: 1fr auto; gap: 9px; align-items: center; margin-top: 15px; }
 .lessonProgress > span { height: 6px; overflow: hidden; border-radius: 999px; background: #e2eaf3; }
 .lessonProgress i { display: block; width: 20%; height: 100%; border-radius: inherit; background: #2d7bef; }
 .lessonProgress small { color: #7890a5; font: 800 9px/1 var(--font-learning), sans-serif; }
@@ -483,13 +475,13 @@
   .heroTitle { font-size: clamp(4rem, 9.5vw, 5rem); }
   .heroVisual { width: min(700px, 100%); margin: 18px auto 0; }
   .journeyShell { transform: translateY(-32px); margin-bottom: -32px; }
-  .howWorks { padding: 82px 0 100px; }
-  .howWorksTitle { width: calc(100% - 48px); margin-bottom: 46px; font-size: clamp(3.9rem, 10vw, 5.4rem); }
+  .howWorks { height: auto; padding: 64px 0 86px; }
+  .howWorksTitle { position: relative; top: auto; left: auto; width: calc(100% - 48px); margin: 0 auto 42px; font-size: clamp(3.9rem, 10vw, 5.4rem); transform: none; }
   .howWorksGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "phone phone" "learn use"; gap: 46px 64px; }
-  .phoneStage { grid-area: phone; width: min(100%, 325px); }
+  .phoneStage { grid-area: phone; width: min(100%, 325px); margin-top: 0; }
   .howFeatureLearn { grid-area: learn; justify-self: end; }
   .howFeatureUse { grid-area: use; justify-self: start; }
-  .howFeature { width: min(100%, 300px); text-align: center; }
+  .howFeature { width: min(100%, 300px); margin-top: 0; text-align: center; }
   .howFeatureIcon { margin-inline: auto; }
   .portfolioShowcase { padding: 100px 0 108px; }
   .portfolioShowcaseLayout { gap: 56px; }
@@ -533,7 +525,7 @@
   .cardStage1 { --card-angle: -1.2deg; --active-angle: -.25deg; }
   .cardStage2 { --card-angle: .9deg; --active-angle: .2deg; }
   .cardStage3 { --card-angle: -.75deg; --active-angle: -.15deg; }
-  .howWorks { padding: 68px 0 84px; }
+  .howWorks { padding: 58px 0 76px; }
   .howWorksTitle { width: calc(100% - 32px); margin-bottom: 39px; font-size: clamp(3rem, 14vw, 4.25rem); line-height: .97; }
   .howWorksGrid { gap: 40px 32px; }
   .howFeature h3 { font-size: 1.75rem; }
