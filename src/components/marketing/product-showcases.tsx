@@ -23,33 +23,37 @@ const chartBars = [24, 38, 54, 72, 86, 82, 66, 51, 36, 22];
 function LessonPhone() {
   return <div className={styles.lessonPhone} role="img" aria-label="Investi lesson screen explaining what a stock is">
     <div className={styles.phoneHardware} aria-hidden="true">
-      <div className={styles.phoneStatus}>
-        <span>9:41</span>
-        <span className={styles.phoneIsland} />
-        <span className={styles.phoneSignal}>● ▰</span>
-      </div>
-      <div className={styles.phoneAppBar}>
-        <ArrowLeft />
-        <span>Lesson 1 of 6</span>
-        <Share2 />
-      </div>
-      <div className={styles.phoneScreenContent}>
-        <p className={styles.phoneKicker}>Lesson 1 of 6</p>
-        <h3>What is a stock?</h3>
-        <p className={styles.phoneDefinition}>A stock represents a small ownership in a real company. When the company grows, your share can grow in value too.</p>
-        <div className={styles.lessonVisual}>
-          <span className={styles.lessonBuilding}><Building2 /></span>
-          <div>
-            <span className={styles.lessonFraction}>1 share</span>
-            <strong>A slice of the company</strong>
+      <div className={styles.phoneScreen}>
+        <div className={styles.phoneStatus}>
+          <span>9:41</span>
+          <span className={styles.phoneIsland} />
+          <span className={styles.phoneSignal}>● ▰</span>
+        </div>
+        <div className={styles.phoneAppBar}>
+          <ArrowLeft />
+          <span>Lesson 1 of 6</span>
+          <Share2 />
+        </div>
+        <div className={styles.phoneScreenContent}>
+          <p className={styles.phoneKicker}>Lesson 1 of 6</p>
+          <h3>What is a stock?</h3>
+          <p className={styles.phoneDefinition}>A stock represents a small ownership in a real company. When the company grows, your share can grow in value too.</p>
+          <div className={styles.lessonVisual}>
+            <div className={styles.lessonIllustration}>
+              <span className={styles.lessonBuilding}><Building2 /></span>
+              <span className={styles.lessonSlice}>
+                <span className={styles.lessonFraction}>1 share</span>
+                <strong>A slice of the company</strong>
+              </span>
+            </div>
+            <span className={styles.lessonPlay}><Play fill="currentColor" /></span>
           </div>
-          <span className={styles.lessonPlay}><Play fill="currentColor" /></span>
+          <div className={styles.lessonProgress}>
+            <span><i /></span>
+            <small>1 of 6</small>
+          </div>
+          <span className={styles.lessonNext}>Next lesson <ArrowRight /></span>
         </div>
-        <div className={styles.lessonProgress}>
-          <span><i /></span>
-          <small>1 of 6</small>
-        </div>
-        <span className={styles.lessonNext}>Next lesson <ArrowRight /></span>
       </div>
     </div>
   </div>;
