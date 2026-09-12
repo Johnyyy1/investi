@@ -6,7 +6,6 @@
   --pale-blue: #dff2ff;
   --green: #42c98a;
   --warm-accent: #ffb85c;
-  --pie-overlap: 170px;
   background: var(--warm-white);
   color: var(--navy);
   min-height: 100vh;
@@ -31,17 +30,26 @@
 .primaryButton:hover { background: var(--pale-blue); }
 .headerActions .button { min-height: 50px; padding: 11px 24px; }
 .mobileMenu { display: none; }
-.hero { position: relative; z-index: 1; padding-top: 90px; text-align: center; }
-.heroTitle { max-width: 850px; margin: 0 auto; font: 800 5.5rem/.98 var(--font-marketing-display), sans-serif; letter-spacing: -.045em; }
+.hero { position: relative; z-index: 1; overflow: clip; padding-block: 50px 28px; }
+.heroLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; min-height: 490px; }
+.heroContent { position: relative; z-index: 2; padding: 12px 0 34px; }
+.heroTitle { max-width: 620px; margin: 0; font: 800 5.25rem/.96 var(--font-marketing-display), sans-serif; letter-spacing: -.05em; }
 .heroTitle span { display: block; }
 .heroTitle span + span { color: var(--deep-blue); }
-.heroCopy { max-width: 700px; margin: 30px auto 0; font-size: 1.3125rem; line-height: 1.5; color: #526a80; }
-.heroActions { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 16px; margin-top: 30px; }
+.heroCopy { max-width: 610px; margin: 28px 0 0; font-size: 1.25rem; line-height: 1.5; color: #526a80; }
+.heroActions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin-top: 28px; }
 .demo { max-width: 100%; }
 .demo > p { max-width: 240px; }
 .demoButton { background: transparent; color: var(--deep-blue); border: 1px solid var(--deep-blue); min-height: 56px; box-shadow: none; }
 .demoButton:hover { background: var(--pale-blue); }
-.portfolioPie { position: relative; z-index: 2; width: 410px; max-width: 100%; aspect-ratio: 1; margin: 24px auto calc(-1 * var(--pie-overlap)); }
+.heroVisual { position: relative; z-index: 1; width: min(710px, 52vw); justify-self: center; }
+.heroVisual::before { content: ""; position: absolute; z-index: -1; inset: -12% -5% -8% -10%; background: radial-gradient(ellipse at 57% 44%, rgb(223 242 255 / 82%) 0%, rgb(211 246 233 / 62%) 46%, rgb(248 246 240 / 0%) 76%); pointer-events: none; }
+.heroImage { display: block; width: 100%; height: auto; object-fit: contain; }
+.heroAnnotation { position: absolute; z-index: 2; color: var(--deep-blue); font-family: var(--font-marketing-handwritten), "Caveat", "Chalkboard SE", "Comic Sans MS", cursive; font-size: 1.45rem; line-height: 1.02; font-weight: 700; text-align: center; pointer-events: none; user-select: none; }
+.heroAnnotation span { display: block; }
+.heroAnnotation svg { display: block; margin-inline: auto; }
+.heroAnnotationLeft { top: 5%; left: 27%; transform: translateX(-100%) rotate(-7deg); }
+.heroAnnotationRight { top: 5%; right: 8%; transform: translateX(35%) rotate(6deg); }
 .pieImage { object-fit: contain; }
 
 /* Handwritten Annotations around Pie */
@@ -54,7 +62,7 @@
 .pieAnnotationRight { left: calc(100% + 20px); top: 56px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; transform: rotate(6deg); }
 .arrowRight { margin-top: 6px; margin-left: 10px; color: var(--deep-blue); }
 
-.journey { background: var(--blue); padding-block: 185px 56px; }
+.journey { background: var(--blue); padding-block: 56px; }
 .journeyLayout { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
 .journeyCopy { max-width: 540px; }
 .eyebrow { margin: 0 0 18px; color: color-mix(in srgb, var(--navy) 90%, black); font-size: .875rem; line-height: 1.5; font-weight: 800; letter-spacing: .09em; }
@@ -84,6 +92,9 @@
 @media (max-width: 1200px) {
   .container { width: calc(100% - 96px); }
   .desktopNav { gap: 20px; }
+  .heroTitle { font-size: 4.5rem; }
+  .heroCopy { font-size: 1.1875rem; }
+  .heroAnnotation { display: none; }
   .journeyLayout { gap: 36px; }
   .journeyCopy h2 { font-size: 3.125rem; }
   .panel { padding: 20px 22px; gap: 16px; }
@@ -101,11 +112,10 @@
   .mobileMenu nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 12px; font-weight: 700; }
   .mobileMenu nav a:hover { background: var(--pale-blue); }
   .mobileMenu nav svg { width: 20px; flex-shrink: 0; }
-  .hero { padding-top: 76px; }
-  .heroTitle { font-size: 4.5rem; }
-  .portfolioPie { width: 340px; margin-top: 24px; }
-  .marketing { --pie-overlap: 135px; }
-  .journey { padding-block: 155px 48px; }
+  .hero { padding-top: 40px; }
+  .heroLayout { min-height: 450px; }
+  .heroTitle { font-size: 4.25rem; }
+  .journey { padding-block: 48px; }
   .journeyLayout { grid-template-columns: 1fr; gap: 40px; }
   .journeyCopy { max-width: 620px; }
   .journeyCopy h2 { font-size: 3.5rem; text-wrap: initial; }
@@ -115,31 +125,33 @@
   .buildPanel { width: min(100%, 370px); margin-top: -6px; }
   .backtestPanel { width: min(100%, 390px); flex-basis: 390px; margin-top: -4px; }
   .backtestRow { justify-content: center; }
-  .pieAnnotationLeft { right: calc(100% + 8px); top: 40px; transform: rotate(-6deg) scale(0.88); }
-  .pieAnnotationRight { left: calc(100% + 8px); top: 50px; transform: rotate(5deg) scale(0.88); }
 }
-@media (max-width: 900px) {
+@media (max-width: 919px) {
   .container { width: calc(100% - 48px); }
-  .heroTitle { font-size: 4rem; }
+  .hero { padding-block: 48px 18px; }
+  .heroLayout { grid-template-columns: 1fr; min-height: 0; }
+  .heroContent { width: min(100%, 670px); padding: 0; }
+  .heroTitle { font-size: 4.5rem; }
+  .heroCopy { max-width: 650px; }
+  .heroVisual { width: min(700px, 100%); margin: 20px auto 0; }
   .journeyCopy h2 { font-size: 3.125rem; }
 }
 @media (max-width: 767px) {
-  .marketing { --pie-overlap: 100px; }
   .container { width: calc(100% - 40px); }
   .header { min-height: 80px; gap: 12px; }
   .headerActions { display: none; }
   .logo { font-size: 2rem; }
-  .hero { padding-top: 56px; }
+  .hero { padding-block: 34px 12px; }
   .heroTitle { font-size: 3rem; line-height: 1.02; letter-spacing: -.05em; }
-  .heroCopy { font-size: 1.125rem; margin-top: 26px; }
+  .heroCopy { font-size: 1.125rem; margin-top: 24px; }
   .desktopBreak { display: none; }
-  .heroActions { flex-direction: column; align-items: center; gap: 12px; margin-top: 28px; }
-  .heroActions > a, .demo { width: min(100%, 290px); }
+  .heroActions { flex-direction: column; align-items: stretch; gap: 12px; margin-top: 26px; }
+  .heroActions > a, .demo { width: min(100%, 310px); }
   .demoButton { width: 100%; }
   .demo > p { max-width: none; }
-  .portfolioPie { width: 260px; margin-top: 30px; }
+  .heroVisual { width: calc(100% + 16px); margin: 18px -8px 0; }
   .pieAnnotation { display: none; }
-  .journey { padding-block: 120px 44px; }
+  .journey { padding-block: 44px; }
   .journeyLayout { gap: 32px; }
   .eyebrow { font-size: .875rem; letter-spacing: .055em; margin-bottom: 18px; }
   .journeyCopy h2 { font-size: 2.625rem; line-height: 1.05; }
@@ -159,6 +171,7 @@
 }
 @media (max-width: 359px) {
   .heroTitle { font-size: 2.75rem; }
+  .heroVisual { width: calc(100% + 24px); margin-inline: -12px; }
   .panel { padding: 18px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -28,12 +28,16 @@ async function layout(page, width, enlarged) {
   await page.evaluate((large) => { document.documentElement.style.fontSize = large ? "200%" : ""; window.scrollTo(0, 0); }, enlarged);
   await page.locator("[data-asset-state] img").evaluate((img) => img.decode());
   const dimensions = await page.evaluate(() => {
-    const pie = document.querySelector("[data-asset-state]").getBoundingClientRect();
+    const hero = document.querySelector("main > section").getBoundingClientRect();
+    const content = document.querySelector("h1").parentElement.getBoundingClientRect();
+    const artwork = document.querySelector("[data-asset-state]").getBoundingClientRect();
     const scene = document.querySelectorAll("main > section")[1].getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth > innerWidth,
-      overlap: Math.round(pie.bottom - scene.top),
-      pieWidth: Math.round(pie.width),
+      heroGap: Math.round(scene.top - hero.bottom),
+      split: artwork.left > content.left + content.width * 0.75 && artwork.top < content.bottom,
+      stacked: artwork.top >= content.bottom && Math.abs(artwork.left + artwork.width / 2 - innerWidth / 2) < 4,
+      artworkWidth: Math.round(artwork.width),
       clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button")].some((el) => {
         const css = getComputedStyle(el);
         // Display-font descenders can exceed the line box without being clipped.
@@ -44,8 +48,9 @@ async function layout(page, width, enlarged) {
   });
   assert.equal(dimensions.overflow, false, `No overflow: ${width}, enlarged=${enlarged}`);
   assert.equal(dimensions.clipped, false, `No clipped text: ${width}, enlarged=${enlarged}`);
-  assert.equal(dimensions.overlap, width < 768 ? 100 : width <= 1100 ? 135 : 170);
-  assert.equal(dimensions.pieWidth, width < 768 ? 260 : width <= 1100 ? 340 : 410);
+  assert.ok(Math.abs(dimensions.heroGap) <= 1, `Hero meets journey section: ${width}, enlarged=${enlarged}`);
+  assert.equal(width >= 920 ? dimensions.split : dimensions.stacked, true, `Responsive hero composition: ${width}, enlarged=${enlarged}`);
+  assert.ok(dimensions.artworkWidth >= (width <= 390 ? 280 : 430), `Mascot remains visually meaningful: ${width}, enlarged=${enlarged}`);
   await page.screenshot({ path: `${output}/landing-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
   if (width <= 1100) {
     const menu = page.getByLabel("Navigation menu");
@@ -69,7 +74,10 @@ try {
   assert.equal(await page.locator("main > section").count(), 2, "Stops after Phase 1");
   assert.deepEqual(await page.locator("article h3").allTextContents(), ["Learn", "Build", "Backtest"]);
   assert.equal(await page.locator("[data-asset-state]").getAttribute("data-asset-state"), "ready");
-  assert.equal(await page.locator("[data-asset-state] img").evaluate((img) => img.complete && img.naturalWidth > 0), true, "Portfolio artwork loads");
+  assert.equal(await page.locator("[data-asset-state] img").getAttribute("src").then((src) => src.includes("mascot-hero.webp")), true, "Approved mascot is used");
+  assert.equal(await page.locator("[data-asset-state] img").getAttribute("alt"), "", "Decorative mascot has empty alt text");
+  assert.equal(await page.locator("[data-asset-state]").getAttribute("aria-hidden"), "true", "Decorative scene stays out of the accessibility tree");
+  assert.equal(await page.locator("[data-asset-state] img").evaluate((img) => img.complete && img.naturalWidth > 0), true, "Mascot artwork loads");
   for (const text of ["A smarter", "A brighter", "Practice today.", "Invest tomorrow."]) {
     assert.equal(await page.getByText(text, { exact: false }).count(), 1);
   }
@@ -77,7 +85,7 @@ try {
     await layout(page, width, false);
     await layout(page, width, true);
   }
-  checks.push("All six widths at 100% and 200% text: no overflow/clipping; loaded pie artwork, sizes and overlap; handwritten annotations; keyboard mobile menu");
+  checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked hero; loaded mascot artwork; compact section transition; handwritten annotations; keyboard mobile menu");
   await page.evaluate(() => document.documentElement.style.fontSize = "");
   await page.setViewportSize({ width: 390, height: 1000 });
   for (const [name, path] of [["Learn", "/sign-in"], ["Portfolio Lab", "/sign-in"], ["Backtesting", "/sign-in"], ["Sign in", "/sign-in"], ["Start learning", "/sign-up"]]) {
@@ -143,7 +151,7 @@ try {
   assert.notEqual(await session(other), owner, "Separate browsers create isolated demo profiles");
   checks.push("Demo failure/retry, one-click real demo, existing-session reuse, isolated profiles, protected product routes still work");
   assert.deepEqual(errors, []);
-  await writeFile(`${output}/results.json`, JSON.stringify({ widths, checks, asset: "public/brand/portfolio-pie.webp; loaded and visually reviewed across all six widths." }, null, 2));
+  await writeFile(`${output}/results.json`, JSON.stringify({ widths, checks, asset: "public/brand/mascot-hero.webp; loaded and visually reviewed across all six widths." }, null, 2));
   console.log("PASS\n" + checks.join("\n") + `\nScreenshots: ${output}`);
 } finally {
   await browser.close();
