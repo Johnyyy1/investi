@@ -79,14 +79,14 @@ try {
   assert.equal(await page.locator("[data-asset-state]").getAttribute("aria-hidden"), "true", "Decorative scene stays out of the accessibility tree");
   assert.equal(await page.locator("[data-asset-state] img").evaluate((img) => img.complete && img.naturalWidth > 0), true, "Mascot artwork loads");
   for (const text of ["A smarter", "A brighter"]) {
-    assert.equal(await page.getByText(text, { exact: false }).count(), 1);
+    assert.equal(await page.getByText(text, { exact: false }).count(), 0);
   }
   assert.equal(await page.getByText("Same curiosity.", { exact: false }).count(), 0, "Blue scene has no handwritten callout");
   for (const width of widths) {
     await layout(page, width, false);
     await layout(page, width, true);
   }
-  checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked hero; loaded mascot artwork; compact section transition; handwritten annotations; keyboard mobile menu");
+  checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked hero; loaded mascot artwork; compact section transition; removed hero annotations; keyboard mobile menu");
   await page.evaluate(() => document.documentElement.style.fontSize = "");
   await page.setViewportSize({ width: 390, height: 1000 });
   for (const [name, path] of [["Home", "/"], ["Learn", "/sign-in"], ["Portfolio Lab", "/sign-in"], ["Backtesting", "/sign-in"], ["Sign in", "/sign-in"], ["Start learning", "/sign-up"]]) {

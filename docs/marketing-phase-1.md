@@ -60,11 +60,9 @@ padding to 185px desktop, 155px tablet and 120px mobile. Bottom padding remains
 - The scene uses differently sized, staggered, gently rotated panels, with
   integrated Lucide book, wrench and chart symbols rather than new 3D icons.
   The Backtest copy explicitly says educational demo data, not historical data.
-- Handwritten annotations read “A smarter you”, “A brighter tomorrow” and
-  “Practice today. Invest tomorrow.” The first two remain beside the pie on
-  desktop/tablet and are hidden on mobile to keep its space clear. The practice
-  note stays beside Backtest where there is room, and wraps below it when text
-  enlarges. Notes and doodles are decorative and hidden from assistive technology.
+- The “A smarter you” and “A brighter tomorrow” annotations have been removed
+  from the hero artwork and portfolio pie visual. The remaining decorative notes
+  and doodles are hidden from assistive technology.
   No decorative animation was added; button transitions respect reduced motion.
 
 ## Responsive layout, accessibility and performance
