@@ -1,44 +1,55 @@
-import { BookOpen, ChartNoAxesColumnIncreasing, Wrench } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BarChart3, BookOpen, ChartSpline } from "lucide-react";
 import styles from "./marketing.module.css";
+
+const steps = [
+  {
+    title: "Learn",
+    description: "Interactive, bite-sized lessons that make investing click.",
+    href: "/learn",
+    icon: BookOpen,
+    className: styles.learnPanel,
+  },
+  {
+    title: "Build",
+    description: "Try ideas in a risk-free portfolio with real market data.",
+    href: "/lab/portfolio",
+    icon: BarChart3,
+    className: styles.buildPanel,
+  },
+  {
+    title: "Backtest",
+    description: "Test your strategy against the past to see what works.",
+    href: "/lab/backtesting",
+    icon: ChartSpline,
+    className: styles.backtestPanel,
+  },
+];
 
 export function JourneyIntro() {
   return <section aria-labelledby="journey-title" className={styles.journey}>
-    <div className={`${styles.container} ${styles.journeyLayout}`}>
-      <div className={styles.journeyCopy}>
-        <p className={styles.eyebrow}>LEARN · BUILD · BACKTEST · GROW</p>
-        <h2 id="journey-title">From “what is a stock?” to building a backtest.</h2>
-        <p className={styles.journeyDescription}>A complete learning journey that turns curiosity into confidence — with real tools, not just theory.</p>
-        <div className={styles.copyUnderlineDoodle} aria-hidden="true">
-          <svg width="108" height="10" viewBox="0 0 108 10" fill="none">
-            <path d="M2 6C30 2 75 2 106 6" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
+    <div className={styles.journeyShell}>
+      <span className={`${styles.journeyGlow} ${styles.journeyGlowOne}`} aria-hidden="true" />
+      <span className={`${styles.journeyGlow} ${styles.journeyGlowTwo}`} aria-hidden="true" />
+      <div className={`${styles.container} ${styles.journeyLayout}`}>
+        <div className={styles.journeyCopy}>
+          <p className={styles.eyebrow}>A CLEARER PATH FORWARD</p>
+          <h2 id="journey-title">Learn. Build. Backtest.</h2>
+          <p className={styles.journeyDescription}>Go from curious to confident with a learning experience designed for real life.</p>
+          <Link href="/learn" prefetch={false} className={styles.journeyCta}>Explore the experience <ArrowRight aria-hidden="true" /></Link>
         </div>
-      </div>
-      <div className={styles.journeyPanels}>
-        <div className={styles.learnCardWrapper}>
-          <svg className={styles.learnSparkleDoodle} width="16" height="14" viewBox="0 0 16 14" fill="none" aria-hidden="true">
-            <path d="M3 12L7 2M9 12L13 2" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <article className={`${styles.panel} ${styles.learnPanel}`}>
-            <span className={styles.panelIcon}><BookOpen aria-hidden="true" /></span>
-            <div><h3>Learn</h3><p>Bite-sized, interactive lessons.</p></div>
-          </article>
-        </div>
-        <article className={`${styles.panel} ${styles.buildPanel}`}>
-          <span className={styles.panelIcon}><Wrench aria-hidden="true" /></span>
-          <div><h3>Build</h3><p>Try ideas, build portfolios, see what happens.</p></div>
-        </article>
-        <div className={styles.backtestRow}>
-          <article className={`${styles.panel} ${styles.backtestPanel}`}>
-            <span className={styles.panelIcon}><ChartNoAxesColumnIncreasing aria-hidden="true" /></span>
-            <div><h3>Backtest</h3><p>Test your ideas on educational demo data.</p></div>
-          </article>
-          <div className={styles.practiceNote} aria-hidden="true">
-            <span>Practice today.</span>
-            <span>Invest tomorrow.</span>
-            <svg width="68" height="10" viewBox="0 0 68 10" fill="none">
-              <path d="M2 6C20 2 48 2 66 7" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+        <div className={styles.journeyCardsScene}>
+          <div className={styles.journeyPanels}>
+            {steps.map(({ title, description, href, icon: Icon, className }, index) => <div key={title} className={`${styles.cardStage} ${styles[`cardStage${index + 1}`]}`}>
+              <div className={styles.cardFloat}>
+                <article className={`${styles.panel} ${className}`}>
+                  <span className={styles.panelIcon}><Icon aria-hidden="true" /></span>
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                  <Link href={href} prefetch={false} className={styles.panelArrow} aria-label={`Explore ${title}`}><ArrowRight aria-hidden="true" /></Link>
+                </article>
+              </div>
+            </div>)}
           </div>
         </div>
       </div>
