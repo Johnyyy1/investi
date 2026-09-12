@@ -8,6 +8,7 @@ import {
   Landmark,
   Play,
   Share2,
+  Wifi,
   Zap,
 } from "lucide-react";
 import styles from "./marketing.module.css";
@@ -25,9 +26,13 @@ function LessonPhone() {
     <div className={styles.phoneHardware} aria-hidden="true">
       <div className={styles.phoneScreen}>
         <div className={styles.phoneStatus}>
-          <span>9:41</span>
+          <span className={styles.phoneTime}>9:41</span>
           <span className={styles.phoneIsland} />
-          <span className={styles.phoneSignal}>● ▰</span>
+          <span className={styles.phoneSystemStatus}>
+            <span className={styles.phoneCellular}><i /><i /><i /><i /></span>
+            <Wifi className={styles.phoneWifi} />
+            <span className={styles.phoneBattery}><i /></span>
+          </span>
         </div>
         <div className={styles.phoneAppBar}>
           <ArrowLeft />
