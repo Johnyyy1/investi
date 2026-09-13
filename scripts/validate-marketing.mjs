@@ -35,6 +35,7 @@ async function layout(page, width, enlarged) {
     const scene = sections[1].getBoundingClientRect();
     const how = sections[2];
     const lab = sections[3];
+    const backtesting = sections[4];
     const howTitle = how.querySelector("h2").getBoundingClientRect();
     const howPhone = how.querySelector('[role="img"]').getBoundingClientRect();
     const howFeatures = [...how.querySelectorAll("h3")]
@@ -43,6 +44,8 @@ async function layout(page, width, enlarged) {
     const labCopy = lab.querySelector("h2").parentElement.getBoundingClientRect();
     const labDemo = lab.querySelector('[data-testid="portfolio-showcase-demo"]').getBoundingClientRect();
     const labPie = lab.querySelector('img[alt^="Three-part portfolio pie"]').getBoundingClientRect();
+    const backtestingCopy = backtesting.querySelector("h2").parentElement.getBoundingClientRect();
+    const backtestingDemo = backtesting.querySelector('[data-testid="backtesting-showcase-demo"]').getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth > innerWidth,
       heroGap: Math.round(scene.top - hero.bottom),
@@ -52,6 +55,7 @@ async function layout(page, width, enlarged) {
       howMobileOrder: howTitle.bottom <= howPhone.top + 1 && howPhone.bottom <= howFeatures[0].top + 1 && howFeatures[0].bottom <= howFeatures[1].top + 1,
       labStacked: labDemo.top >= labCopy.bottom - 1,
       labPieWidth: Math.round(labPie.width),
+      backtestingStacked: backtestingDemo.top >= backtestingCopy.bottom - 1,
       clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button, main label, main output")].some((el) => {
         const css = getComputedStyle(el);
         // Display-font descenders can exceed the line box without being clipped.
@@ -67,6 +71,7 @@ async function layout(page, width, enlarged) {
   assert.ok(dimensions.artworkWidth >= (width <= 390 ? 280 : 430), `Mascot remains visually meaningful: ${width}, enlarged=${enlarged}`);
   if (width <= 620) assert.equal(dimensions.howMobileOrder, true, `Walkthrough mobile order: ${width}, enlarged=${enlarged}`);
   if (width <= 1024 || enlarged) assert.equal(dimensions.labStacked, true, `Portfolio showcase stacks when space is limited: ${width}, enlarged=${enlarged}`);
+  if (width <= 768 || enlarged) assert.equal(dimensions.backtestingStacked, true, `Backtesting showcase stacks when space is limited: ${width}, enlarged=${enlarged}`);
   assert.ok(dimensions.labPieWidth >= (width <= 390 ? 220 : 260), `Portfolio pie remains meaningful: ${width}, enlarged=${enlarged}`);
   await page.screenshot({ path: `${output}/landing-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
   if (width <= 1100) {
@@ -88,12 +93,13 @@ try {
   assert.equal(await page.title(), "Learn investing by doing · investi");
   assert.equal(await page.locator("h1").count(), 1);
   assert.equal(await page.locator("h1").innerText(), "Learn investing\nby doing.");
-  assert.equal(await page.locator("main > section").count(), 4, "Includes the two new product showcase sections");
+  assert.equal(await page.locator("main > section").count(), 5, "Includes the portfolio and backtesting product showcase sections");
   assert.deepEqual(await page.locator("article h3").allTextContents(), ["Learn", "Build", "Backtest"]);
   assert.deepEqual(await page.locator("main > section h2").allTextContents(), [
     "Learn. Build. Backtest.",
     "How does Investi work?",
     "Don’t just read about diversification. Break a portfolio.",
+    "Your intuition needs data.",
   ]);
   assert.equal(await page.getByRole("img", { name: "Investi lesson screen explaining what a stock is" }).count(), 1);
   assert.equal(await page.getByRole("img", { name: /Three-part portfolio pie/ }).count(), 1);
@@ -102,6 +108,10 @@ try {
   assert.equal(await page.getByRole("img", { name: "Portfolio allocation: 60% stocks, 30% bonds, 10% cash." }).count(), 1, "Portfolio allocation has a static text equivalent");
   assert.equal(await page.getByText("100% allocated · safe to experiment", { exact: true }).count(), 1);
   assert.equal(await page.getByText("Illustrative data for learning. Not a forecast or recommendation.", { exact: true }).count(), 1);
+  assert.equal(await page.getByRole("link", { name: "Try Backtesting", exact: true }).getAttribute("href"), "/lab/backtesting");
+  assert.equal(await page.getByText("Educational demo data · synthetic scenarios for learning", { exact: true }).count(), 1);
+  assert.equal(await page.getByText(/Example educational backtest from January 2015 to December 2025/).count(), 1, "Backtest chart has a screen-reader summary");
+  assert.deepEqual(await page.locator('[data-testid="backtesting-showcase-demo"] dt').allTextContents(), ["Final value", "CAGR", "Max drawdown", "Volatility"]);
   for (const removed of ["Knowledge today", "Opportunity tomorrow", "Different choices", "Real outcomes"]) {
     assert.equal(await page.getByText(removed, { exact: true }).count(), 0, `Removed handwritten copy: ${removed}`);
   }
@@ -148,7 +158,7 @@ try {
   await page.getByRole("link", { name: "Sign in", exact: true }).first().click();
   await page.waitForURL("**/sign-in");
   await page.getByRole("heading", { name: "Welcome back" }).waitFor();
-  checks.push("Metadata, one H1, four semantic sections, accessible product visuals, removed handwritten copy, skip link, reduced motion, existing signup and sign-in");
+  checks.push("Metadata, one H1, five semantic sections, accessible product visuals, removed handwritten copy, skip link, reduced motion, existing signup and sign-in");
 
   await page.goto(baseURL);
   await page.setViewportSize({ width: 390, height: 1000 });

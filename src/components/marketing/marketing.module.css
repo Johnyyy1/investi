@@ -471,13 +471,94 @@
   to { opacity: 1; transform: scale(.96); }
 }
 
+/* Backtesting showcase */
+.backtestingShowcase {
+  position: relative;
+  z-index: 2;
+  margin-top: -34px;
+  padding: 118px 0 122px;
+  overflow: clip;
+  border-radius: 52px 52px 0 0;
+  color: #fff;
+  background: #102d4c;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), 0 -18px 44px rgb(51 58 59 / 5%);
+}
+.backtestingLayout { display: flex; flex-wrap: wrap; gap: clamp(42px, 4.4vw, 68px); align-items: center; }
+.backtestingCopy { min-width: 0; flex: .78 1 21rem; }
+.backtestingEyebrow { margin: 0 0 20px; color: #8cbdf7; font-size: .78rem; line-height: 1.5; font-weight: 800; letter-spacing: .17em; }
+.backtestingCopy h2 { max-width: 490px; margin: 0; color: #fff; font: 800 clamp(3.25rem, 4.25vw, 4.2rem)/.98 var(--font-marketing-display), sans-serif; letter-spacing: -.052em; text-wrap: balance; }
+.backtestingDescription { max-width: 445px; margin: 26px 0 0; color: #b9cce0; font-size: 1.14rem; line-height: 1.56; }
+.backtestingCta { margin-top: 31px; border-radius: 15px; }
+.backtestingCta svg { transition: transform 180ms ease; }
+.backtestingCta:hover svg { transform: translateX(3px); }
+.backtestingSurface {
+  min-width: 0;
+  flex: 1.22 1 34rem;
+  padding: 29px 30px 24px;
+  border: 1px solid rgb(159 198 235 / 18%);
+  border-radius: 30px;
+  background: #153858;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), 0 24px 64px rgb(3 20 37 / 22%);
+  animation: backtestingSurfaceReveal 680ms cubic-bezier(.2, .75, .25, 1) both;
+}
+.backtestingFigure { min-width: 0; margin: 0; }
+.backtestingChartHeader { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.backtestingChartHeader h3 { margin: 0; color: #f6faff; font: 800 1.3rem/1.2 var(--font-marketing-display), sans-serif; letter-spacing: -.025em; }
+.backtestingChartHeader p { margin: 7px 0 0; color: #8faac3; font-size: .76rem; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.backtestingLegend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px 18px; color: #c8d8e7; font-size: .74rem; line-height: 1.4; font-weight: 700; }
+.backtestingLegend span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.backtestingLegend i { display: block; width: 21px; height: 0; border-top: 3px solid; }
+.backtestingLegend .portfolioLegend { border-color: #55a6ff; }
+.backtestingLegend .benchmarkLegend { border-color: #a5b8ca; border-top-style: dashed; }
+.backtestingChart { position: relative; height: 276px; margin-top: 23px; }
+.backtestingYAxis { position: absolute; top: -5px; bottom: 29px; left: 0; display: flex; width: 48px; flex-direction: column; justify-content: space-between; color: #819bb4; font-size: .67rem; line-height: 1; font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; }
+.backtestingPlot { position: absolute; inset: 0 0 0 59px; min-width: 0; }
+.backtestingPlot svg { display: block; width: 100%; height: calc(100% - 29px); overflow: visible; }
+.backtestingGrid line { stroke: rgb(165 194 220 / 15%); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.portfolioLine, .benchmarkLine { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.portfolioLine { stroke: #55a6ff; stroke-width: 2.7; }
+.benchmarkLine { stroke: #a5b8ca; stroke-width: 1.7; stroke-dasharray: 7 7; }
+.portfolioEndpoint { fill: #55a6ff; stroke: #d9ecff; stroke-width: 2; }
+.benchmarkEndpoint { fill: #153858; stroke: #c1d0de; stroke-width: 2; }
+.backtestingLineGroup { transform-box: fill-box; transform-origin: left center; animation: backtestingChartDraw 900ms cubic-bezier(.35, .05, .2, 1) both; }
+.benchmarkLineGroup { animation-delay: 180ms; }
+.portfolioLineGroup { animation-delay: 280ms; }
+.backtestingXAxis { position: absolute; inset: auto 0 0; display: grid; grid-template-columns: repeat(6, 1fr); color: #819bb4; font-size: .67rem; line-height: 1; font-weight: 650; font-variant-numeric: tabular-nums; }
+.backtestingXAxis span { text-align: center; }
+.backtestingXAxis span:first-child { text-align: left; }
+.backtestingXAxis span:last-child { text-align: right; }
+.backtestingChartSummary { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.backtestingMetrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 3px 0 0; padding: 22px 0 0; border-top: 1px solid rgb(165 194 220 / 16%); }
+.backtestingMetrics > div { min-width: 0; padding: 0 19px; border-left: 1px solid rgb(165 194 220 / 16%); opacity: 0; animation: backtestingMetricReveal 520ms cubic-bezier(.2, .75, .25, 1) var(--metric-delay) both; }
+.backtestingMetrics > div:first-child { padding-left: 0; border-left: 0; }
+.backtestingMetrics > div:last-child { padding-right: 0; }
+.backtestingMetrics dt { color: #8faac3; font-size: .7rem; line-height: 1.25; font-weight: 700; }
+.backtestingMetrics dd { margin: 0; }
+.backtestingMetrics dd:nth-of-type(1) { margin-top: 6px; color: #f7fbff; font: 800 1.35rem/1.08 var(--font-marketing-display), sans-serif; letter-spacing: -.025em; font-variant-numeric: tabular-nums; overflow-wrap: normal; }
+.backtestingMetrics dd:nth-of-type(2) { margin-top: 4px; color: #7593af; font-size: .66rem; line-height: 1.25; }
+.backtestingDisclosure { display: flex; align-items: center; justify-content: flex-end; gap: 7px; margin: 20px 0 0; color: #8faac3; font-size: .68rem; line-height: 1.4; }
+.backtestingDisclosure svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+@keyframes backtestingSurfaceReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes backtestingChartDraw {
+  from { opacity: .2; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+@keyframes backtestingMetricReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @supports (animation-timeline: view()) {
-  .howFeature, .phoneStage, .portfolioCopy, .portfolioDemoStage {
+  .howFeature, .phoneStage, .portfolioCopy, .portfolioDemoStage, .backtestingCopy, .backtestingSurface {
     animation: sectionReveal linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 42%;
   }
-  .howFeatureUse, .portfolioDemoStage { animation-range: entry 7% entry 48%; }
+  .howFeatureUse, .portfolioDemoStage, .backtestingSurface { animation-range: entry 7% entry 48%; }
 }
 
 @keyframes sectionReveal {
@@ -524,6 +605,10 @@
   .portfolioDemoStage { width: 100%; }
   .portfolioDemo { padding-inline: 32px; }
   .portfolioWorkspace { grid-template-columns: minmax(290px, .9fr) minmax(280px, 1.1fr); gap: 30px; }
+  .backtestingLayout { gap: 34px; }
+  .backtestingCopy { flex-basis: 19rem; }
+  .backtestingSurface { flex-basis: 32rem; }
+  .backtestingMetrics > div { padding-inline: 13px; }
 }
 
 @media (max-width: 919px) {
@@ -548,6 +633,12 @@
   .portfolioOutcomes { grid-template-columns: 1fr 1fr; }
   .outcomeIntro { grid-column: 1 / -1; }
   .outcomeMetric:nth-of-type(2) { padding-left: 0; border-left: 0; }
+  .backtestingShowcase { padding: 104px 0 108px; }
+  .backtestingLayout { gap: 52px; }
+  .backtestingCopy { max-width: 680px; flex-basis: 100%; }
+  .backtestingSurface { width: 100%; flex-basis: 100%; }
+  .backtestingMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 0; }
+  .backtestingMetrics > div:nth-child(3) { padding-left: 0; border-left: 0; }
 }
 
 @media (max-width: 767px) {
@@ -601,6 +692,16 @@
   .portfolioDemoHeader h3 { font-size: 1.8rem; }
   .portfolioWorkspace { grid-template-columns: minmax(250px, 1fr) minmax(225px, .85fr); gap: 18px; }
   .allocationControl { grid-template-columns: 44px minmax(84px, .62fr) minmax(86px, 1fr) 52px; gap: 8px; }
+  .backtestingShowcase { margin-top: -26px; padding: 88px 0 92px; border-radius: 34px 34px 0 0; }
+  .backtestingCopy h2 { font-size: clamp(2.85rem, 12vw, 3.65rem); }
+  .backtestingDescription { font-size: 1.05rem; }
+  .backtestingCta { width: min(100%, 330px); justify-content: space-between; }
+  .backtestingSurface { padding: 25px 22px 22px; border-radius: 26px; }
+  .backtestingChartHeader { flex-direction: column; gap: 15px; }
+  .backtestingLegend { justify-content: flex-start; }
+  .backtestingChart { height: 252px; margin-top: 20px; }
+  .backtestingMetrics dd:nth-of-type(1) { font-size: 1.25rem; }
+  .backtestingDisclosure { justify-content: flex-start; }
 }
 
 @media (max-width: 620px) {
@@ -628,6 +729,12 @@
   .outcomeMetric strong { font-size: 1.45rem; }
   .outcomeMetric:nth-of-type(3) strong { font-size: 1.04rem; white-space: normal; }
   .portfolioDisclosure { text-align: left; }
+  .backtestingSurface { padding-inline: 17px; }
+  .backtestingMetrics > div { padding-inline: 12px; }
+  .backtestingMetrics dd:nth-of-type(1) { font-size: 1.15rem; }
+  .backtestingYAxis { width: 43px; font-size: .62rem; }
+  .backtestingPlot { left: 51px; }
+  .backtestingXAxis { font-size: .61rem; }
 }
 
 @media (max-width: 380px) {
@@ -639,9 +746,15 @@
   .lessonPhone { width: min(100%, 288px); transform: rotate(.6deg); }
   .portfolioDemo { padding-inline: 15px; border-radius: 23px; }
   .portfolioDemoHeader h3 { font-size: 1.65rem; }
+  .backtestingSurface { padding-inline: 14px; }
+  .backtestingChart { height: 235px; }
+  .backtestingMetrics { gap: 20px 0; }
+  .backtestingMetrics dd:nth-of-type(1) { font-size: 1.04rem; }
+  .backtestingDisclosure { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .marketing *, .marketing *::before, .marketing *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .cardStage { opacity: 1; }
+  .backtestingSurface, .backtestingMetrics > div, .backtestingLineGroup { opacity: 1; transform: none; }
 }

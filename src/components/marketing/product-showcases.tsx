@@ -8,6 +8,7 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
+import { BacktestingShowcase } from "./backtesting-showcase";
 import { PortfolioShowcase } from "./portfolio-showcase";
 import styles from "./marketing.module.css";
 
@@ -78,5 +79,6 @@ export function ProductShowcases() {
     </section>
 
     <PortfolioShowcase />
+    <BacktestingShowcase />
   </>;
 }
