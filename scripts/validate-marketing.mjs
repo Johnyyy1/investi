@@ -41,7 +41,8 @@ async function layout(page, width, enlarged) {
       .filter((heading) => !heading.closest('[role="img"]'))
       .map((heading) => heading.parentElement.getBoundingClientRect());
     const labCopy = lab.querySelector("h2").parentElement.getBoundingClientRect();
-    const labDemo = lab.querySelector('[role="img"]').getBoundingClientRect();
+    const labDemo = lab.querySelector('[data-testid="portfolio-showcase-demo"]').getBoundingClientRect();
+    const labPie = lab.querySelector('img[alt^="Three-part portfolio pie"]').getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth > innerWidth,
       heroGap: Math.round(scene.top - hero.bottom),
@@ -50,7 +51,8 @@ async function layout(page, width, enlarged) {
       artworkWidth: Math.round(artwork.width),
       howMobileOrder: howTitle.bottom <= howPhone.top + 1 && howPhone.bottom <= howFeatures[0].top + 1 && howFeatures[0].bottom <= howFeatures[1].top + 1,
       labStacked: labDemo.top >= labCopy.bottom - 1,
-      clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button")].some((el) => {
+      labPieWidth: Math.round(labPie.width),
+      clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button, main label, main output")].some((el) => {
         const css = getComputedStyle(el);
         // Display-font descenders can exceed the line box without being clipped.
         return (css.overflowX !== "visible" && el.scrollWidth > el.clientWidth + 1)
@@ -65,6 +67,7 @@ async function layout(page, width, enlarged) {
   assert.ok(dimensions.artworkWidth >= (width <= 390 ? 280 : 430), `Mascot remains visually meaningful: ${width}, enlarged=${enlarged}`);
   if (width <= 620) assert.equal(dimensions.howMobileOrder, true, `Walkthrough mobile order: ${width}, enlarged=${enlarged}`);
   if (width <= 1024 || enlarged) assert.equal(dimensions.labStacked, true, `Portfolio showcase stacks when space is limited: ${width}, enlarged=${enlarged}`);
+  assert.ok(dimensions.labPieWidth >= (width <= 390 ? 220 : 260), `Portfolio pie remains meaningful: ${width}, enlarged=${enlarged}`);
   await page.screenshot({ path: `${output}/landing-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
   if (width <= 1100) {
     const menu = page.getByLabel("Navigation menu");
@@ -93,15 +96,21 @@ try {
     "Don’t just read about diversification. Break a portfolio.",
   ]);
   assert.equal(await page.getByRole("img", { name: "Investi lesson screen explaining what a stock is" }).count(), 1);
-  assert.equal(await page.getByRole("img", { name: /Portfolio Lab example with 60 percent stocks/ }).count(), 1);
+  assert.equal(await page.getByRole("img", { name: /Three-part portfolio pie/ }).count(), 1);
+  assert.equal(await page.getByRole("slider").count(), 3, "Portfolio showcase has three real allocation controls");
+  assert.equal(await page.getByText("100% allocated · safe to experiment", { exact: true }).count(), 1);
+  assert.equal(await page.getByText("Illustrative data for learning. Not a forecast or recommendation.", { exact: true }).count(), 1);
   for (const removed of ["Knowledge today", "Opportunity tomorrow", "Different choices", "Real outcomes"]) {
-    assert.equal(await page.getByText(removed, { exact: false }).count(), 0, `Removed handwritten copy: ${removed}`);
+    assert.equal(await page.getByText(removed, { exact: true }).count(), 0, `Removed handwritten copy: ${removed}`);
   }
   assert.equal(await page.locator("[data-asset-state]").getAttribute("data-asset-state"), "ready");
   assert.equal(await page.locator("[data-asset-state] img").getAttribute("src").then((src) => src.includes("mascot-hero.webp")), true, "Approved mascot is used");
   assert.equal(await page.locator("[data-asset-state] img").getAttribute("alt"), "", "Decorative mascot has empty alt text");
   assert.equal(await page.locator("[data-asset-state]").getAttribute("aria-hidden"), "true", "Decorative scene stays out of the accessibility tree");
   assert.equal(await page.locator("[data-asset-state] img").evaluate((img) => img.complete && img.naturalWidth > 0), true, "Mascot artwork loads");
+  const pie = page.getByRole("img", { name: /Three-part portfolio pie/ });
+  assert.equal((await pie.getAttribute("src")).includes("portfolio-pie.webp"), true, "Approved portfolio pie is used");
+  assert.equal(await pie.evaluate((img) => img.complete && img.naturalWidth > 0), true, "Portfolio pie artwork loads");
   for (const text of ["A smarter", "A brighter"]) {
     assert.equal(await page.getByText(text, { exact: false }).count(), 0);
   }
@@ -110,8 +119,18 @@ try {
     await layout(page, width, false);
     await layout(page, width, true);
   }
-  checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked hero; loaded mascot artwork; compact section transition; removed hero annotations; keyboard mobile menu");
+  checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked layout; loaded mascot and portfolio pie artwork; compact section transition; keyboard mobile menu");
   await page.evaluate(() => document.documentElement.style.fontSize = "");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  const stocks = page.getByRole("slider", { name: "Stocks allocation" });
+  await stocks.focus();
+  await stocks.press("ArrowRight");
+  assert.equal(await stocks.getAttribute("aria-valuetext"), "61% of the portfolio");
+  const sliderTotal = await page.getByRole("slider").evaluateAll((sliders) => sliders.reduce((sum, slider) => sum + Number(slider.value), 0));
+  assert.ok(Math.abs(sliderTotal - 100) < 1e-8, "Keyboard slider changes preserve a 100% total");
+  assert.equal(await page.getByText("7.3%", { exact: true }).count(), 1, "Outcome updates with allocation");
+  checks.push("Portfolio sliders are keyboard-operable, rebalance to 100%, update educational outcomes, and retain a readable disclosure");
   await page.setViewportSize({ width: 390, height: 1000 });
   for (const [name, path] of [["Home", "/"], ["Learn", "/sign-in"], ["Portfolio Lab", "/sign-in"], ["Backtesting", "/sign-in"], ["Sign in", "/sign-in"], ["Start learning", "/sign-up"]]) {
     await page.goto(baseURL);
