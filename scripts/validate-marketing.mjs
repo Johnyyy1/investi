@@ -26,7 +26,7 @@ async function session(context) {
 async function layout(page, width, enlarged) {
   await page.setViewportSize({ width, height: 1000 });
   await page.evaluate((large) => { document.documentElement.style.fontSize = large ? "200%" : ""; window.scrollTo(0, 0); }, enlarged);
-  await page.locator("[data-asset-state] img").evaluate((img) => img.decode());
+  await page.locator("[data-asset-state] img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
   const dimensions = await page.evaluate(() => {
     const hero = document.querySelector("main > section").getBoundingClientRect();
     const content = document.querySelector("h1").parentElement.getBoundingClientRect();
@@ -151,10 +151,18 @@ try {
     assert.equal(await page.getByText(removed, { exact: true }).count(), 0, `Removed handwritten copy: ${removed}`);
   }
   assert.equal(await page.locator("[data-asset-state]").getAttribute("data-asset-state"), "ready");
-  assert.equal(await page.locator("[data-asset-state] img").getAttribute("src").then((src) => src.includes("mascot-hero.webp")), true, "Approved mascot is used");
-  assert.equal(await page.locator("[data-asset-state] img").getAttribute("alt"), "", "Decorative mascot has empty alt text");
-  assert.equal(await page.locator("[data-asset-state]").getAttribute("aria-hidden"), "true", "Decorative scene stays out of the accessibility tree");
-  assert.equal(await page.locator("[data-asset-state] img").evaluate((img) => img.complete && img.naturalWidth > 0), true, "Mascot artwork loads");
+  const heroScene = page.locator("[data-asset-state]");
+  const mascot = heroScene.locator('img[src*="mascot-hero.webp"]');
+  const heroSun = heroScene.locator('img[src*="sun.webp"]');
+  const heroClouds = heroScene.locator('img[src*="cloud.webp"]');
+  assert.equal(await mascot.count(), 1, "Approved mascot is used once");
+  assert.equal(await heroSun.count(), 1, "Hero uses one sun");
+  assert.equal(await heroClouds.count(), 3, "Hero reuses the cloud asset three times");
+  assert.equal(await heroScene.getAttribute("aria-hidden"), "true", "Decorative scene stays out of the accessibility tree");
+  for (const image of [mascot, heroSun, ...await heroClouds.all()]) {
+    assert.equal(await image.getAttribute("alt"), "", "Hero artwork has empty alt text");
+    assert.equal(await image.evaluate((img) => img.complete && img.naturalWidth > 0), true, "Hero artwork loads");
+  }
   const pie = page.getByRole("img", { name: /Three-part portfolio pie/ });
   assert.equal((await pie.getAttribute("src")).includes("portfolio-pie.webp"), true, "Approved portfolio pie is used");
   assert.equal(await pie.evaluate((img) => img.complete && img.naturalWidth > 0), true, "Portfolio pie artwork loads");
@@ -251,7 +259,7 @@ try {
   assert.notEqual(await session(other), owner, "Separate browsers create isolated demo profiles");
   checks.push("Demo failure/retry, one-click real demo, existing-session reuse, isolated profiles, protected product routes still work");
   assert.deepEqual(errors, []);
-  await writeFile(`${output}/results.json`, JSON.stringify({ widths, checks, asset: "Approved mascot, Progress, hill, and cloud assets; loaded and visually reviewed across all six widths." }, null, 2));
+  await writeFile(`${output}/results.json`, JSON.stringify({ widths, checks, asset: "Approved mascot, hero sun and clouds, Progress, hill, and final CTA cloud assets; loaded and visually reviewed across all six widths." }, null, 2));
   console.log("PASS\n" + checks.join("\n") + `\nScreenshots: ${output}`);
 } finally {
   await browser.close();

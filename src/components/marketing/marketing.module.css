@@ -105,9 +105,15 @@
 .demo > p { max-width: 240px; }
 .demoButton { min-height: 54px; color: var(--deep-blue); border: 1px solid rgb(25 87 201 / 65%); background: rgb(255 255 255 / 35%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 75%); }
 .demoButton:hover { background: rgb(255 255 255 / 82%); }
-.heroVisual { position: relative; z-index: 1; width: min(690px, 52vw); justify-self: center; }
+.heroVisual { position: relative; z-index: 1; isolation: isolate; width: min(690px, 52vw); justify-self: center; }
 .heroVisual::before { content: ""; position: absolute; z-index: -1; inset: -14% -6% -8% -10%; border-radius: 50%; background: radial-gradient(ellipse at 57% 44%, rgb(221 241 255 / 72%) 0%, rgb(209 244 231 / 58%) 48%, transparent 76%); pointer-events: none; }
-.heroImage { display: block; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 25px 30px rgb(30 74 107 / 9%)); }
+.heroImage { position: relative; z-index: 3; display: block; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 25px 30px rgb(30 74 107 / 9%)); }
+.heroAtmosphere { position: absolute; display: block; height: auto; object-fit: contain; pointer-events: none; user-select: none; }
+.heroSun { z-index: 0; top: 7%; right: 5%; width: clamp(120px, 10.5vw, 150px); opacity: .8; }
+.heroCloud { z-index: 1; }
+.heroCloudOne { top: -20%; left: 4%; width: clamp(120px, 10.7vw, 152px); opacity: .72; }
+.heroCloudTwo { top: -8%; right: -2%; width: clamp(92px, 7.5vw, 106px); opacity: .58; transform: scaleX(-1); }
+.heroCloudThree { right: -5%; bottom: 4%; width: clamp(102px, 8.5vw, 120px); opacity: .48; }
 
 /* Blue journey scene */
 .journey { position: relative; z-index: 2; padding: 0 clamp(16px, 2vw, 30px) 46px; }
@@ -736,6 +742,10 @@
   .headerGlass { padding-left: 22px; }
   .desktopNav { gap: 22px; }
   .heroTitle { font-size: 4.55rem; }
+  .heroSun { right: 4%; width: 130px; }
+  .heroCloudOne { top: -18%; width: 140px; }
+  .heroCloudTwo { width: 98px; }
+  .heroCloudThree { right: -4%; width: 108px; }
   .journeyLayout { grid-template-columns: minmax(300px, .85fr) minmax(0, 1.55fr); gap: 34px; }
   .journeyCopy { padding-left: 8px; }
   .panel { min-height: 318px; padding-inline: 20px; }
@@ -785,6 +795,10 @@
   .heroContent { width: min(100%, 680px); padding: 8px 0 0; }
   .heroTitle { font-size: clamp(4rem, 9.5vw, 5rem); }
   .heroVisual { width: min(700px, 100%); margin: 18px auto 0; }
+  .heroSun { top: 5%; right: 7%; width: 120px; }
+  .heroCloudOne { top: -9%; left: 9%; width: 132px; }
+  .heroCloudTwo { top: -4%; right: 1%; width: 94px; }
+  .heroCloudThree { display: none; }
   .journeyShell { transform: translateY(-32px); margin-bottom: -32px; }
   .howWorks { height: auto; padding: 64px 0 86px; }
   .howWorksTitle { position: relative; top: auto; left: auto; width: calc(100% - 48px); margin: 0 auto 42px; font-size: clamp(3.9rem, 10vw, 5.4rem); transform: none; }
@@ -837,6 +851,9 @@
   .demoButton { width: 100%; }
   .demo > p { max-width: none; }
   .heroVisual { width: calc(100% + 20px); margin: 22px -10px 0; }
+  .heroSun { top: 5%; right: 9%; width: clamp(78px, 24vw, 100px); opacity: .76; }
+  .heroCloudOne { top: -8%; left: 5%; width: clamp(84px, 28vw, 106px); opacity: .65; }
+  .heroCloudTwo { display: none; }
   .journey { padding-inline: 10px; padding-bottom: 24px; }
   .journeyShell { border-radius: 28px; transform: translateY(-22px); margin-bottom: -22px; }
   .journeyLayout { width: calc(100% - 34px); gap: 34px; padding: 52px 0 56px; }
