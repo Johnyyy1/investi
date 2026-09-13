@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { BacktestingShowcase } from "./backtesting-showcase";
 import { PortfolioShowcase } from "./portfolio-showcase";
+import { ProgressShowcase } from "./progress-showcase";
 import styles from "./marketing.module.css";
 
 function LessonPhone() {
@@ -80,5 +81,6 @@ export function ProductShowcases() {
 
     <PortfolioShowcase />
     <BacktestingShowcase />
+    <ProgressShowcase />
   </>;
 }
