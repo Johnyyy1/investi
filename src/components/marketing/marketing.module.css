@@ -1,19 +1,21 @@
 .marketing {
-  --warm-white: #fbfaf6;
-  --blue: #2574ec;
-  --deep-blue: #1957c9;
-  --navy: #102a47;
-  --pale-blue: #e8f3ff;
-  --green: #55bf78;
+  --warm-white: #f8f6f0;
+  --blue: #2498f3;
+  --deep-blue: #1667b2;
+  --navy: #17324a;
+  --pale-blue: #dff2ff;
+  --green: #42c98a;
+  --warm-accent: #ffb85c;
+  --data-navy: #102d4c;
   min-height: 100vh;
   color: var(--navy);
   background:
     radial-gradient(ellipse 52% 34% at 76% 9%, rgb(169 225 220 / 42%), transparent 72%),
     radial-gradient(ellipse 48% 30% at 48% 5%, rgb(183 211 255 / 50%), transparent 74%),
-    linear-gradient(180deg, #fbfaf6 0%, #faf9f5 59%, #e8f2ff 76%, #f8f7f3 100%);
+    linear-gradient(180deg, var(--warm-white) 0%, #faf9f5 59%, #e8f2ff 76%, #f8f7f3 100%);
   font-family: var(--font-learning), sans-serif;
   overflow-x: clip;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .marketing :focus-visible { outline: 3px solid var(--navy); outline-offset: 4px; }
@@ -178,7 +180,7 @@
 }
 .heroLayout { display: grid; grid-template-columns: minmax(0, .96fr) minmax(0, 1.04fr); align-items: center; min-height: 500px; gap: 16px; }
 .heroContent { position: relative; z-index: 2; padding: 20px 0 42px; }
-.heroTitle { max-width: 650px; margin: 0; font: 800 clamp(4.3rem, 6.25vw, 5.5rem)/.94 var(--font-marketing-display), sans-serif; letter-spacing: -.055em; }
+.heroTitle { max-width: 650px; margin: 0; font: 800 clamp(3rem, 6.25vw, 5.5rem)/.94 var(--font-marketing-display), sans-serif; letter-spacing: -.055em; }
 .heroTitle span { display: block; }
 .heroTitle span + span { color: var(--deep-blue); }
 .heroCopy { max-width: 610px; margin: 29px 0 0; color: #526a80; font-size: 1.2rem; line-height: 1.52; }
@@ -229,13 +231,10 @@
 .journeyCardsScene { position: relative; min-width: 0; padding: 16px 2px; }
 .journeyPanels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(13px, 1.35vw, 20px); align-items: center; min-width: 0; padding: 18px 5px 22px; perspective: 1200px; }
 .cardStage { min-width: 0; opacity: 0; animation: cardReveal 720ms cubic-bezier(.2, .75, .25, 1) both; }
-.cardStage1 { --card-angle: -3.2deg; --active-angle: -.7deg; --float-distance: -5px; padding-top: 20px; animation-delay: 90ms; }
-.cardStage2 { --card-angle: 1.8deg; --active-angle: .35deg; --float-distance: -7px; padding-bottom: 20px; animation-delay: 190ms; }
-.cardStage3 { --card-angle: -2.5deg; --active-angle: -.45deg; --float-distance: -4px; padding-top: 8px; animation-delay: 290ms; }
-.cardFloat { min-width: 0; animation: cardFloat 5.8s ease-in-out infinite; }
-.cardStage1 .cardFloat { animation-delay: -1.4s; }
-.cardStage2 .cardFloat { animation-delay: -3.7s; }
-.cardStage3 .cardFloat { animation-delay: -2.5s; }
+.cardStage1 { --card-angle: -3.2deg; --active-angle: -.7deg; padding-top: 20px; animation-delay: 90ms; }
+.cardStage2 { --card-angle: 1.8deg; --active-angle: .35deg; padding-bottom: 20px; animation-delay: 190ms; }
+.cardStage3 { --card-angle: -2.5deg; --active-angle: -.45deg; padding-top: 8px; animation-delay: 290ms; }
+.cardFloat { min-width: 0; }
 .panel {
   position: relative;
   display: flex;
@@ -262,13 +261,13 @@
 }
 .panel::after { content: ""; position: absolute; inset: 0 18px auto; height: 1px; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 95%), transparent); pointer-events: none; }
 .panel > * { position: relative; z-index: 1; }
-.cardStage:hover .panel, .cardStage:focus-within .panel { border-color: #fff; box-shadow: 0 34px 58px rgb(7 31 91 / 34%), 0 12px 21px rgb(8 37 101 / 14%), inset 0 1px 0 #fff; transform: translateY(-9px) rotate(var(--active-angle)) scale(1.008); }
+.cardStage:hover .panel, .cardStage:focus-within .panel { border-color: #fff; box-shadow: 0 30px 52px rgb(7 31 91 / 30%), 0 10px 18px rgb(8 37 101 / 13%), inset 0 1px 0 #fff; transform: translateY(-3px) rotate(var(--active-angle)) scale(1.004); }
 .panel h3 { margin: 24px 0 0; font: 800 clamp(1.6rem, 2vw, 1.95rem)/1.05 var(--font-marketing-display), sans-serif; letter-spacing: -.03em; }
 .panel p { margin: 13px 0 25px; color: #52657c; font-size: .98rem; line-height: 1.46; }
 .panelIcon { display: flex; width: 64px; height: 64px; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid rgb(255 255 255 / 74%); border-radius: 20px; box-shadow: inset 0 1px 0 rgb(255 255 255 / 80%), 0 9px 16px rgb(32 71 116 / 7%); }
 .panelIcon svg { width: 31px; height: 31px; stroke-width: 2.55; }
 .panelArrow { display: flex; width: 49px; height: 49px; align-items: center; justify-content: center; margin-top: auto; margin-left: auto; border: 1px solid rgb(255 255 255 / 78%); border-radius: 50%; box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%), 0 8px 14px rgb(39 65 100 / 8%); transition: transform 280ms cubic-bezier(.2, .75, .25, 1), box-shadow 280ms ease; }
-.panelArrow:hover, .panelArrow:focus-visible, .cardStage:hover .panelArrow { box-shadow: inset 0 1px 0 rgb(255 255 255 / 80%), 0 10px 18px rgb(39 65 100 / 12%); transform: translateX(4px) scale(1.035); }
+.panelArrow:hover, .panelArrow:focus-visible, .cardStage:hover .panelArrow { box-shadow: inset 0 1px 0 rgb(255 255 255 / 80%), 0 10px 18px rgb(39 65 100 / 12%); transform: translateX(3px) scale(1.025); }
 .panelArrow svg { width: 22px; height: 22px; }
 .buildPanel { z-index: 1; min-height: 354px; }
 .learnPanel { --card-wash: rgb(200 242 207 / 58%); }
@@ -281,11 +280,6 @@
 @keyframes cardReveal {
   from { opacity: 0; transform: translateY(28px) scale(.975); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes cardFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(var(--float-distance)); }
 }
 
 /* Product walkthrough */
@@ -529,7 +523,7 @@
 .educationBadge { display: inline-flex; min-height: 42px; flex: 0 0 auto; align-items: center; gap: 9px; padding: 9px 14px; border-radius: 999px; color: #236348; background: #eef6f1; font-size: .8rem; line-height: 1.25; font-weight: 750; }
 .educationBadge svg { width: 20px; height: 20px; }
 .portfolioWorkspace { display: grid; grid-template-columns: minmax(270px, .95fr) minmax(250px, 1.05fr); gap: 26px; align-items: center; min-height: 304px; padding: 23px 0 22px; }
-.portfolioControls { display: grid; min-width: 0; gap: 18px; margin: 0; padding: 0; border: 0; }
+.portfolioControls { display: grid; min-width: 0; gap: 18px; margin: 0; padding: 0; border: 0; pointer-events: none; user-select: none; }
 .allocationControl { --allocation-color: #287cf0; display: grid; grid-template-columns: 46px minmax(104px, .7fr) minmax(100px, 1fr) 54px; gap: 11px; align-items: center; min-width: 0; }
 .bondsAllocation { --allocation-color: #3e9f76; }
 .cashAllocation { --allocation-color: #81bda9; }
@@ -569,7 +563,7 @@
   overflow: clip;
   border-radius: 52px 52px 0 0;
   color: #fff;
-  background: #102d4c;
+  background: var(--data-navy);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), 0 -18px 44px rgb(51 58 59 / 5%);
 }
 .backtestingLayout { display: flex; flex-wrap: wrap; gap: clamp(42px, 4.4vw, 68px); align-items: center; }
@@ -820,11 +814,13 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.journey :focus-visible, .backtestingShowcase :focus-visible { outline-color: #fff; }
+
 @media (max-width: 1220px) {
   .container { width: calc(100% - 48px); }
   .headerGlass { padding-left: 22px; }
   .desktopNav { gap: 22px; }
-  .heroTitle { font-size: 4.55rem; }
+  .heroTitle { font-size: min(4.55rem, 8vw); }
   .heroSun { right: 4%; width: 130px; }
   .heroCloudOne { top: -18%; width: 140px; }
   .heroCloudTwo { width: 98px; }
@@ -884,7 +880,7 @@
   .hero { padding: 56px 0 92px; }
   .heroLayout { grid-template-columns: 1fr; min-height: 0; }
   .heroContent { width: min(100%, 680px); padding: 8px 0 0; }
-  .heroTitle { font-size: clamp(4rem, 9.5vw, 5rem); }
+  .heroTitle { font-size: min(5rem, 9.5vw); }
   .heroVisual { width: min(700px, 100%); margin: 18px auto 0; }
   .heroSun { top: 5%; right: 7%; width: 120px; }
   .heroCloudOne { top: -9%; left: 9%; width: 132px; }
@@ -924,7 +920,7 @@
   .finalCtaHill { right: 50%; bottom: -18%; width: min(92%, 590px); transform: translateX(50%); }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .container { width: calc(100% - 32px); }
   .headerShell { width: calc(100% - 24px); padding-top: 12px; }
   .headerGlass { min-height: 66px; padding: 8px 9px 8px 18px; }
@@ -934,7 +930,7 @@
   .mobileMenu summary span { display: none; }
   .mobileMenu nav { width: calc(100vw - 24px); }
   .hero { padding: 46px 0 72px; }
-  .heroTitle { font-size: clamp(3.15rem, 14vw, 4.35rem); line-height: .99; }
+  .heroTitle { font-size: min(4.35rem, 14vw); line-height: .99; }
   .heroCopy { margin-top: 23px; font-size: 1.08rem; }
   .desktopBreak { display: none; }
   .heroActions { flex-direction: column; align-items: stretch; margin-top: 26px; }
@@ -949,13 +945,12 @@
   .journeyShell { border-radius: 28px; transform: translateY(-22px); margin-bottom: -22px; }
   .journeyLayout { width: calc(100% - 34px); gap: 34px; padding: 52px 0 56px; }
   .eyebrow { margin-bottom: 16px; font-size: .72rem; }
-  .journeyCopy h2 { font-size: clamp(2.75rem, 12vw, 3.5rem); }
+  .journeyCopy h2 { font-size: min(3.5rem, 12vw); }
   .journeyDescription { margin-top: 18px; font-size: 1.05rem; }
   .journeyCta { width: 100%; justify-content: space-between; margin-top: 25px; }
   .journeyCardsScene { width: 100%; padding: 8px 0; }
   .journeyPanels { grid-template-columns: 1fr; gap: 18px; padding: 0 5px; }
   .cardStage1, .cardStage2, .cardStage3 { padding: 0; }
-  .cardFloat { animation-duration: 6.5s; }
   .panel, .buildPanel { min-height: 242px; padding: 24px; border-radius: 24px; }
   .panel h3 { margin-top: 18px; font-size: 1.8rem; }
   .panel p { max-width: 330px; margin: 10px 62px 0 0; }
@@ -964,13 +959,13 @@
   .cardStage2 { --card-angle: .9deg; --active-angle: .2deg; }
   .cardStage3 { --card-angle: -.75deg; --active-angle: -.15deg; }
   .howWorks { padding: 58px 0 76px; }
-  .howWorksTitle { width: calc(100% - 32px); margin-bottom: 39px; font-size: clamp(3rem, 14vw, 4.25rem); line-height: .97; }
+  .howWorksTitle { width: calc(100% - 32px); margin-bottom: 39px; font-size: min(4.25rem, 14vw); line-height: .97; }
   .howWorksGrid { gap: 40px 32px; }
   .lessonPhone { transform: rotate(.85deg); }
   .howFeature h3 { font-size: 1.75rem; }
   .howFeature p { font-size: 1rem; }
   .portfolioShowcase { padding: 82px 0 88px; }
-  .portfolioCopy h2 { font-size: clamp(2.8rem, 12vw, 3.65rem); }
+  .portfolioCopy h2 { font-size: min(3.65rem, 13vw); }
   .portfolioDescription { font-size: 1.05rem; }
   .portfolioCta { width: min(100%, 330px); justify-content: space-between; }
   .portfolioDemo { padding: 24px; border-radius: 26px; }
@@ -979,7 +974,7 @@
   .portfolioWorkspace { grid-template-columns: minmax(250px, 1fr) minmax(225px, .85fr); gap: 18px; }
   .allocationControl { grid-template-columns: 44px minmax(84px, .62fr) minmax(86px, 1fr) 52px; gap: 8px; }
   .backtestingShowcase { margin-top: -26px; padding: 88px 0 92px; border-radius: 34px 34px 0 0; }
-  .backtestingCopy h2 { font-size: clamp(2.85rem, 12vw, 3.65rem); }
+  .backtestingCopy h2 { font-size: min(3.65rem, 13vw); }
   .backtestingDescription { font-size: 1.05rem; }
   .backtestingCta { width: min(100%, 330px); justify-content: space-between; }
   .backtestingSurface { padding: 25px 22px 22px; border-radius: 26px; }
@@ -990,14 +985,14 @@
   .backtestingDisclosure { justify-content: flex-start; }
   .progressShowcase { margin-top: -28px; padding: 92px 0 88px; border-radius: 36px 36px 0 0; }
   .progressShowcaseLayout { gap: 53px; }
-  .progressCopy h2 { font-size: clamp(2.85rem, 12vw, 3.65rem); }
+  .progressCopy h2 { font-size: min(3.65rem, 13vw); }
   .progressDescription { font-size: 1.05rem; }
   .progressCta { width: min(100%, 330px); justify-content: space-between; }
   .progressScene { min-height: 595px; }
   .finalCtaSection { padding-bottom: 72px; }
   .finalCtaCard { border-radius: 34px; }
   .finalCtaContent { padding: 50px 34px 20px; }
-  .finalCtaContent h2 { font-size: clamp(2.85rem, 12vw, 3.65rem); }
+  .finalCtaContent h2 { font-size: min(3.65rem, 13vw); }
   .finalCtaDescription { font-size: 1.05rem; }
   .finalCtaActions { flex-direction: column; align-items: stretch; }
   .finalCtaActions > a, .finalCtaDemo { width: min(100%, 330px); }
@@ -1069,10 +1064,10 @@
 }
 
 @media (max-width: 380px) {
-  .heroTitle { font-size: 3.05rem; }
+  .heroTitle { font-size: min(3.05rem, 15vw); }
   .panel { min-height: 250px; padding-inline: 21px; }
   .panel p { margin-right: 46px; }
-  .howWorksTitle { font-size: 2.85rem; }
+  .howWorksTitle { font-size: min(2.85rem, 14vw); }
   .phoneStage { padding-inline: 8px; }
   .lessonPhone { width: min(100%, 288px); transform: rotate(.6deg); }
   .portfolioDemo { padding-inline: 15px; border-radius: 23px; }

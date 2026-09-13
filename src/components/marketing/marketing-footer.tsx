@@ -13,13 +13,6 @@ const footerGroups = [
     ],
   },
   {
-    title: "Company",
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/pricing", label: "Pricing" },
-    ],
-  },
-  {
     title: "Account",
     links: [
       { href: "/sign-in", label: "Sign in" },

@@ -26,7 +26,7 @@ export function PortfolioShowcase() {
           <div className={styles.portfolioDemoHeader}>
             <div>
               <h3>Your portfolio</h3>
-              <p>Adjust the allocation to explore the trade-offs.</p>
+              <p>Illustrative 60 / 30 / 10 allocation.</p>
             </div>
             <span className={styles.educationBadge}><GraduationCap aria-hidden="true" /> 100% allocated · safe to experiment</span>
           </div>

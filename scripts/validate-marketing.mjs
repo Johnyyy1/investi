@@ -53,6 +53,21 @@ async function layout(page, width, enlarged) {
     const finalCtaCard = finalCta.firstElementChild.firstElementChild.getBoundingClientRect();
     const finalCtaContent = finalCta.querySelector("h2").parentElement.getBoundingClientRect();
     const finalCtaScene = finalCta.querySelector('[data-testid="final-cta-scene"]').getBoundingClientRect();
+    const midWordWraps = [];
+    for (const element of document.querySelectorAll("h1, h2, h3, article p, main a, main button, footer p, footer a")) {
+      if (element.getClientRects().length === 0) continue;
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        for (const match of node.textContent.matchAll(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)) {
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + match[0].length);
+          const lines = new Set([...range.getClientRects()].filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top)));
+          if (lines.size > 1) midWordWraps.push(match[0]);
+        }
+      }
+    }
     return {
       overflow: document.documentElement.scrollWidth > innerWidth,
       heroGap: Math.round(scene.top - hero.bottom),
@@ -72,10 +87,12 @@ async function layout(page, width, enlarged) {
         return (css.overflowX !== "visible" && el.scrollWidth > el.clientWidth + 1)
           || (css.overflowY !== "visible" && el.scrollHeight > el.clientHeight + 1);
       }),
+      midWordWraps,
     };
   });
   assert.equal(dimensions.overflow, false, `No overflow: ${width}, enlarged=${enlarged}`);
   assert.equal(dimensions.clipped, false, `No clipped text: ${width}, enlarged=${enlarged}`);
+  assert.deepEqual(dimensions.midWordWraps, [], `No mid-word wrapping: ${width}, enlarged=${enlarged}`);
   assert.ok(Math.abs(dimensions.heroGap) <= 1, `Hero meets journey section: ${width}, enlarged=${enlarged}`);
   assert.equal(width >= 920 ? dimensions.split : dimensions.stacked, true, `Responsive hero composition: ${width}, enlarged=${enlarged}`);
   assert.ok(dimensions.artworkWidth >= (width <= 390 ? 280 : 430), `Mascot remains visually meaningful: ${width}, enlarged=${enlarged}`);
@@ -121,12 +138,15 @@ try {
   assert.equal(await page.getByRole("slider").count(), 0, "Portfolio showcase exposes no fake slider controls");
   assert.equal(await page.locator('input[type="range"]').count(), 0, "Portfolio showcase has no native range inputs");
   assert.equal(await page.getByRole("img", { name: "Portfolio allocation: 60% stocks, 30% bonds, 10% cash." }).count(), 1, "Portfolio allocation has a static text equivalent");
+  assert.equal(await page.locator('[aria-label^="Portfolio allocation:"]').evaluate((element) => getComputedStyle(element).pointerEvents), "none", "Static allocation ignores pointer interaction");
   assert.equal(await page.getByText("100% allocated · safe to experiment", { exact: true }).count(), 1);
+  assert.equal(await page.getByText("Illustrative 60 / 30 / 10 allocation.", { exact: true }).count(), 1);
   assert.equal(await page.getByText("Illustrative data for learning. Not a forecast or recommendation.", { exact: true }).count(), 1);
   assert.equal(await page.getByRole("link", { name: "Try Backtesting", exact: true }).getAttribute("href"), "/lab/backtesting");
   assert.equal(await page.getByText("Educational demo data · synthetic scenarios for learning", { exact: true }).count(), 1);
   assert.equal(await page.getByText(/Example educational backtest from January 2015 to December 2025/).count(), 1, "Backtest chart has a screen-reader summary");
   assert.deepEqual(await page.locator('[data-testid="backtesting-showcase-demo"] dt').allTextContents(), ["Final value", "CAGR", "Max drawdown", "Volatility"]);
+  assert.equal(await page.locator('[data-testid="backtesting-showcase-demo"] dd').filter({ hasText: "14.16%" }).count(), 1, "Max drawdown uses the product's positive loss-magnitude convention");
   const progress = page.locator('[data-testid="progress-showcase-demo"]');
   await progress.scrollIntoViewIfNeeded();
   await progress.locator("img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
@@ -183,15 +203,24 @@ try {
     assert.equal(await image.evaluate((img) => img.complete && img.naturalWidth > 0), true, `${asset} loads`);
   }
   const footer = page.locator("footer");
-  assert.deepEqual(await footer.getByRole("heading").allTextContents(), ["Product", "Company", "Account"]);
+  assert.deepEqual(await footer.getByRole("heading").allTextContents(), ["Product", "Account"]);
   assert.equal(await footer.getByText("Learn investing through practice.", { exact: true }).count(), 1);
   assert.equal(await footer.getByText("© 2026 Investi. All rights reserved.", { exact: true }).count(), 1);
   assert.equal(await footer.getByText("Investi is an educational product. Nothing on this site is financial advice.", { exact: true }).count(), 1);
+  assert.equal(await page.getByText(/real market data/i).count(), 0, "Marketing makes no unsupported real-market-data claim");
+  assert.deepEqual(
+    [...new Set(await page.locator("a[href]").evaluateAll((links) => links.map((link) => link.getAttribute("href"))))].sort(),
+    ["#main", "/", "/lab/backtesting", "/lab/portfolio", "/learn", "/progress", "/sign-in", "/sign-up"],
+    "Every marketing link points to an implemented destination",
+  );
+  assert.equal(await page.locator('link[rel="preload"][as="image"]').count(), 1, "Only the hero LCP image is preloaded");
+  assert.equal(await page.locator('img[src*="investi-logo.png"]').first().getAttribute("loading"), "lazy", "The header logo is not redundantly preloaded");
+  assert.equal(await page.locator("article").first().evaluate((element) => getComputedStyle(element.parentElement).animationName), "none", "Journey cards do not float indefinitely");
   for (const width of widths) {
     await layout(page, width, false);
     await layout(page, width, true);
   }
-  checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked layout; loaded mascot and portfolio pie artwork; compact section transition; keyboard mobile menu");
+  checks.push("All six widths at 100% and 200% text: no overflow, clipping, or mid-word wrapping; responsive split/stacked layout; loaded mascot and portfolio pie artwork; compact section transition; keyboard mobile menu");
   await page.evaluate(() => document.documentElement.style.fontSize = "");
   checks.push("Portfolio allocation is static, has no fake slider semantics, preserves the 60 / 30 / 10 example, and retains a readable disclosure");
   await page.setViewportSize({ width: 390, height: 1000 });
@@ -246,6 +275,10 @@ try {
   await page.getByRole("button", { name: "Explore demo" }).first().click();
   await page.waitForURL("**/learn");
   assert.equal(await session(context), owner, "Demo reuses an existing session");
+  await page.goto(baseURL);
+  await page.locator('[data-testid="final-cta"]').getByRole("button", { name: "Explore demo" }).click();
+  await page.waitForURL("**/learn");
+  assert.equal(await session(context), owner, "Final CTA demo reaches the same real experience");
   for (const path of ["/lab/portfolio", "/lab/backtesting", "/progress"]) {
     await page.goto(`${baseURL}${path}`);
     assert.equal(new URL(page.url()).pathname, path);

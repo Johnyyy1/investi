@@ -64,7 +64,7 @@ function ProductFeature({ kind }: { kind: "learn" | "use" }) {
     <h3>{learn ? "Learn in minutes" : "Actually use it"}</h3>
     <p>{learn
       ? "Clear, interactive lessons that make investing simple."
-      : "Apply what you learn with real tools and market data."}</p>
+      : "Apply what you learn with guided tools and educational scenarios."}</p>
   </div>;
 }
 

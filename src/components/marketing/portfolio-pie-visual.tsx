@@ -13,7 +13,6 @@ export function PortfolioPieVisual({
         alt=""
         fill
         sizes="(max-width: 767px) 260px, (max-width: 1100px) 340px, 410px"
-        preload
         className={styles.pieImage}
       />
     </div>

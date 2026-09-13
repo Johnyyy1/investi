@@ -12,7 +12,7 @@ const steps = [
   },
   {
     title: "Build",
-    description: "Try ideas in a risk-free portfolio with real market data.",
+    description: "Try ideas in a risk-free portfolio and see how allocation choices behave.",
     href: "/lab/portfolio",
     icon: BarChart3,
     className: styles.buildPanel,
