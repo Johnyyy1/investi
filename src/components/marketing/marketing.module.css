@@ -446,28 +446,13 @@
 .cashAllocation { --allocation-color: #81bda9; }
 .allocationIcon { display: flex; width: 46px; height: 46px; align-items: center; justify-content: center; border-radius: 50%; color: var(--allocation-color); background: color-mix(in srgb, var(--allocation-color) 13%, white); }
 .allocationIcon svg { width: 22px; height: 22px; stroke-width: 2.2; }
-.allocationControl label { display: flex; min-width: 0; flex-direction: column; }
-.allocationControl label strong { color: #17324e; font: 800 1rem/1.2 var(--font-marketing-display), sans-serif; }
-.allocationControl label span { margin-top: 3px; color: #788a9b; font-size: .72rem; line-height: 1.25; font-weight: 650; }
-.allocationControl input {
-  --allocation-value: 50%;
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  margin: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-  background: transparent;
-}
-.allocationControl input::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--allocation-color) 0 var(--allocation-value), #e7ecef var(--allocation-value) 100%); }
-.allocationControl input::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -7px; appearance: none; -webkit-appearance: none; border: 4px solid #fff; border-radius: 50%; background: var(--allocation-color); box-shadow: 0 2px 8px rgb(31 61 81 / 28%); transition: transform 160ms ease; }
-.allocationControl input::-moz-range-track { height: 8px; border: 0; border-radius: 999px; background: #e7ecef; }
-.allocationControl input::-moz-range-progress { height: 8px; border-radius: 999px; background: var(--allocation-color); }
-.allocationControl input::-moz-range-thumb { width: 15px; height: 15px; border: 4px solid #fff; border-radius: 50%; background: var(--allocation-color); box-shadow: 0 2px 8px rgb(31 61 81 / 28%); }
-.allocationControl input:hover::-webkit-slider-thumb { transform: scale(1.08); }
-.allocationControl input:focus-visible { outline: 3px solid var(--navy); outline-offset: 3px; border-radius: 999px; }
-.allocationControl output { justify-self: end; min-width: 52px; padding: 10px 6px; border-radius: 12px; color: #17324e; background: #f4f5f4; font: 800 .95rem/1 var(--font-marketing-display), sans-serif; text-align: center; font-variant-numeric: tabular-nums; }
+.allocationLabel { display: flex; min-width: 0; flex-direction: column; }
+.allocationLabel strong { color: #17324e; font: 800 1rem/1.2 var(--font-marketing-display), sans-serif; }
+.allocationLabel span { margin-top: 3px; color: #788a9b; font-size: .72rem; line-height: 1.25; font-weight: 650; }
+.allocationTrack { position: relative; display: block; height: 8px; border-radius: 999px; background: #e7ecef; }
+.allocationTrack i { display: block; height: 100%; border-radius: inherit; background: var(--allocation-color); }
+.allocationTrack b { position: absolute; top: 50%; width: 22px; height: 22px; border: 4px solid #fff; border-radius: 50%; background: var(--allocation-color); box-shadow: 0 2px 8px rgb(31 61 81 / 28%); transform: translate(-50%, -50%); }
+.allocationValue { justify-self: end; min-width: 52px; padding: 10px 6px; border-radius: 12px; color: #17324e; background: #f4f5f4; font: 800 .95rem/1 var(--font-marketing-display), sans-serif; text-align: center; font-variant-numeric: tabular-nums; }
 .portfolioPie { display: flex; min-width: 0; align-items: center; flex-direction: column; margin: 0; }
 .portfolioPie img { display: block; width: min(100%, 326px); height: auto; filter: drop-shadow(0 20px 17px rgb(29 75 77 / 14%)); transform: scale(.96); animation: portfolioPieReveal 620ms cubic-bezier(.2, .75, .25, 1) both; }
 .portfolioPie figcaption { max-width: 300px; margin-top: -11px; color: #728495; font-size: .7rem; line-height: 1.35; text-align: center; }
@@ -481,8 +466,6 @@
 .outcomeMetric:nth-of-type(3) strong { color: #17324e; font-size: 1.22rem; }
 .outcomeMetric small { margin-top: 3px; color: #8595a3; font-size: .68rem; line-height: 1.25; }
 .portfolioDisclosure { grid-column: 1 / -1; margin: -4px 0 0; color: #7d8d99; font-size: .69rem; line-height: 1.35; text-align: right; }
-.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-
 @keyframes portfolioPieReveal {
   from { opacity: 0; transform: scale(.9); }
   to { opacity: 1; transform: scale(.96); }
@@ -637,9 +620,9 @@
   .educationBadge { width: 100%; justify-content: center; }
   .allocationControl { grid-template-columns: 42px minmax(0, 1fr) 54px; gap: 9px; }
   .allocationIcon { width: 42px; height: 42px; }
-  .allocationControl label { grid-column: 2; grid-row: 1; }
-  .allocationControl input { grid-column: 1 / -1; grid-row: 2; }
-  .allocationControl output { grid-column: 3; grid-row: 1; }
+  .allocationLabel { grid-column: 2; grid-row: 1; }
+  .allocationTrack { grid-column: 1 / -1; grid-row: 2; }
+  .allocationValue { grid-column: 3; grid-row: 1; }
   .portfolioOutcomes { gap: 18px 13px; }
   .outcomeMetric { padding-left: 13px; }
   .outcomeMetric strong { font-size: 1.45rem; }

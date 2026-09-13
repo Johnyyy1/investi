@@ -97,7 +97,9 @@ try {
   ]);
   assert.equal(await page.getByRole("img", { name: "Investi lesson screen explaining what a stock is" }).count(), 1);
   assert.equal(await page.getByRole("img", { name: /Three-part portfolio pie/ }).count(), 1);
-  assert.equal(await page.getByRole("slider").count(), 3, "Portfolio showcase has three real allocation controls");
+  assert.equal(await page.getByRole("slider").count(), 0, "Portfolio showcase exposes no fake slider controls");
+  assert.equal(await page.locator('input[type="range"]').count(), 0, "Portfolio showcase has no native range inputs");
+  assert.equal(await page.getByRole("img", { name: "Portfolio allocation: 60% stocks, 30% bonds, 10% cash." }).count(), 1, "Portfolio allocation has a static text equivalent");
   assert.equal(await page.getByText("100% allocated · safe to experiment", { exact: true }).count(), 1);
   assert.equal(await page.getByText("Illustrative data for learning. Not a forecast or recommendation.", { exact: true }).count(), 1);
   for (const removed of ["Knowledge today", "Opportunity tomorrow", "Different choices", "Real outcomes"]) {
@@ -121,16 +123,7 @@ try {
   }
   checks.push("All six widths at 100% and 200% text: no overflow/clipping; responsive split/stacked layout; loaded mascot and portfolio pie artwork; compact section transition; keyboard mobile menu");
   await page.evaluate(() => document.documentElement.style.fontSize = "");
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto(baseURL);
-  const stocks = page.getByRole("slider", { name: "Stocks allocation" });
-  await stocks.focus();
-  await stocks.press("ArrowRight");
-  assert.equal(await stocks.getAttribute("aria-valuetext"), "61% of the portfolio");
-  const sliderTotal = await page.getByRole("slider").evaluateAll((sliders) => sliders.reduce((sum, slider) => sum + Number(slider.value), 0));
-  assert.ok(Math.abs(sliderTotal - 100) < 1e-8, "Keyboard slider changes preserve a 100% total");
-  assert.equal(await page.getByText("7.3%", { exact: true }).count(), 1, "Outcome updates with allocation");
-  checks.push("Portfolio sliders are keyboard-operable, rebalance to 100%, update educational outcomes, and retain a readable disclosure");
+  checks.push("Portfolio allocation is static, has no fake slider semantics, preserves the 60 / 30 / 10 example, and retains a readable disclosure");
   await page.setViewportSize({ width: 390, height: 1000 });
   for (const [name, path] of [["Home", "/"], ["Learn", "/sign-in"], ["Portfolio Lab", "/sign-in"], ["Backtesting", "/sign-in"], ["Sign in", "/sign-in"], ["Start learning", "/sign-up"]]) {
     await page.goto(baseURL);
