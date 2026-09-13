@@ -8,6 +8,7 @@ import { parsePrice } from "@/features/finance/returns";
 import { portfolioWeightedReturn } from "@/features/finance/foundations";
 import { calculateBacktestMetrics, selectMonthlySample } from "@/features/lab/backtest";
 import { syntheticMonthlyData } from "@/features/lab/sample-data";
+import { Select } from "@/components/ui/form-controls";
 import type { ComparisonPoint } from "./backtest-chart";
 const BacktestChart = dynamic(() => import("./backtest-chart").then((module) => module.BacktestChart), { loading: () => <p role="status" className="flex h-64 items-center text-ql-small text-ql-secondary">Loading chart…</p> });
 const strategies = [
@@ -18,8 +19,6 @@ const strategies = [
 const years = Array.from({ length: 11 }, (_, index) => 2015 + index);
 const percent = (value: number) => `${(value * 100).toFixed(2)}%`;
 type Result = { metrics: ReturnType<typeof calculateBacktestMetrics>; benchmark: ReturnType<typeof calculateBacktestMetrics>; points: ComparisonPoint[]; label: string; period: string; amount: number };
-const selectClass = "mt-2 min-h-12 w-full rounded-ql-md border border-ql-control bg-ql-surface px-3 text-ql-body";
-
 export function BacktestingLab() {
   const [strategy, setStrategy] = useState("mixed");
   const [start, setStart] = useState(2015), [end, setEnd] = useState(2025);
@@ -44,8 +43,8 @@ export function BacktestingLab() {
   }
   return <>
     <form onSubmit={(event) => { event.preventDefault(); run(); }} className="mt-8 grid gap-5 rounded-ql-lg bg-ql-surface p-5 sm:grid-cols-2 sm:p-7 lg:grid-cols-4">
-      <div><label htmlFor="strategy" className="text-ql-small font-semibold">Asset mix</label><select id="strategy" className={selectClass} value={strategy} onChange={(event) => { setStrategy(event.target.value); setDirty(true); }}>{strategies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-      <div className="grid grid-cols-1 gap-3 min-[375px]:grid-cols-2"><div><label htmlFor="start-year" className="block text-ql-small font-semibold">From January</label><select id="start-year" className={selectClass} value={start} onChange={(event) => { setStart(Number(event.target.value)); setDirty(true); }}>{years.map((year) => <option key={year}>{year}</option>)}</select></div><div><label htmlFor="end-year" className="block text-ql-small font-semibold">To December</label><select id="end-year" className={selectClass} value={end} onChange={(event) => { setEnd(Number(event.target.value)); setDirty(true); }}>{years.map((year) => <option key={year}>{year}</option>)}</select></div></div>
+      <div><label htmlFor="strategy" className="text-ql-small font-semibold">Asset mix</label><Select id="strategy" className="mt-2" value={strategy} onChange={(event) => { setStrategy(event.target.value); setDirty(true); }}>{strategies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></div>
+      <div className="grid grid-cols-1 gap-3 min-[375px]:grid-cols-2"><div><label htmlFor="start-year" className="block text-ql-small font-semibold">From January</label><Select id="start-year" className="mt-2" value={start} onChange={(event) => { setStart(Number(event.target.value)); setDirty(true); }}>{years.map((year) => <option key={year}>{year}</option>)}</Select></div><div><label htmlFor="end-year" className="block text-ql-small font-semibold">To December</label><Select id="end-year" className="mt-2" value={end} onChange={(event) => { setEnd(Number(event.target.value)); setDirty(true); }}>{years.map((year) => <option key={year}>{year}</option>)}</Select></div></div>
       <FinanceInput label="Initial amount" suffix="Kč" value={amount} onValueChange={(value) => { setAmount(value); setDirty(true); }} />
       <LearningButton type="submit" className="self-end">Run backtest</LearningButton>
       {error && <p role="alert" className="text-ql-small text-ql-danger-ink sm:col-span-2 lg:col-span-4">{error}</p>}

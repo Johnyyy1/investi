@@ -16,6 +16,8 @@ import { MobileNav } from "@/components/shell/mobile-nav";
 import { AppHeader } from "@/components/shell/app-header";
 import { PracticeDemo } from "./practice-demo";
 import { InputDemo } from "./input-demo";
+import { Badge } from "@/components/ui/badge";
+import { Surface } from "@/components/ui/surface";
 
 function Section({ id, index, title, description, children }: { id: string; index: string; title: string; description: string; children: ReactNode }) {
   return <section id={id} className="scroll-mt-8 border-t border-ql-border py-10 sm:py-12">
@@ -23,8 +25,8 @@ function Section({ id, index, title, description, children }: { id: string; inde
   </section>;
 }
 const swatches = [
-  ["Page", "bg-ql-page"], ["Surface", "bg-ql-surface"], ["Subtle", "bg-ql-subtle"],
-  ["Primary", "bg-ql-blue-500"], ["Success", "bg-ql-success"], ["Warning", "bg-ql-warning"], ["Danger", "bg-ql-danger"],
+  ["Warm white", "bg-background"], ["Surface", "bg-surface"], ["Pale blue", "bg-primary-soft"],
+  ["Investi blue", "bg-primary"], ["Deep blue", "bg-primary-hover"], ["Green", "bg-success"], ["Warm accent", "bg-warning"], ["Data dark", "bg-data-dark"],
 ];
 const pathItems = [
   { id: "one", title: "What is a return?", minutes: 12, state: "completed" as const },
@@ -46,14 +48,16 @@ export function DesignSystemShowcase() {
         <div className="py-10 sm:py-16"><p className="mb-4 text-ql-small font-semibold text-ql-link">A clearer path to understanding.</p><AppHeader title="Small steps. Strong foundations." description="A lighter learning language for investi. Explore the components, try a question, and see how the system works together." />
           <nav aria-label="Showcase sections" className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-ql-small text-ql-link">{[["foundations", "Foundations"], ["practice", "Learning flow"], ["controls", "Controls"], ["explanations", "Explanations"], ["data", "Data"], ["motivation", "Motivation"], ["shell", "Shell"]].map(([id, label]) => <a key={id} href={`#${id}`} className="underline decoration-ql-border-strong underline-offset-4">{label}</a>)}</nav>
         </div>
-        <Section id="foundations" index="01" title="Calm, with a little optimism" description="Soft surfaces, clear type, and color with a purpose. Nunito Sans at weights 400–700.">
-          <div className="grid gap-8 lg:grid-cols-2"><div className="flex flex-wrap gap-4">{swatches.map(([name, color]) => <div key={name}><div className={`h-16 w-20 rounded-ql-md border border-ql-border ${color}`} /><p className="mt-2 text-ql-meta text-ql-secondary">{name}</p></div>)}</div><div className="space-y-3"><p className="text-ql-page-title font-semibold">Learning that stays with you.</p><p className="text-ql-title font-semibold">One idea at a time</p><p className="text-ql-body text-ql-secondary">Build confidence through clear explanations and useful practice.</p><p className="text-ql-meta text-ql-secondary">12 metadata · 14 secondary · 16 body · 20 title · 24 section · 32 page</p></div></div>
+        <Section id="foundations" index="01" title="Calm, with a little optimism" description="The landing-page palette and Nunito Sans typography, tuned down for focused product work.">
+          <div className="grid gap-8 lg:grid-cols-2"><div className="flex flex-wrap gap-4">{swatches.map(([name, color]) => <div key={name}><div className={`h-16 w-20 rounded-control border border-border ${color}`} /><p className="mt-2 text-microcopy text-secondary">{name}</p></div>)}</div><div className="space-y-3"><p className="text-page-title font-semibold">Learning that stays with you.</p><p className="text-section-title font-semibold">A clear section</p><p className="text-card-title font-semibold">One idea at a time</p><p className="text-body text-secondary">Build confidence through clear explanations and useful practice.</p><p className="text-microcopy text-secondary">13 microcopy · 15 secondary · 16 body · 20 card · 28 section · 36–48 page</p></div></div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3"><Surface className="p-5"><p className="font-bold">Flat surface</p><p className="mt-1 text-small text-secondary">Structure through border and spacing.</p></Surface><Surface elevation="raised" className="p-5"><p className="font-bold">Raised surface</p><p className="mt-1 text-small text-secondary">Subtle separation for interactive cards.</p></Surface><Surface elevation="floating" radius="panel" className="p-5"><p className="font-bold">Floating overlay</p><p className="mt-1 text-small text-secondary">Reserved for menus and dialogs.</p></Surface></div>
         </Section>
         <Section id="practice" index="02" title="A complete learning interaction" description="Choose an answer, check your reasoning, then continue. All progress and rewards here are demonstration values.">
           <div className="mx-auto max-w-3xl"><PracticeDemo /></div>
         </Section>
         <Section id="controls" index="03" title="Clear choices, confident actions" description="Touch-friendly buttons and native radio choices. Color reinforces the state; words and controls communicate it.">
           <div className="flex flex-wrap gap-3">{(["primary", "secondary", "success", "danger", "ghost"] as const).map((variant) => <LearningButton key={variant} variant={variant} onClick={() => setMessage(`${variant} button pressed.`)}>{variant.charAt(0).toUpperCase() + variant.slice(1)}</LearningButton>)}<LearningButton disabled>Disabled</LearningButton><LearningButton loading>Saving progress</LearningButton></div>
+          <div className="mt-6 flex flex-wrap gap-2">{(["neutral", "primary", "success", "warning", "danger"] as const).map((tone) => <Badge key={tone} tone={tone}>{tone === "success" ? "Completed" : tone.charAt(0).toUpperCase() + tone.slice(1)}</Badge>)}</div>
           <p role="status" className="mt-3 min-h-6 text-ql-small text-ql-secondary">{message}</p>
           <div className="mt-6 grid gap-3 md:grid-cols-2">{(["idle", "selected", "correct", "incorrect", "disabled"] as AnswerState[]).map((state) => <AnswerOption key={state} name={`state-${state}`} value={state} state={state === "idle" && idleSelected ? "selected" : state} disabled={state !== "idle"} checked={state === "selected" || state === "idle" && idleSelected} onChange={() => setIdleSelected(true)}>{state.charAt(0).toUpperCase() + state.slice(1)} answer state</AnswerOption>)}</div>
           <div className="mt-8 space-y-4"><LessonFeedback state="correct" title="Correct">A percentage return compares a change with its starting value.</LessonFeedback><LessonFeedback state="incorrect" title="Try a different base">The second period starts from the first period’s ending value.</LessonFeedback><LessonFeedback state="informational" title="Take your time">Your answer has no effect on the example data.</LessonFeedback></div>

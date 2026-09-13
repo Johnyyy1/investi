@@ -1,75 +1,83 @@
-# QuantLearn learning design system
+# Investi product design system
 
-> This document records the original design-system slice. The current production integration now has persisted XP/streak state and three implemented Learn/Lab/Progress destinations; see [product-reset.md](product-reset.md).
+This document describes Phase 1 of the product-wide design-system migration. The current marketing landing page remains the source of truth for the Investi identity; the application uses the same language more quietly. Product screens have not been redesigned in this phase.
 
-The new system is opt-in through `.learning-theme`. The working application keeps its existing design until route-by-route migration. Preview at `/dev/design-system` under `npm run dev`; the route returns 404 in production and is excluded from normal navigation. All showcase rewards and learner values are explicitly illustrative.
+Preview the foundation at `/dev/design-system` under `npm run dev`. The route returns 404 in production and is excluded from normal navigation. All rewards, chart values, and learner state in the preview are illustrative.
 
-## Tokens and typography
+## Architecture
 
-`src/styles/learning-tokens.css` owns Tailwind v4 theme tokens. Prefix all new learning utilities with `ql-`. Page/surface/subtle colors are #F7FBFF / #FFFFFF / #EEF7FF. Primary blue runs from 50 (#EEF8FF) to 700 (#227CD0), with 500 (#4AAEFF) the primary button fill. Primary ink is #18324A. Borders are #DCEAF7 and #C5DAEB.
+`src/styles/learning-tokens.css` is the canonical token layer. It registers semantic Tailwind v4 tokens for new code and keeps the existing `ql-*` tokens as aliases. This compatibility layer lets current Learn, Labs, Progress, Settings, onboarding, auth, and lesson screens inherit the new palette and scale without a fragile class-name rewrite.
 
-Semantic accents: success #55C878 on #EFFBF2; warning #F7BF4F on #FFF9E8; danger #F26F6F on #FFF2F2. Use darker semantic ink for text. Blue/green/red accent fills are not body text. Original secondary #607890 is retained as `ql-secondary-palette`; readable secondary ink is #586F85 so small text passes 4.5:1 against the pale backgrounds. Muted #8DA0B2 is decorative only. Controls use a stronger border and focus ring. Contrast tests protect the intended text/surface pairs.
+New reusable UI primitives live in `src/components/ui`:
 
-Nunito Sans is loaded by next/font in the showcase with weights 400, 500, 600, 700. During migration load that font at the new shell boundary and set `--font-learning`; do not add another UI font. Existing fonts remain on legacy routes during this slice. KaTeX uses its own mathematical fonts, which are not UI typography. Import `katex/dist/katex.min.css` at the route/layout boundary that consumes FormulaBlock, as the showcase does.
-
-Text classes: `text-ql-meta` (12), `small` (14), `body` (16), `emphasis` (18), `title` (20), `section` (24), `page-title` (32), `celebration` (40, completion only). Use regular or semibold by default; avoid 800/900. Never reuse a color name as a text-size token.
-
-Spacing uses Tailwind's four-pixel base with 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80px preferred. Named CSS space aliases mirror that scale. Radius: xs 8, sm 10, md 14, lg 18, xl 24, full 999px. Controls use md, concept/formula surfaces lg, and composed lesson surfaces xl. Full rounding is reserved for badges and progress tracks. Shadows are limited to small (two low-opacity layers) and medium (4px/16px); prefer borders and separation.
-
-## Component rules
-
-| Component | Responsibility |
+| Primitive | Responsibility |
 | --- | --- |
-| LearningButton | Native button, five variants, 48px minimum, loading/disabled semantics, tactile press |
-| AnswerOption | Native radio, shared name gives arrow-key behavior; state, checked and disabled are independently controlled |
-| LessonProgress | Back action, animated bar and compact step count |
-| LessonFeedback | Correct/incorrect/informational title and explanation; optional Continue and sticky placement |
-| ConceptCard | Compact definition or insight, not an all-purpose section container |
-| FormulaBlock | Trusted-author LaTeX, KaTeX HTML + MathML, variable definitions, safe rendering fallback |
-| FinanceInput | Labeled raw-string input with mode, prefix/suffix, hint/error; never parses or calculates |
-| MetricResult | Compact formatted output with explicit sign and semantic ink |
-| LearningChart | Recharts line chart, shared axes/grid/tooltip/margins, empty/invalid states, accessible data table |
-| CompletionScreen | Supplied completion result and optional XP; callback controls navigation |
-| Streak / XpCounter / DailyGoal / AchievementBadge | Controlled visual state only; no fabricated persistence |
-| ModulePath | Completed/active/available/locked steps; inline CTA is keyboard-accessible without a popover dependency |
-| AppSidebar / MobileNav / AppHeader | Composable shell foundations; optional header heading level for nesting |
+| `Button`, `ButtonLink`, `IconButton` | Primary, secondary, ghost, success, and danger actions; loading and disabled states |
+| `Input`, `Textarea`, `Select`, `Slider` | Native, accessible controls with one sizing, focus, and disabled treatment |
+| `Progress` | Clamped accessible progress value and shared track/fill styling |
+| `Badge` | Compact neutral or semantic status label |
+| `Surface` | Flat, raised, and floating surface hierarchy |
+| `Feedback` / `feedbackVariants` | Correct, incorrect, warning, informational, and completed surfaces |
 
-Wrap AnswerOption groups in a fieldset with a legend. Supply explanatory LessonFeedback after submission; correctness never uses a toast. Shortcut labels are display hints, not global keyboard handlers: only show them if the lesson implements those shortcuts (or clearly identifies them as option numbers).
+Existing learning APIs remain stable. `LearningButton`, `LearningLink`, and `LearningProgressBar` are compatibility exports or wrappers over the canonical primitives. `FinanceInput`, `TextInput`, lesson feedback, concept cards, charts, and lab controls now share the same underlying styles.
 
-LessonFeedback and CompletionScreen offer opt-in `autoFocusAction` for flows that replace the focused submit/continue button. Their actions reference the feedback/completion description for screen readers. Do not enable autofocus on passive previews or initial page content. The practice demo also returns focus to its back control on reset. Locked achievement copy stays at full contrast; only the decorative icon fades. Progress fills use blue-700 against blue-100 to exceed 3:1 non-text contrast.
+There are no application dialogs or tooltips in the current repository, so this phase does not add speculative dialog or tooltip dependencies. Native details/summary interactions remain unchanged.
 
-FinanceInput modes identify intent; percentage supplies a default % suffix, currency units must be passed explicitly. Keep blanks and partial values as strings and validate at the domain boundary. MetricResult consumes formatted values; no financial logic lives here. LearningChart is a focused single-series starting point, not a chart builder. Extend its shared style exports for additional meaningful chart types.
+## Color tokens
 
-Charts measure their actual container after hydration instead of assuming a desktop width during server rendering. The native details/data table is server-rendered and remains usable without JavaScript. Empty and non-finite datasets have explicit fallbacks; chart animation is disabled.
+The exact approved brand palette is available as `investi-*` tokens:
 
-Motion durations are 150ms fast, 250ms normal, 500ms reward. `useLearningDuration` respects reduced motion, including width animation; CSS disables transitions/press transforms where appropriate. Progress updates, XP changes, and completion are event-driven. No ambient motion.
+| Brand token | Value | Semantic use |
+| --- | --- | --- |
+| Warm White | `#F8F6F0` | Product background |
+| Investi Blue | `#2498F3` | Primary action and data series |
+| Deep Blue | `#1667B2` | Hover, link, focus, progress fill |
+| Navy | `#17324A` | Main text |
+| Pale Blue | `#DFF2FF` | Selected and informational surfaces |
+| Investi Green | `#42C98A` | Success, correct, completion, growth |
+| Warm Accent | `#FFB85C` | Warning and restrained emphasis |
+| Data Dark | `#102D4C` | Data and accessible text on bright brand fills |
 
-Sticky feedback is opt-in, uses safe-area padding, and belongs at the end of the lesson region. Check short/mobile viewports when integrating. Bottom navigation is hidden with `lessonMode`; reserve bottom space when using fixed navigation. Practice and Progress have no routes yet, so defaults expose them as unavailable, never as broken links. Supply real items when those features exist.
+New code should choose semantic roles such as `background`, `foreground`, `surface`, `surface-muted`, `primary`, `primary-hover`, `success`, `warning`, `danger`, `border`, or `data-*`. Avoid raw color values in product components. Green is semantic, not general decoration.
 
-## Library boundaries
+Bright Investi Blue does not have enough contrast with white for normal-sized button copy. Primary buttons therefore use Data Dark on the default fill and switch to white on Deep Blue hover. Automated tests protect the intended text/surface pairs, semantic feedback pairs, and progress contrast.
 
-Reuse the existing native/CVA primitives in `components/ui` where they fit. Low-level shadcn/Radix primitives belong there if a future dialog/popover/menu requires their behavior; there is no need to add a runtime UI kit for native buttons or radios.
+## Typography and spacing
 
-Never introduce a new UI library when an existing project primitive or domain component can solve the problem. Do not use raw shadcn components directly in lesson content when an equivalent QuantLearn learning component exists. Lessons consume the domain layer; infrastructure and one-off non-learning forms may use low-level primitives directly.
+The product continues to use Nunito Sans—the body family already shared with the approved landing page—through `next/font`. The application scale is:
 
-Added: Motion and KaTeX (+ KaTeX types). Retained: Tailwind, CVA, Lucide, Recharts. No Sonner dependency until actual system notifications are introduced; no correctness toasts. No additional framework, Storybook, popover dependency, gamification database, or lesson-content rewrite.
+- 36–48px responsive page title (`page-title`)
+- 28px major section heading (`section-title`)
+- 20px card heading (`card-title`)
+- 18px emphasis (`emphasis`)
+- 16px body (`body`)
+- 15px secondary copy and labels (`small`)
+- 13px microcopy (`microcopy`)
 
-## Prohibited patterns
+Existing `text-ql-*` utilities map onto this scale. Prefer regular, semibold, or bold weights; reserve the landing page's oversized 800-weight display treatment for marketing.
 
-No gradients, glows, glass, dark primary surfaces, oversized KPI cards, random accent colors, heavy floating shadows, excessive pills/icons, or decorative chart data. Keep hierarchy in spacing, scale, alignment and surface contrast. Color supports meaning.
+Spacing follows the existing four-pixel rhythm: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, and 80px. Semantic CSS aliases are `--space-*`; `--ql-space-*` remains compatible.
 
-## Review and rollout
+## Radius, elevation, and motion
 
-The showcase includes an interactive answer/completion flow, all control states, KaTeX, input errors, chart/table/empty state, reward previews, every path state, and shell samples. It is not a product route or a source of real learner data.
+The radius hierarchy is 12px controls, 16px buttons, 24px surfaces, and 30px large panels. A 10px compact radius and full pill radius are available for specialized components. Existing `rounded-ql-*` utilities map onto the appropriate new level.
 
-Next slice: migrate the Returns module overview to ModulePath and the new shell, reading existing persisted lesson states. Then migrate a single lesson reading/practice flow. Keep auth, progress actions, financial utilities, and authored content unchanged while validating each integration.
+Elevation has three levels:
+
+- level 0: flat
+- level 1: subtle surface separation
+- level 2: floating menus, dialogs, or other overlays
+
+Application shadows stay restrained. Marketing gradients, glows, glass, tilted cards, and scenery are not product primitives.
+
+Motion uses 180ms micro interactions, 270ms surface transitions, and 400ms larger entries with a restrained ease-out curve. No continuous animation was added. CSS and Motion-based components both remove nonessential movement under `prefers-reduced-motion`.
+
+## Accessibility and behavior boundaries
+
+Focus-visible treatment is a three-pixel Deep Blue outline with separation from the control. Native controls retain labels, touch targets, keyboard behavior, disabled semantics, and error descriptions. Correctness is always communicated with text/state in addition to color.
+
+This phase changes visual infrastructure only. Authentication, sessions, XP, streaks, persisted progress, lesson completion, demo isolation, database behavior, and financial calculations remain untouched.
 
 ## Validation
 
-Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`. For repeatable browser checks, start `npm run dev`, then run `node scripts/validate-design-system.mjs`. Install the Playwright Chromium browser first, or use `BROWSER_CHANNEL=chrome` with an installed Chrome. Override the origin with `DESIGN_SYSTEM_BASE_URL` if needed. This script opens an isolated headless browser, not a personal browser profile.
-
-The browser check covers 320/390/768/1024/1440px layouts, page overflow, chart sizing, keyboard radio navigation and focus handoffs, input error state, normal/reduced motion, and the no-JavaScript data table. Unit tests cover invalid chart values, MathML/safe formula fallback, motion durations, and token contrast. Motion's expected development-only reduced-motion notice is explicitly allowed; other browser warnings/errors fail validation.
-
-Validation scope: Chromium automation plus manual in-app-browser inspection. This is not a full screen-reader, cross-browser, or production lesson integration audit. Gamification remains illustrative, charts are single-series, and unavailable navigation remains disabled. Production isolation must also be checked against `npm start`: `/dev/design-system` must return HTTP 404, not merely disappear from navigation.
-
-Completion validation (2026-09-08): lint, typecheck, 56 unit tests across 9 files, production build, and the browser script passed. Manual desktop/mobile inspection covered controls, feedback, completion, formulas, chart/table, rewards, and shell. No horizontal page overflow was observed at the five tested widths or in the 320px no-JavaScript fallback. Production HTTP 404 and absence from normal navigation were confirmed. Fixes were limited to focus handoffs, completion visibility/padding, reduced-motion press behavior, progress/achievement contrast, and chart server-render sizing. Auth, financial logic, persisted progress, and production screen designs were unchanged.
+Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`. With the development server running, use `node scripts/validate-design-system.mjs` and the other existing `scripts/validate-*.mjs` browser suites as their environment permits. Production isolation must still return HTTP 404 for `/dev/design-system`.

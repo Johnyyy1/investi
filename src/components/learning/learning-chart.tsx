@@ -4,9 +4,9 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 export type LearningChartPoint = { label: string; value: number };
 export const learningChartStyle = {
   margin: { top: 16, right: 16, left: 0, bottom: 8 },
-  axis: { fill: "var(--color-ql-secondary)", fontSize: 12 },
-  tooltip: { background: "var(--color-ql-surface)", color: "var(--color-ql-text)", border: "1px solid var(--color-ql-border)", borderRadius: "var(--radius-ql-md)", boxShadow: "var(--shadow-ql-sm)", fontSize: 14 },
-  colors: { primary: "var(--color-ql-blue-600)", positive: "var(--color-ql-success-ink)", negative: "var(--color-ql-danger-ink)" },
+  axis: { fill: "var(--color-secondary)", fontSize: 13 },
+  tooltip: { background: "var(--color-surface)", color: "var(--color-foreground)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-control)", boxShadow: "var(--shadow-elevation-1)", fontSize: 14 },
+  colors: { primary: "var(--color-data-1)", positive: "var(--color-success-ink)", negative: "var(--color-danger-ink)" },
 };
 export function LearningChart({ data, title, description, valueLabel = "Value", sentiment = "primary", formatValue = String, yDomain }: {
   data: LearningChartPoint[]; title: string; description: string; valueLabel?: string;
@@ -20,7 +20,7 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
     <div className="mt-4 h-64 min-w-0 max-w-full overflow-hidden">
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart accessibilityLayer data={data} margin={learningChartStyle.margin}>
-          <CartesianGrid stroke="var(--color-ql-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis dataKey="label" tick={learningChartStyle.axis} tickLine={false} axisLine={false} />
           <YAxis domain={yDomain} tick={learningChartStyle.axis} tickLine={false} axisLine={false} width={64} tickFormatter={formatValue} />
           <Tooltip contentStyle={learningChartStyle.tooltip} formatter={(value) => [formatValue(Number(value)), valueLabel]} />

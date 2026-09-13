@@ -6,6 +6,7 @@ import { FinanceInput } from "@/components/learning/finance-input";
 import { MetricResult } from "@/components/learning/metric-result";
 import { FinancialInputError, parsePrice } from "@/features/finance/returns";
 import { portfolioWeightedReturn, validatePortfolioWeights } from "@/features/finance/foundations";
+import { Slider } from "@/components/ui/form-controls";
 
 import { portfolioAssets as assets } from "@/features/lab/portfolio";
 type AssetId = typeof assets[number]["id"];
@@ -95,7 +96,7 @@ export function PortfolioBuilder() {
         return <div key={asset.id} className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
           <div className="min-w-0">
             <label htmlFor={`${allocationErrorId}-${asset.id}-slider`} className="mb-2 flex items-center gap-2 text-ql-small font-semibold"><span aria-hidden="true" className={`h-3 w-3 rounded-full ${asset.color}`} />{asset.label}</label>
-            <input id={`${allocationErrorId}-${asset.id}-slider`} aria-label={`${asset.label} allocation slider`} type="range" min="0" max="100" step="1" value={sliderValue} onChange={(event) => setAllocation(asset.id, event.target.value)} className="min-h-12 w-full cursor-pointer accent-ql-link" />
+            <Slider id={`${allocationErrorId}-${asset.id}-slider`} aria-label={`${asset.label} allocation slider`} min="0" max="100" step="1" value={sliderValue} onChange={(event) => setAllocation(asset.id, event.target.value)} />
           </div>
           <FinanceInput label={`${asset.label} allocation`} mode="percentage" value={allocations[asset.id]} onValueChange={(value) => setAllocation(asset.id, value)} error={parsed.errors[asset.id]} />
         </div>;
