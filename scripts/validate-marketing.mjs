@@ -37,6 +37,7 @@ async function layout(page, width, enlarged) {
     const lab = sections[3];
     const backtesting = sections[4];
     const progress = sections[5];
+    const finalCta = sections[6];
     const howTitle = how.querySelector("h2").getBoundingClientRect();
     const howPhone = how.querySelector('[role="img"]').getBoundingClientRect();
     const howFeatures = [...how.querySelectorAll("h3")]
@@ -49,6 +50,9 @@ async function layout(page, width, enlarged) {
     const backtestingDemo = backtesting.querySelector('[data-testid="backtesting-showcase-demo"]').getBoundingClientRect();
     const progressCopy = progress.querySelector("h2").parentElement.getBoundingClientRect();
     const progressDemo = progress.querySelector('[data-testid="progress-showcase-demo"]').getBoundingClientRect();
+    const finalCtaCard = finalCta.firstElementChild.firstElementChild.getBoundingClientRect();
+    const finalCtaContent = finalCta.querySelector("h2").parentElement.getBoundingClientRect();
+    const finalCtaScene = finalCta.querySelector('[data-testid="final-cta-scene"]').getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth > innerWidth,
       heroGap: Math.round(scene.top - hero.bottom),
@@ -60,7 +64,9 @@ async function layout(page, width, enlarged) {
       labPieWidth: Math.round(labPie.width),
       backtestingStacked: backtestingDemo.top >= backtestingCopy.bottom - 1,
       progressStacked: progressDemo.top >= progressCopy.bottom - 1,
-      clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button, main label, main output")].some((el) => {
+      finalCtaStacked: finalCtaScene.top >= finalCtaContent.bottom - 1,
+      finalCtaSceneContained: finalCtaScene.left >= finalCtaCard.left - 1 && finalCtaScene.right <= finalCtaCard.right + 1,
+      clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button, main label, main output, footer p, footer a")].some((el) => {
         const css = getComputedStyle(el);
         // Display-font descenders can exceed the line box without being clipped.
         return (css.overflowX !== "visible" && el.scrollWidth > el.clientWidth + 1)
@@ -77,6 +83,8 @@ async function layout(page, width, enlarged) {
   if (width <= 1024 || enlarged) assert.equal(dimensions.labStacked, true, `Portfolio showcase stacks when space is limited: ${width}, enlarged=${enlarged}`);
   if (width <= 768 || enlarged) assert.equal(dimensions.backtestingStacked, true, `Backtesting showcase stacks when space is limited: ${width}, enlarged=${enlarged}`);
   if (width <= 768) assert.equal(dimensions.progressStacked, true, `Progress showcase stacks on mobile and tablet: ${width}, enlarged=${enlarged}`);
+  assert.equal((width <= 768 || enlarged) ? dimensions.finalCtaStacked : !dimensions.finalCtaStacked, true, `Final CTA uses the intended split/stacked layout: ${width}, enlarged=${enlarged}`);
+  assert.equal(dimensions.finalCtaSceneContained, true, `Final CTA artwork stays contained: ${width}, enlarged=${enlarged}`);
   assert.ok(dimensions.labPieWidth >= (width <= 390 ? 220 : 260), `Portfolio pie remains meaningful: ${width}, enlarged=${enlarged}`);
   await page.screenshot({ path: `${output}/landing-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
   if (width <= 1100) {
@@ -98,7 +106,7 @@ try {
   assert.equal(await page.title(), "Learn investing by doing · investi");
   assert.equal(await page.locator("h1").count(), 1);
   assert.equal(await page.locator("h1").innerText(), "Learn investing\nby doing.");
-  assert.equal(await page.locator("main > section").count(), 6, "Includes the portfolio, backtesting, and progress product showcase sections");
+  assert.equal(await page.locator("main > section").count(), 7, "Includes all product showcases and the final CTA");
   assert.deepEqual(await page.locator("article h3").allTextContents(), ["Learn", "Build", "Backtest"]);
   assert.deepEqual(await page.locator("main > section h2").allTextContents(), [
     "Learn. Build. Backtest.",
@@ -106,6 +114,7 @@ try {
     "Don’t just read about diversification. Break a portfolio.",
     "Your intuition needs data.",
     "Keep the streak.See yourself grow.",
+    "Ready to start learning by doing?",
   ]);
   assert.equal(await page.getByRole("img", { name: "Investi lesson screen explaining what a stock is" }).count(), 1);
   assert.equal(await page.getByRole("img", { name: /Three-part portfolio pie/ }).count(), 1);
@@ -153,6 +162,23 @@ try {
     assert.equal(await page.getByText(text, { exact: false }).count(), 0);
   }
   assert.equal(await page.getByText("Same curiosity.", { exact: false }).count(), 0, "Blue scene has no handwritten callout");
+  const finalCta = page.locator('[data-testid="final-cta"]');
+  await finalCta.scrollIntoViewIfNeeded();
+  await finalCta.locator("img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
+  assert.equal(await finalCta.getByText("Final step", { exact: true }).count(), 1);
+  assert.equal(await finalCta.getByRole("link", { name: "Start learning", exact: true }).getAttribute("href"), "/sign-up");
+  assert.equal(await finalCta.getByRole("button", { name: "Explore demo", exact: true }).count(), 1);
+  for (const asset of ["hill.webp", "clouds.webp"]) {
+    const image = finalCta.locator(`img[src*="${asset}"]`);
+    assert.equal(await image.count(), 1, `${asset} is used once in the final CTA`);
+    assert.equal(await image.getAttribute("alt"), "", `${asset} is decorative`);
+    assert.equal(await image.evaluate((img) => img.complete && img.naturalWidth > 0), true, `${asset} loads`);
+  }
+  const footer = page.locator("footer");
+  assert.deepEqual(await footer.getByRole("heading").allTextContents(), ["Product", "Company", "Account"]);
+  assert.equal(await footer.getByText("Learn investing through practice.", { exact: true }).count(), 1);
+  assert.equal(await footer.getByText("© 2026 Investi. All rights reserved.", { exact: true }).count(), 1);
+  assert.equal(await footer.getByText("Investi is an educational product. Nothing on this site is financial advice.", { exact: true }).count(), 1);
   for (const width of widths) {
     await layout(page, width, false);
     await layout(page, width, true);
@@ -171,7 +197,7 @@ try {
   await page.goto(baseURL);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  assert.equal(await page.getByRole("button", { name: "Explore demo" }).evaluate((el) => getComputedStyle(el).transitionDuration), "0s");
+  assert.equal(await page.getByRole("button", { name: "Explore demo" }).first().evaluate((el) => getComputedStyle(el).transitionDuration), "0s");
   assert.equal(await progress.locator("img").first().evaluate((el) => getComputedStyle(el).transitionDuration), "0s");
   await page.goto(baseURL);
   await page.keyboard.press("Tab");
@@ -185,7 +211,7 @@ try {
   await page.getByRole("link", { name: "Sign in", exact: true }).first().click();
   await page.waitForURL("**/sign-in");
   await page.getByRole("heading", { name: "Welcome back" }).waitFor();
-  checks.push("Metadata, one H1, six semantic sections, accessible product visuals, truthful illustrative Progress preview, loaded decorative artwork, removed handwritten copy, skip link, reduced motion, existing signup and sign-in");
+  checks.push("Metadata, one H1, seven semantic sections, accessible product visuals, final conversion CTA, structured footer, loaded decorative artwork, skip link, reduced motion, existing signup and sign-in");
 
   await page.goto(baseURL);
   await page.setViewportSize({ width: 390, height: 1000 });
@@ -196,20 +222,20 @@ try {
     await new Promise((resolve) => { releaseFailure = resolve; reportFailureStarted(); });
     await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "Unavailable" }) });
   });
-  await page.getByRole("button", { name: "Explore demo" }).click();
+  await page.getByRole("button", { name: "Explore demo" }).first().click();
   await failureStarted;
-  assert.equal(await page.getByRole("button", { name: "Opening demo…" }).isDisabled(), true, "Demo prevents repeat activation while pending");
+  assert.equal(await page.getByRole("button", { name: "Opening demo…" }).first().isDisabled(), true, "Demo prevents repeat activation while pending");
   releaseFailure();
   await page.getByRole("alert").filter({ hasText: "We couldn’t open the demo" }).waitFor();
   assert.equal(new URL(page.url()).pathname, "/");
-  assert.equal(await page.getByRole("button", { name: "Explore demo" }).isEnabled(), true);
+  assert.equal(await page.getByRole("button", { name: "Explore demo" }).first().isEnabled(), true);
   await page.unroute("**/api/auth/sign-in/anonymous");
-  await page.getByRole("button", { name: "Explore demo" }).click();
+  await page.getByRole("button", { name: "Explore demo" }).first().click();
   await page.waitForURL("**/learn");
   const owner = await session(context);
   await page.goto(baseURL);
   assert.equal(new URL(page.url()).pathname, "/", "Root stays public with a session");
-  await page.getByRole("button", { name: "Explore demo" }).click();
+  await page.getByRole("button", { name: "Explore demo" }).first().click();
   await page.waitForURL("**/learn");
   assert.equal(await session(context), owner, "Demo reuses an existing session");
   for (const path of ["/lab/portfolio", "/lab/backtesting", "/progress"]) {
@@ -220,12 +246,12 @@ try {
   }
   const other = await newContext(), otherPage = await other.newPage();
   await otherPage.goto(baseURL);
-  await otherPage.getByRole("button", { name: "Explore demo" }).click();
+  await otherPage.getByRole("button", { name: "Explore demo" }).first().click();
   await otherPage.waitForURL("**/learn");
   assert.notEqual(await session(other), owner, "Separate browsers create isolated demo profiles");
   checks.push("Demo failure/retry, one-click real demo, existing-session reuse, isolated profiles, protected product routes still work");
   assert.deepEqual(errors, []);
-  await writeFile(`${output}/results.json`, JSON.stringify({ widths, checks, asset: "public/brand/mascot-hero.webp plus four curated Progress assets; loaded and visually reviewed across all six widths." }, null, 2));
+  await writeFile(`${output}/results.json`, JSON.stringify({ widths, checks, asset: "Approved mascot, Progress, hill, and cloud assets; loaded and visually reviewed across all six widths." }, null, 2));
   console.log("PASS\n" + checks.join("\n") + `\nScreenshots: ${output}`);
 } finally {
   await browser.close();

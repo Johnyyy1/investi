@@ -3,6 +3,8 @@ import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { Hero } from "@/components/marketing/hero";
 import { JourneyIntro } from "@/components/marketing/journey-intro";
 import { ProductShowcases } from "@/components/marketing/product-showcases";
+import { FinalCta } from "@/components/marketing/final-cta";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import styles from "@/components/marketing/marketing.module.css";
 
 export const metadata: Metadata = {
@@ -18,6 +20,8 @@ export default function MarketingPage() {
       <Hero />
       <JourneyIntro />
       <ProductShowcases />
+      <FinalCta />
     </main>
+    <MarketingFooter />
   </>;
 }

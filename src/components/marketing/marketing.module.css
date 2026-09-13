@@ -650,13 +650,80 @@
   to { transform: scaleX(1); }
 }
 
+/* Final conversion */
+.finalCtaSection {
+  position: relative;
+  z-index: 4;
+  margin-top: -1px;
+  padding: 42px 0 112px;
+  background: #f8f7f2;
+}
+.finalCtaCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  min-height: 570px;
+  overflow: hidden;
+  border: 1px solid rgb(173 207 238 / 46%);
+  border-radius: 46px;
+  background:
+    radial-gradient(ellipse 55% 82% at 89% 41%, rgb(196 231 255 / 72%), transparent 72%),
+    linear-gradient(130deg, #f8fcff 0%, #edf7ff 56%, #e5f3ff 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 92%), 0 28px 70px rgb(43 86 129 / 11%);
+}
+.finalCtaCard::before {
+  content: "";
+  position: absolute;
+  inset: 1px 20% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 90%), transparent);
+  pointer-events: none;
+}
+.finalCtaContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  max-width: 650px;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(54px, 6vw, 82px) clamp(38px, 5.2vw, 74px);
+}
+.finalCtaEyebrow { margin: 0 0 18px; color: #2b70de; font-size: .78rem; line-height: 1.5; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+.finalCtaContent h2 { margin: 0; color: #102a47; font: 800 clamp(3.25rem, 4.35vw, 4.35rem)/.98 var(--font-marketing-display), sans-serif; letter-spacing: -.052em; text-wrap: balance; }
+.finalCtaDescription { max-width: 590px; margin: 25px 0 0; color: #536b83; font-size: 1.14rem; line-height: 1.56; }
+.finalCtaActions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 13px; margin-top: 31px; }
+.finalCtaButton { min-width: 188px; border-radius: 15px; }
+.finalCtaDemo { max-width: 100%; }
+.finalCtaScene { position: relative; z-index: 1; min-width: 0; min-height: 520px; align-self: stretch; pointer-events: none; }
+.finalCtaSceneGlow { position: absolute; z-index: -1; right: 2%; bottom: 5%; width: 85%; height: 64%; border-radius: 50%; background: rgb(181 224 255 / 42%); filter: blur(28px); }
+.finalCtaClouds, .finalCtaHill { position: absolute; display: block; width: auto; height: auto; object-fit: contain; }
+.finalCtaClouds { z-index: 1; top: 2%; right: 3%; width: min(91%, 590px); opacity: .82; filter: drop-shadow(0 12px 18px rgb(75 111 148 / 8%)); }
+.finalCtaHill { z-index: 2; right: -2%; bottom: -15%; width: min(98%, 630px); filter: drop-shadow(0 25px 26px rgb(39 83 101 / 16%)); }
+
+/* Footer */
+.marketingFooter { color: var(--navy); background: #edf2f4; }
+.footerTop { display: flex; flex-wrap: wrap; gap: 58px clamp(58px, 8vw, 118px); padding: 76px 0 68px; border-top: 1px solid rgb(95 126 151 / 15%); }
+.footerBrand { min-width: min(100%, 250px); flex: 1 1 300px; }
+.footerLogo { display: inline-flex; width: 150px; height: auto; text-decoration: none; }
+.footerLogo img { display: block; width: 100%; height: auto; }
+.footerBrand > p { max-width: 320px; margin: 19px 0 0; color: #587086; font-size: 1.02rem; line-height: 1.55; }
+.footerNavigation { display: grid; min-width: min(100%, 500px); flex: 2 1 650px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 42px clamp(34px, 5vw, 76px); }
+.footerLinkGroup h2 { margin: 0 0 18px; color: #58728d; font-size: .76rem; line-height: 1.4; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+.footerLinkGroup ul { display: grid; gap: 13px; margin: 0; padding: 0; list-style: none; }
+.footerLinkGroup a { color: #274865; font-size: .96rem; line-height: 1.45; font-weight: 700; text-decoration: none; text-underline-offset: 4px; transition: color 160ms ease; }
+.footerLinkGroup a:hover { color: var(--deep-blue); text-decoration: underline; }
+.footerBottom { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 13px 34px; padding: 25px 0 31px; border-top: 1px solid rgb(95 126 151 / 18%); }
+.footerBottom p { margin: 0; color: #63798c; font-size: .76rem; line-height: 1.5; }
+.footerBottom p:last-child { max-width: 570px; text-align: right; }
+
 @supports (animation-timeline: view()) {
-  .howFeature, .phoneStage, .portfolioCopy, .portfolioDemoStage, .backtestingCopy, .backtestingSurface, .progressCopy, .progressScene {
+  .howFeature, .phoneStage, .portfolioCopy, .portfolioDemoStage, .backtestingCopy, .backtestingSurface, .progressCopy, .progressScene, .finalCtaContent, .finalCtaScene {
     animation: sectionReveal linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 42%;
   }
-  .howFeatureUse, .portfolioDemoStage, .backtestingSurface, .progressScene { animation-range: entry 7% entry 48%; }
+  .howFeatureUse, .portfolioDemoStage, .backtestingSurface, .progressScene, .finalCtaScene { animation-range: entry 7% entry 48%; }
 }
 
 @keyframes sectionReveal {
@@ -744,6 +811,12 @@
   .progressShowcaseLayout { grid-template-columns: 1fr; gap: 62px; }
   .progressCopy { max-width: 680px; }
   .progressScene { width: min(100%, 760px); min-height: 625px; justify-self: center; }
+  .finalCtaSection { padding-top: 26px; padding-bottom: 90px; }
+  .finalCtaCard { min-height: 0; }
+  .finalCtaContent { max-width: 720px; padding-bottom: 26px; }
+  .finalCtaScene { width: min(100%, 700px); min-height: 470px; justify-self: center; }
+  .finalCtaClouds { top: -2%; right: 4%; width: min(88%, 580px); }
+  .finalCtaHill { right: 50%; bottom: -18%; width: min(92%, 590px); transform: translateX(50%); }
 }
 
 @media (max-width: 767px) {
@@ -813,6 +886,19 @@
   .progressDescription { font-size: 1.05rem; }
   .progressCta { width: min(100%, 330px); justify-content: space-between; }
   .progressScene { min-height: 595px; }
+  .finalCtaSection { padding-bottom: 72px; }
+  .finalCtaCard { border-radius: 34px; }
+  .finalCtaContent { padding: 50px 34px 20px; }
+  .finalCtaContent h2 { font-size: clamp(2.85rem, 12vw, 3.65rem); }
+  .finalCtaDescription { font-size: 1.05rem; }
+  .finalCtaActions { flex-direction: column; align-items: stretch; }
+  .finalCtaActions > a, .finalCtaDemo { width: min(100%, 330px); }
+  .finalCtaButton { width: 100%; justify-content: space-between; }
+  .finalCtaScene { min-height: 410px; }
+  .footerTop { padding-block: 62px 55px; }
+  .footerBrand { flex-basis: 100%; }
+  .footerBottom { padding-bottom: 28px; }
+  .footerBottom p:last-child { text-align: left; }
 }
 
 @media (max-width: 620px) {
@@ -863,6 +949,15 @@
   .progressObjects { width: min(100%, 340px); height: 185px; }
   .progressTrophy { width: 158px; }
   .progressBooks { width: 148px; }
+  .finalCtaSection { padding-top: 18px; padding-bottom: 58px; }
+  .finalCtaCard { border-radius: 29px; }
+  .finalCtaContent { padding: 43px 24px 10px; }
+  .finalCtaEyebrow { margin-bottom: 14px; }
+  .finalCtaScene { min-height: 330px; }
+  .finalCtaClouds { top: 1%; width: 94%; }
+  .finalCtaHill { bottom: -17%; width: 103%; max-width: none; }
+  .footerTop { gap: 48px; padding-block: 54px 48px; }
+  .footerNavigation { min-width: 0; grid-template-columns: 1fr; gap: 37px; }
 }
 
 @media (max-width: 380px) {
@@ -892,6 +987,9 @@
   .progressObjects { width: 290px; height: 169px; }
   .progressTrophy { width: 144px; }
   .progressBooks { width: 134px; }
+  .finalCtaContent { padding-inline: 20px; }
+  .finalCtaContent h2 { font-size: min(3.05rem, 15vw); overflow-wrap: normal; }
+  .finalCtaScene { min-height: 300px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
