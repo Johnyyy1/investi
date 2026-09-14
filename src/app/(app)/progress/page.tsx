@@ -4,12 +4,14 @@ import { LearningStats } from "@/components/gamification/learning-stats";
 import { LearningProgressBar } from "@/components/learning/lesson-progress";
 import { LearningLink } from "@/components/learning/learning-button";
 import { moduleCatalog } from "@/features/learning/catalog";
+import { AppHeader } from "@/components/shell/app-header";
+import { PageFrame } from "@/components/shell/page-frame";
 
 export const metadata = { title: "Progress" };
 export default async function ProgressPage() {
   const summary = await loadLearner();
-  return <main className="mx-auto max-w-4xl px-5 py-8 sm:px-10 lg:py-14">
-    <h1 className="text-ql-page-title font-bold">Look how far you’ve come.</h1>
+  return <PageFrame width="focused">
+    <AppHeader title="Look how far you’ve come." />
     <div className="mt-8">{summary.gamification && <LearningStats stats={summary.gamification} goal />}</div>
     <p className="mt-10 text-ql-celebration font-bold">{summary.completed.length}<span className="ml-3 text-ql-title font-normal text-ql-secondary">lessons complete</span></p>
     <p data-testid="available-progress" className="mt-2 text-ql-small text-ql-secondary">{summary.completed.length} of {summary.lessons.length} available lessons complete</p>
@@ -25,5 +27,5 @@ export default async function ProgressPage() {
     </section>
     <LearningLink className="mt-8 w-full sm:w-auto" href={summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`}>{summary.allComplete ? "Explore the Lab" : "Continue learning"}</LearningLink>
     <details className="mt-8 text-ql-small text-ql-secondary"><summary className="flex min-h-12 cursor-pointer items-center text-ql-link">How progress works</summary><p>First completion earns 60 XP. At least one new lesson on a calendar day counts toward your streak. Reviews do not earn extra credit. Your goal is {summary.gamification?.dailyTarget ?? 1} lessons a day, based on your saved daily minutes. Days follow {summary.gamification?.timeZone ?? "UTC"}.</p></details>
-  </main>;
+  </PageFrame>;
 }

@@ -5,13 +5,14 @@ import { ModulePath, type ModulePathItem } from "@/components/gamification/modul
 import { AppHeader } from "@/components/shell/app-header";
 import { LearningProgressBar } from "./lesson-progress";
 import { getModuleBySlug, getModuleLessons } from "@/features/learning/catalog";
+import { PageFrame } from "@/components/shell/page-frame";
 
 export function ModuleOverview({ slug, items, completedLessons }: { slug: string; items: ModulePathItem[]; completedLessons: number }) {
   const router = useRouter();
   const learningModule = getModuleBySlug(slug)!;
   const lessons = getModuleLessons(slug);
   const available = lessons.filter((lesson) => lesson.status === "available");
-  return <main className="mx-auto w-full min-w-0 max-w-4xl px-5 pt-8 pb-12 sm:px-10 lg:py-12">
+  return <PageFrame width="focused">
     <Link href="/learn" className="inline-flex min-h-12 items-center text-ql-small text-ql-link underline underline-offset-4">Learn</Link>
     <div className="mt-6"><AppHeader title={learningModule.title} description={learningModule.description} /></div>
     <section aria-label="Module progress" className="mt-8 max-w-xl border-y border-ql-border py-6">
@@ -21,5 +22,5 @@ export function ModuleOverview({ slug, items, completedLessons }: { slug: string
     <section className="mt-10 max-w-xl" aria-labelledby="module-path-title"><h2 id="module-path-title" className="mb-8 text-ql-section font-semibold">Your learning path</h2>
       <ModulePath items={items} onOpen={(id) => { const lesson = available.find((item) => item.id === id); if (lesson) router.push(`/learn/${slug}/${lesson.slug}`); }} />
     </section>
-  </main>;
+  </PageFrame>;
 }

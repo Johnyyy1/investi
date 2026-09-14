@@ -40,11 +40,54 @@ async function layouts(page, label) {
     assert.equal(await page.locator("h1").count(), 1, `${label}: one page heading`);
     const nav = page.getByRole("navigation", { name: width < 1024 ? "Mobile navigation" : "Main navigation" });
     if (await nav.count()) {
-      assert.deepEqual(await nav.getByRole("link").allTextContents(), ["Learn", "Lab", "Progress"]);
+      const links = nav.getByRole("link");
+      assert.deepEqual(await links.allTextContents(), ["Learn", "Lab", "Progress"]);
       const box = await nav.boundingBox();
       assert.ok(box && box.height >= 48, "navigation has large targets");
+      for (const link of await links.all()) {
+        const linkBox = await link.boundingBox();
+        assert.ok(linkBox && linkBox.height >= 48, `${label}: every navigation target is at least 48px at ${width}`);
+      }
+      const accountBox = await page.getByLabel("Account menu").boundingBox();
+      assert.ok(accountBox && accountBox.height >= 48, `${label}: account target is at least 48px at ${width}`);
     }
   }
+}
+async function accountMenuLayouts(page) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const trigger = page.getByLabel("Account menu");
+    await trigger.click();
+    const settings = page.getByRole("link", { name: "Settings", exact: true });
+    const signOut = button(page, "Sign out");
+    await settings.waitFor();
+    const [triggerBox, settingsBox, signOutBox] = await Promise.all([
+      trigger.boundingBox(), settings.boundingBox(), signOut.boundingBox(),
+    ]);
+    for (const box of [triggerBox, settingsBox, signOutBox]) {
+      assert.ok(box && box.x >= 0 && box.x + box.width <= width, `account menu stays within ${width}px viewport`);
+      assert.ok(box.height >= 44, `account menu targets stay at least 44px at ${width}`);
+    }
+    await page.screenshot({ path: `${screenshotDir}/account-menu-${width}.png`, fullPage: true });
+    await trigger.press("Escape");
+    assert.ok(await trigger.evaluate((element) => element === document.activeElement), "Escape closes account menu and returns focus");
+    assert.equal(await settings.isVisible(), false, "Escape hides account actions");
+  }
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; window.scrollTo(0, 0); });
+  const trigger = page.getByLabel("Account menu");
+  await trigger.click();
+  const settings = page.getByRole("link", { name: "Settings", exact: true });
+  await settings.waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Learn and account shell respect 200% text at 320px");
+  for (const item of [trigger, settings, button(page, "Sign out")]) {
+    const box = await item.boundingBox();
+    assert.ok(box && box.x >= 0 && box.x + box.width <= 320, "enlarged account controls stay inside the viewport");
+  }
+  await page.screenshot({ path: `${screenshotDir}/account-menu-320-text-200.png`, fullPage: true });
+  await trigger.press("Escape");
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  await page.setViewportSize({ width: 1440, height: 900 });
 }
 async function menuSignOut(page) {
   await page.getByLabel("Account menu").click();
@@ -68,6 +111,22 @@ try {
   const demoA = await newContext();
   const { page, owner: ownerA } = await startDemo(demoA);
   await layouts(page, "learn");
+  await accountMenuLayouts(page);
+  await page.getByLabel("Account menu").click();
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await heading(page, "Learning preferences");
+  await layouts(page, "settings");
+  assert.equal(await page.getByRole("navigation", { name: "Main navigation" }).locator('[aria-current="page"]').count(), 0, "Settings does not imply a primary navigation destination");
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Lab", exact: true }).click();
+  await heading(page, "What happens if…");
+  assert.equal(await page.getByRole("link", { name: "Lab", exact: true }).getAttribute("aria-current"), "page");
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Progress", exact: true }).click();
+  await heading(page, "Look how far you’ve come.");
+  assert.equal(await page.getByRole("link", { name: "Progress", exact: true }).getAttribute("aria-current"), "page");
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Learn", exact: true }).click();
+  await page.waitForURL("**/learn");
+  await page.locator("h1").waitFor();
+  assert.equal(await page.getByRole("link", { name: "Learn", exact: true }).getAttribute("aria-current"), "page");
   assert.equal(await page.getByRole("link", { name: "Continue learning", exact: true }).getAttribute("href"), "/learn/investing-foundations/risk-vs-reward");
   await page.getByRole("link", { name: "Continue learning", exact: true }).click();
   await heading(page, "The timing of a need matters");
@@ -126,9 +185,11 @@ try {
   await page.getByRole("link", { name: "Open Portfolio Lab", exact: true }).click();
   await button(page, "Run scenario").click();
   await heading(page, "See what changed");
+  await page.waitForFunction(() => document.activeElement?.textContent?.trim() === "See what changed");
   assert.equal(await page.getByTestId("portfolio-return").textContent(), "-11.4%");
   const slider = page.getByRole("slider", { name: "Stocks allocation slider" });
   await slider.focus();
+  assert.equal(await slider.evaluate((element) => element === document.activeElement), true, "Portfolio slider receives keyboard focus");
   assert.notEqual(await slider.evaluate((element) => getComputedStyle(element).outlineStyle), "none", "Portfolio slider keeps a visible keyboard focus indicator");
   assert.ok((await slider.boundingBox()).height >= 48, "Portfolio slider keeps a 48px touch target");
   await slider.press("Home");
@@ -197,7 +258,9 @@ try {
   await signup.getByLabel("Email", { exact: true }).fill(email);
   await signup.getByLabel("Password", { exact: true }).fill(password);
   await button(signup, "Sign in").click(); await signup.waitForURL("**/learn");
-  await signup.goto(`${baseURL}/dashboard`); await signup.waitForURL("**/learn");
+  const dashboardNavigation = await signup.goto(`${baseURL}/dashboard`, { waitUntil: "commit" }).catch((error) => error);
+  if (dashboardNavigation instanceof Error) assert.match(dashboardNavigation.message, /Navigation to .*\/dashboard.*interrupted by another navigation to .*\/learn/);
+  await signup.waitForURL("**/learn");
   assert.equal(await signup.getByRole("link", { name: "Continue learning", exact: true }).getAttribute("href"), "/learn/returns/simple-returns");
   assert.deepEqual((await sql`select * from learning_profile where user_id = ${normal.id}`)[0], legacy);
   await signup.getByRole("link", { name: "Continue learning", exact: true }).click(); await heading(signup, "Explore a price series");

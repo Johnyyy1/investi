@@ -51,8 +51,9 @@ async function layout(page, width, enlarged) {
     const progressCopy = progress.querySelector("h2").parentElement.getBoundingClientRect();
     const progressDemo = progress.querySelector('[data-testid="progress-showcase-demo"]').getBoundingClientRect();
     const finalCtaCard = finalCta.firstElementChild.firstElementChild.getBoundingClientRect();
-    const finalCtaContent = finalCta.querySelector("h2").parentElement.getBoundingClientRect();
-    const finalCtaScene = finalCta.querySelector('[data-testid="final-cta-scene"]').getBoundingClientRect();
+    const finalCtaContentEl = finalCta.querySelector("h2").parentElement;
+    const finalCtaSceneEl = finalCta.querySelector('[data-testid="final-cta-scene"]');
+    const finalCtaScene = finalCtaSceneEl.getBoundingClientRect();
     const midWordWraps = [];
     for (const element of document.querySelectorAll("h1, h2, h3, article p, main a, main button, footer p, footer a")) {
       if (element.getClientRects().length === 0) continue;
@@ -79,7 +80,8 @@ async function layout(page, width, enlarged) {
       labPieWidth: Math.round(labPie.width),
       backtestingStacked: backtestingDemo.top >= backtestingCopy.bottom - 1,
       progressStacked: progressDemo.top >= progressCopy.bottom - 1,
-      finalCtaStacked: finalCtaScene.top >= finalCtaContent.bottom - 1,
+      // Offset geometry verifies the grid structure without scroll-linked reveal transforms shifting client rects.
+      finalCtaStacked: finalCtaSceneEl.offsetTop >= finalCtaContentEl.offsetTop + finalCtaContentEl.offsetHeight - 1,
       finalCtaSceneContained: finalCtaScene.left >= finalCtaCard.left - 1 && finalCtaScene.right <= finalCtaCard.right + 1,
       clipped: [...document.querySelectorAll("h1, h2, h3, article, main p, main a, main button, main label, main output, footer p, footer a")].some((el) => {
         const css = getComputedStyle(el);
@@ -282,7 +284,7 @@ try {
   for (const path of ["/lab/portfolio", "/lab/backtesting", "/progress"]) {
     await page.goto(`${baseURL}${path}`);
     assert.equal(new URL(page.url()).pathname, path);
-    assert.equal(await page.locator("h1").count(), 1);
+    assert.equal(await page.locator("h1").count(), 1, `${path} keeps a single page heading`);
     assert.equal(await page.locator("[data-asset-state]").count(), 0, "Marketing does not enter the product");
   }
   const other = await newContext(), otherPage = await other.newPage();
