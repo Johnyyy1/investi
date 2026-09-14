@@ -6,6 +6,7 @@ import { type SaveLessonProgress, saveLessonProgressSchema } from "./schemas";
 import { validateCompletion, validateMove } from "./transition";
 import { getGamification, learningDate, LESSON_XP } from "@/features/gamification/domain";
 import { getLearnerSummary } from "@/features/learning/learner-summary";
+import { LESSON_PRACTICE_CAPITAL_MINOR, REWARD_POLICY_VERSION } from "@/features/rewards/practice-capital";
 
 export async function saveLessonProgress(userId: string, input: SaveLessonProgress, answers?: Record<string, string>) {
   const progress = saveLessonProgressSchema.parse(input);
@@ -41,7 +42,16 @@ export async function completeLesson(userId: string, lessonId: string) {
     let xpAwarded = 0;
     if (current.status !== "completed") {
       await tx.update(lessonProgress).set({ status: "completed", completedAt: now, updatedAt: now }).where(where);
-      const awarded = await tx.insert(lessonAward).values({ userId, lessonId, xp: LESSON_XP, learningDate: learningDate(now, timeZone), timeZone, awardedAt: now }).onConflictDoNothing().returning();
+      const awarded = await tx.insert(lessonAward).values({
+        userId,
+        lessonId,
+        xp: LESSON_XP,
+        practiceCapitalMinor: LESSON_PRACTICE_CAPITAL_MINOR,
+        rewardPolicyVersion: REWARD_POLICY_VERSION,
+        learningDate: learningDate(now, timeZone),
+        timeZone,
+        awardedAt: now,
+      }).onConflictDoNothing().returning();
       xpAwarded = awarded[0]?.xp ?? 0;
     }
     const awards = await tx.select().from(lessonAward).where(eq(lessonAward.userId, userId));

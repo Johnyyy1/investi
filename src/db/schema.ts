@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { experienceValues, goalValues, interestValues } from "../features/onboarding/domain";
 import {
   boolean,
+  bigint,
   check,
   date,
   index,
@@ -156,6 +157,8 @@ export const lessonAward = pgTable("lesson_award", {
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   lessonId: text("lesson_id").notNull().references(() => lesson.id, { onDelete: "cascade" }),
   xp: integer("xp").notNull(),
+  practiceCapitalMinor: bigint("practice_capital_minor", { mode: "bigint" }).notNull(),
+  rewardPolicyVersion: integer("reward_policy_version").notNull(),
   learningDate: date("learning_date").notNull(),
   timeZone: text("time_zone").notNull(),
   awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull(),
@@ -163,4 +166,6 @@ export const lessonAward = pgTable("lesson_award", {
   primaryKey({ columns: [table.userId, table.lessonId] }),
   index("lesson_award_user_date_idx").on(table.userId, table.learningDate),
   check("lesson_award_xp_check", sql`${table.xp} = 60`),
+  check("lesson_award_practice_capital_positive_check", sql`${table.practiceCapitalMinor} > 0`),
+  check("lesson_award_reward_policy_version_positive_check", sql`${table.rewardPolicyVersion} > 0`),
 ]);

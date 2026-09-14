@@ -19,13 +19,15 @@ New accounts see one experience-level choice with Beginner selected by default, 
 
 Completed profiles never replay onboarding. Existing answers, completion timestamps, lesson rows, and active Returns cursors remain intact. The loader recomputes a suitable recommendation without rewriting stored preferences. A stale onboarding tab cannot overwrite a completed profile.
 
-## Completion transaction and XP
+## Completion transaction, XP, and Practice Capital
 
-The client sends only the lesson identifier, cursor, and—when crossing a question step—the attempted answer. User identity always comes from the server session. XP is the server constant `LESSON_XP = 60`; no client payload can choose an amount.
+The client sends only the lesson identifier, cursor, and—when crossing a question step—the attempted answer. User identity always comes from the server session. XP remains the server constant `LESSON_XP = 60`; no client payload can choose a reward amount. Practice Capital policy v1 awards exactly `200000` CZK minor units (2,000.00 Kč) for an eligible first lesson completion. It is virtual educational capital, not real money, not withdrawable, and not investment advice.
 
-The repository validates that movement advances by no more than one authored step and that a question was attempted before leaving its step. Completion requires the final saved authored step. The completion transaction locks the account row, preserves an existing `completedAt`, changes an unfinished progress row to completed, and inserts one `lesson_award` receipt. The receipt primary key `(user_id, lesson_id)` and fixed-XP check enforce one lifetime reward per lesson. The transaction then derives the updated read model and next lesson. If the award write fails, the lesson update rolls back. Repeated, refreshed, reviewed, or concurrent completion requests cannot add a second receipt.
+The repository validates that movement advances by no more than one authored step and that a question was attempted before leaving its step. Completion requires the final saved authored step. The completion transaction locks the account row, preserves an existing `completedAt`, changes an unfinished progress row to completed, and inserts one `lesson_award` receipt containing 60 XP, 200000 Practice Capital minor units, and reward policy version 1. The receipt primary key `(user_id, lesson_id)` and database checks enforce one lifetime positive reward per lesson. The transaction then derives the updated read model and next lesson. If the award write fails, the lesson update rolls back. Repeated, refreshed, reviewed, or concurrent completion requests cannot add a second receipt. XP remains the visible compatibility experience in this phase; Practice Capital does not appear in the UI.
 
 Migration `0003_chunky_sphinx.sql` intentionally backfills one 60-XP receipt for each pre-existing published completed lesson. It uses the real stored completion/update timestamp and UTC because the historical timezone was not recorded. This preserves credit without duplicating completion or inventing a separate time-spent measure; the composite primary key makes deployment/retry idempotent. No time minutes are inferred.
+
+Migration `0004_awesome_sebastian_shaw.sql` expands the same receipt with nullable Practice Capital fields, reconciles completed published lessons that are missing a receipt under the existing UTC historical rule, backfills every authoritative receipt to policy v1, and only then enforces non-null positive values. The receipt is the authority: Practice Capital is never calculated from XP. The server-side summary sums the receipt bigint values exactly and does not store a mutable user balance.
 
 ## Streak and daily goal semantics
 
@@ -39,7 +41,7 @@ Daily minutes map deterministically to lesson targets: 5 → 1, 10 → 1, 15 →
 
 **Explore demo** asks Better Auth to create a fresh anonymous user/session. There is no shared email or password. Before the session is usable, a transaction verifies the anonymous owner and seeds a deterministic profile, six completed lessons with matching award receipts, and one in-progress lesson. Concurrent or repeated initialization is safe, and a failed seed rolls back profile/progress/rewards together. Separate visitors receive separate owners and mutable state.
 
-The resulting read model is 360 XP, a four-day streak, one of two daily lessons, completed Foundations/Returns history, and an in-progress Risk vs reward lesson ready at its final interaction. These values are derived from the stored seed rows rather than hardcoded UI metrics.
+The resulting read model is 360 XP, 1,200,000 Practice Capital minor units from six receipts, a four-day streak, one of two daily lessons, completed Foundations/Returns history, and an in-progress Risk vs reward lesson ready at its final interaction. These values are derived from the stored seed rows rather than hardcoded UI metrics.
 
 Anonymous sessions expire after 24 hours. `npm run demo:cleanup` is a dry run; `npm run demo:cleanup -- --apply` removes only anonymous identities older than seven days, with related data deleted by cascade. Scheduling that command daily is sufficient for the current scale.
 

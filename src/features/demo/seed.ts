@@ -1,4 +1,5 @@
 import { learningDate, LESSON_XP, shiftDate } from "@/features/gamification/domain";
+import { LESSON_PRACTICE_CAPITAL_MINOR, REWARD_POLICY_VERSION } from "@/features/rewards/practice-capital";
 import { lessonSteps } from "@/features/progress/transition";
 
 /** Relative to the session's UTC calendar day, with the same content and history each time. */
@@ -13,7 +14,15 @@ export function demoSeed(now: Date) {
     const date = shiftDate(today, offset);
     // Today's seed is never in the future, including immediately after midnight.
     const awardedAt = offset === 0 ? new Date(now) : new Date(`${date}T12:00:00Z`);
-    return { lessonId, xp: LESSON_XP, learningDate: date, timeZone: "UTC", awardedAt };
+    return {
+      lessonId,
+      xp: LESSON_XP,
+      practiceCapitalMinor: LESSON_PRACTICE_CAPITAL_MINOR,
+      rewardPolicyVersion: REWARD_POLICY_VERSION,
+      learningDate: date,
+      timeZone: "UTC",
+      awardedAt,
+    };
   });
   const progress = awards.map((award) => ({ lessonId: award.lessonId, status: "completed" as const, lastPosition: lessonSteps(award.lessonId).length - 1, completedAt: award.awardedAt, updatedAt: award.awardedAt }));
   // Resume at the final question: interaction → feedback → takeaway → reward in minutes.

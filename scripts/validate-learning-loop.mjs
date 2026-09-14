@@ -24,6 +24,7 @@ const button = (page, name) => page.getByRole("button", { name, exact: true });
 const rows = (id) => sql`select * from lesson_progress where user_id = ${id} order by lesson_id`;
 const awards = (id) => sql`select * from lesson_award where user_id = ${id} order by lesson_id`;
 const total = async (id) => Number((await sql`select coalesce(sum(xp), 0)::int as xp from lesson_award where user_id = ${id}`)[0].xp);
+const practiceCapitalTotal = async (id) => BigInt((await sql`select coalesce(sum(practice_capital_minor), 0)::text as total from lesson_award where user_id = ${id}`)[0].total);
 async function sessionOwner(context) {
   const result = await context.request.get(`${baseURL}/api/auth/get-session`);
   const session = await result.json();
@@ -103,6 +104,8 @@ async function startDemo(context) {
   const owner = await sessionOwner(context);
   assert.equal(owner.isAnonymous, true);
   assert.equal(await total(owner.id), 360);
+  assert.equal(await practiceCapitalTotal(owner.id), 1_200_000n);
+  assert.ok((await awards(owner.id)).every((award) => BigInt(award.practice_capital_minor) === 200_000n && award.reward_policy_version === 1));
   assert.equal((await rows(owner.id)).length, 7);
   await page.getByTestId("total-xp").filter({ hasText: "360 XP" }).waitFor();
   return { page, owner };
@@ -146,8 +149,9 @@ try {
   await sql.unsafe(`ALTER TABLE lesson_award ADD CONSTRAINT "${constraint}" CHECK (user_id <> '${ownerA.id.replaceAll("'", "''")}') NOT VALID`);
   await button(page, "Mark lesson complete").click();
   await page.locator("main").getByRole("alert").filter({ hasText: "Completion could not be saved" }).waitFor();
-  assert.deepEqual(await rows(ownerA.id), before, "XP failure rolls back lesson completion");
+  assert.deepEqual(await rows(ownerA.id), before, "reward receipt failure rolls back lesson completion");
   assert.equal(await total(ownerA.id), 360);
+  assert.equal(await practiceCapitalTotal(ownerA.id), 1_200_000n);
   assert.equal(await page.getByRole("heading", { name: "Lesson complete", exact: true }).count(), 0);
   await sql.unsafe(`ALTER TABLE lesson_award DROP CONSTRAINT "${constraint}"`); constraint = undefined;
   const concurrent = await demoA.newPage();
@@ -156,6 +160,7 @@ try {
   await Promise.all([button(page, "Mark lesson complete").click(), button(concurrent, "Mark lesson complete").click()]);
   await heading(page, "Lesson complete"); await heading(concurrent, "Lesson complete");
   assert.equal(await total(ownerA.id), 420, "concurrent completions award XP once");
+  assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "concurrent completions award Practice Capital once");
   const completed = await rows(ownerA.id), savedAwards = await awards(ownerA.id);
   assert.equal(savedAwards.length, 7);
   await page.getByText("2 / 2 lessons", { exact: true }).waitFor();
@@ -169,16 +174,19 @@ try {
   await page.getByRole("radio").nth(1).check(); await button(page, "Check answer").click(); await button(page, "Continue").click();
   await heading(page, "Expected is not realized");
   assert.deepEqual(await awards(ownerA.id), savedAwards, "review awards nothing");
+  assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "review awards no Practice Capital");
   assert.deepEqual((await rows(ownerA.id)).find((row) => row.lesson_id === "foundations-risk-reward"), completed.find((row) => row.lesson_id === "foundations-risk-reward"), "review preserves completion");
-  checks.push("A/F: one-click resume; refresh; completion/XP rollback; concurrent idempotence; daily goal; next lesson; review");
+  checks.push("A/F: one-click resume; refresh; atomic XP/Practice Capital rollback; concurrent idempotence; daily goal; next lesson; review");
 
   const demoB = await newContext();
   const { page: pageB, owner: ownerB } = await startDemo(demoB);
   assert.notEqual(ownerA.id, ownerB.id);
   assert.equal(await total(ownerB.id), 360);
+  assert.equal(await practiceCapitalTotal(ownerB.id), 1_200_000n);
   assert.equal((await rows(ownerB.id)).find((row) => row.lesson_id === "foundations-risk-reward").status, "in_progress");
   await pageB.reload();
   assert.equal(await total(ownerB.id), 360, "demo refresh does not reseed or duplicate");
+  assert.equal(await practiceCapitalTotal(ownerB.id), 1_200_000n, "demo refresh preserves receipt-derived Practice Capital");
   checks.push("D/E: one-click isolated demo; separate identities and state; refresh persistence");
 
   await page.goto(`${baseURL}/lab`); await heading(page, "What happens if…"); await layouts(page, "lab");
@@ -231,6 +239,7 @@ try {
   checks.push("Labs: slider keyboard input; weighted scenario and comparison; invalid returns; backtest; benchmark; full table; question; invalid amount/period; reduced motion; 200% text");
   await page.goto(`${baseURL}/progress`); await heading(page, "Look how far you’ve come."); await layouts(page, "progress");
   assert.equal(await total(ownerA.id), 420, "Lab does not manufacture lesson XP");
+  assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "Lab does not manufacture Practice Capital");
 
   const fresh = await newContext(), signup = await fresh.newPage();
   const email = `reset-${randomUUID()}@example.com`, password = randomUUID();
@@ -249,6 +258,7 @@ try {
   assert.deepEqual(profile.goals, []); assert.deepEqual(profile.interests, []);
   assert.equal(profile.time_zone, "Europe/Prague");
   assert.equal(await total(normal.id), 0);
+  assert.equal(await practiceCapitalTotal(normal.id), 0n, "new users receive no starting Practice Capital");
   await signup.goto(`${baseURL}/onboarding`); await signup.waitForURL("**/learn");
   // Legacy preferences and active Returns cursor survive sign-out/in and dashboard compatibility redirect.
   await sql`update learning_profile set experience_level = 'INVESTOR', goals = ARRAY['QUANT']::learning_goal[], interests = ARRAY['QUANT']::learning_interest[], daily_goal_minutes = 15, recommended_start = 'returns' where user_id = ${normal.id}`;

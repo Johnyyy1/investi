@@ -10,6 +10,7 @@ Learn investing by doing. The authenticated product is organized around three de
 - **`features/lessons`** is the typed authored lesson engine shared by Foundations and Returns.
 - **`features/progress`** validates step transitions and completes lessons with rewards in one transaction.
 - **`features/gamification`** derives XP, local learning days, streak, and daily lesson progress from persisted award receipts.
+- **`features/rewards`** owns the server-side Practice Capital policy and exact receipt-derived entitlement read model.
 - **`features/lab`** contains pure portfolio/backtest math and an explicitly synthetic educational fixture.
 
 ## Local setup and deployment order
@@ -29,7 +30,7 @@ Learn investing by doing. The authenticated product is organized around three de
    npm run dev
    ```
 
-`db:seed` is idempotent. Migration `0003_chunky_sphinx.sql` must precede this application version because completion writes require `lesson_award`, `learning_profile.time_zone`, and `user.is_anonymous`.
+`db:seed` is idempotent. Migrations through `0004_awesome_sebastian_shaw.sql` must precede this application version because completion writes require the Practice Capital fields on `lesson_award`.
 
 ## Verification
 
@@ -41,6 +42,7 @@ npm run typecheck
 npm run lint
 npm run build
 npm run test:persistence
+npm run test:migration
 npm run test:product
 BROWSER_CHANNEL=chrome node scripts/validate-foundations.mjs
 BROWSER_CHANNEL=chrome node scripts/validate-returns-flow.mjs

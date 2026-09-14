@@ -16,6 +16,7 @@
     "db:studio": "drizzle-kit studio",
     "test:product": "node scripts/validate-learning-loop.mjs",
     "test:persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-persistence.mts",
+    "test:migration": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-practice-capital-migration.mts",
     "demo:cleanup": "node scripts/cleanup-demos.mjs"
   },
   "dependencies": {
