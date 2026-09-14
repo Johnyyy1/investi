@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/session";
 import { completeLesson, getModuleProgress, markLessonInProgress, saveLessonProgress } from "./repository";
 import { availableLessons } from "@/features/learning/catalog";
 import { getStepDefinitions } from "@/features/lessons/returns/guided-flow";
+import { serializePracticeCapitalMinor } from "@/features/rewards/presentation";
+import { toLearningMomentum, type CompletionRewardPresentation } from "./contracts";
 
 const lessonIdSchema = z.string().refine((id) => availableLessons.some((lesson) => lesson.id === id && lesson.status === "available"));
 
@@ -32,7 +34,15 @@ export async function completeLessonAction(lessonId: string) {
     revalidatePath("/learn", "layout");
     revalidatePath("/dashboard");
     revalidatePath("/progress");
-    return { ok: true, completedLessons, reward };
+    const presentationReward: CompletionRewardPresentation = {
+      practiceCapitalAwardedMinor: serializePracticeCapitalMinor(reward.practiceCapitalAwardedMinor),
+      earnedPracticeCapitalMinor: serializePracticeCapitalMinor(reward.earnedPracticeCapitalMinor),
+      learningMomentum: toLearningMomentum(reward.gamification),
+      nextHref: reward.nextHref,
+      nextTitle: reward.nextTitle,
+      allComplete: reward.allComplete,
+    };
+    return { ok: true, completedLessons, reward: presentationReward };
   } catch {
     return { ok: false, message: "Completion could not be saved. Please try again." };
   }

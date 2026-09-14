@@ -22,8 +22,8 @@ describe("Practice Capital reward policy", () => {
   });
 
   it("counts each lesson receipt once without deriving capital from XP", () => {
-    const receipt = { lessonId: "lesson-a", practiceCapitalMinor: BigInt(200_000), rewardPolicyVersion: 1 };
-    const awards = [receipt, { ...receipt, practiceCapitalMinor: BigInt(999_999) }];
+    const receipt = { lessonId: "lesson-a", xp: 0, practiceCapitalMinor: BigInt(200_000), rewardPolicyVersion: 1 };
+    const awards = [receipt, { ...receipt, xp: 999_999, practiceCapitalMinor: BigInt(999_999) }];
 
     expect(getPracticeCapitalSummary(awards)).toEqual({ earnedPracticeCapitalMinor: BigInt(200_000) });
   });

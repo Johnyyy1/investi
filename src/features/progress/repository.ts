@@ -6,7 +6,7 @@ import { type SaveLessonProgress, saveLessonProgressSchema } from "./schemas";
 import { validateCompletion, validateMove } from "./transition";
 import { getGamification, learningDate, LESSON_XP } from "@/features/gamification/domain";
 import { getLearnerSummary } from "@/features/learning/learner-summary";
-import { LESSON_PRACTICE_CAPITAL_MINOR, REWARD_POLICY_VERSION } from "@/features/rewards/practice-capital";
+import { getPracticeCapitalSummary, LESSON_PRACTICE_CAPITAL_MINOR, REWARD_POLICY_VERSION } from "@/features/rewards/practice-capital";
 
 export async function saveLessonProgress(userId: string, input: SaveLessonProgress, answers?: Record<string, string>) {
   const progress = saveLessonProgressSchema.parse(input);
@@ -40,6 +40,7 @@ export async function completeLesson(userId: string, lessonId: string) {
     const timeZone = profile?.timeZone ?? "UTC";
     const now = new Date();
     let xpAwarded = 0;
+    let practiceCapitalAwardedMinor = BigInt(0);
     if (current.status !== "completed") {
       await tx.update(lessonProgress).set({ status: "completed", completedAt: now, updatedAt: now }).where(where);
       const awarded = await tx.insert(lessonAward).values({
@@ -53,6 +54,7 @@ export async function completeLesson(userId: string, lessonId: string) {
         awardedAt: now,
       }).onConflictDoNothing().returning();
       xpAwarded = awarded[0]?.xp ?? 0;
+      practiceCapitalAwardedMinor = awarded[0]?.practiceCapitalMinor ?? BigInt(0);
     }
     const awards = await tx.select().from(lessonAward).where(eq(lessonAward.userId, userId));
     const states = await tx.select().from(lessonProgress).where(eq(lessonProgress.userId, userId));
@@ -60,6 +62,8 @@ export async function completeLesson(userId: string, lessonId: string) {
     return {
       xpAwarded,
       lessonXp: awards.find((award) => award.lessonId === lessonId)?.xp ?? 0,
+      practiceCapitalAwardedMinor,
+      earnedPracticeCapitalMinor: getPracticeCapitalSummary(awards).earnedPracticeCapitalMinor,
       gamification: getGamification(awards, now, timeZone, profile?.dailyGoalMinutes),
       nextHref: summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`,
       nextTitle: summary.allComplete ? "Try the Lab" : summary.next.title,

@@ -2,10 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import styles from "./marketing.module.css";
+import { LESSON_PRACTICE_CAPITAL_MINOR } from "@/features/rewards/practice-capital";
+import { formatPracticeCapitalMinor } from "@/features/rewards/presentation";
 
 const completedLessons = 6;
 const availableLessons = 10;
-const exampleXp = completedLessons * 60;
+const examplePracticeCapital = formatPracticeCapitalMinor(LESSON_PRACTICE_CAPITAL_MINOR * BigInt(completedLessons));
+const lessonPracticeCapital = formatPracticeCapitalMinor(LESSON_PRACTICE_CAPITAL_MINOR);
 const exampleStreak = 4;
 
 export function ProgressShowcase() {
@@ -14,7 +17,7 @@ export function ProgressShowcase() {
       <div className={styles.progressCopy}>
         <p className={styles.progressEyebrow}>PROGRESS</p>
         <h2 id="progress-showcase-title">Keep the streak.<span>See yourself grow.</span></h2>
-        <p className={styles.progressDescription}>Small lessons add up. Keep your streak, earn XP and see your investing knowledge grow over time.</p>
+        <p className={styles.progressDescription}>Small lessons add up. Keep your streak, earn virtual Practice Capital and see your investing knowledge grow over time.</p>
         <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.progressCta}`}>Start learning <ArrowRight aria-hidden="true" /></Link>
       </div>
 
@@ -26,9 +29,9 @@ export function ProgressShowcase() {
             <Image src="/brand/flame-icon.webp" width={92} height={92} sizes="72px" alt="" aria-hidden="true" className={styles.progressStatImage} />
             <span><small>Current streak</small><strong>{exampleStreak} days</strong></span>
           </div>
-          <div className={`${styles.progressStat} ${styles.xpStat}`}>
-            <Image src="/brand/xp-star.webp" width={92} height={92} sizes="72px" alt="" aria-hidden="true" className={styles.progressStatImage} />
-            <span><small>XP earned</small><strong>{exampleXp} XP</strong></span>
+          <div className={`${styles.progressStat} ${styles.capitalStat}`}>
+            <Image src="/brand/growing-coin.webp" width={92} height={92} sizes="72px" alt="" aria-hidden="true" className={styles.progressStatImage} />
+            <span><small>Practice Capital earned</small><strong>{examplePracticeCapital}</strong></span>
           </div>
         </div>
 
@@ -44,7 +47,7 @@ export function ProgressShowcase() {
           <progress className={styles.progressBar} max={availableLessons} value={completedLessons} aria-label={`${completedLessons} of ${availableLessons} lessons completed`}>{completedLessons} of {availableLessons} lessons completed</progress>
           <div className={styles.progressReward}>
             <span className={styles.rewardDot} aria-hidden="true" />
-            <span><small>First completion reward</small><strong>+60 XP per lesson</strong></span>
+            <span><small>First completion reward</small><strong>+{lessonPracticeCapital} per lesson</strong></span>
           </div>
         </div>
 

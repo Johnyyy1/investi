@@ -1,10 +1,12 @@
 import { loadLearner } from "@/features/learning/load-learner";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { GuidedLesson } from "@/components/lesson/guided-lesson";
 import { getModuleLessons } from "@/features/learning/catalog";
 import { getAuthoredLesson } from "@/features/lessons/registry";
 import { getLessonProgress, getModuleProgress } from "@/features/progress/repository";
 import { getCurrentUser } from "@/lib/session";
+import { serializePracticeCapitalMinor } from "@/features/rewards/presentation";
+import { toLearningMomentum } from "@/features/progress/contracts";
 
 type LessonPageProps = { params: Promise<{ moduleSlug: string; lessonSlug: string }> };
 export async function generateMetadata({ params }: LessonPageProps) {
@@ -16,9 +18,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const lesson = getAuthoredLesson(moduleSlug, lessonSlug);
   if (!lesson) notFound();
   const user = await getCurrentUser();
-  const progress = user ? await getLessonProgress(user.id, lesson.id) : undefined;
+  if (!user) redirect("/sign-in");
+  const progress = await getLessonProgress(user.id, lesson.id);
   const status = progress?.status ?? "not_started";
-  const completedLessons = user ? await getModuleProgress(user.id, getModuleLessons(moduleSlug)[0].moduleId) : 0;
+  const completedLessons = await getModuleProgress(user.id, getModuleLessons(moduleSlug)[0].moduleId);
   const summary = await loadLearner();
-  return <GuidedLesson key={lesson.id} lesson={lesson} initialStatus={status} initialPosition={progress?.lastPosition ?? 0} initialCompletedLessons={completedLessons} initialGamification={summary.gamification!} nextHref={summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`} />;
+  if (!summary.gamification) redirect("/sign-in");
+  return <GuidedLesson key={lesson.id} lesson={lesson} initialStatus={status} initialPosition={progress?.lastPosition ?? 0} initialCompletedLessons={completedLessons} initialLearningMomentum={toLearningMomentum(summary.gamification)} initialEarnedPracticeCapitalMinor={serializePracticeCapitalMinor(summary.practiceCapital.earnedPracticeCapitalMinor)} nextHref={summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`} />;
 }

@@ -107,10 +107,13 @@ try {
   assert.equal(await progressRowCount("returns-what-is-a-return"), 1, "A failed completion does not create a duplicate progress row");
   await page.unroute("**/learn/returns/what-is-a-return");
   await button("Mark lesson complete").click(); await heading("Lesson complete");
+  assert.equal(await page.getByLabel("2,000 Kč Practice Capital earned").count(), 1, "first completion presents the server-awarded Practice Capital");
+  assert.equal(await page.getByText(/\bXP\b/).count(), 0, "completion no longer exposes XP");
   assert.equal(await page.getByText("Already completed. Reviewing will not change your saved completion.").count(), 0, "Completion is not relabeled as review");
   const completedOnce = await row("returns-what-is-a-return");
   await repeatAttempt.getByRole("button", { name: "Mark lesson complete", exact: true }).click();
   await repeatAttempt.getByRole("heading", { name: "Lesson complete", exact: true }).waitFor();
+  assert.equal(await repeatAttempt.getByLabel("2,000 Kč Practice Capital earned").count(), 0, "repeated completion does not present another reward");
   assert.deepEqual(await row("returns-what-is-a-return"), completedOnce, "Repeated completion preserves the first completion timestamp");
   assert.equal(await progressRowCount("returns-what-is-a-return"), 1, "Repeated completion does not duplicate progress");
   await repeatContext.close();

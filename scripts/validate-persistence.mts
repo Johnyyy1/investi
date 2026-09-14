@@ -45,6 +45,7 @@ try {
   await db.update(lessonProgress).set({ lastPosition: 9 }).where(eq(lessonProgress.userId, a));
   const [one, two] = await Promise.all([completeLesson(a, "foundations-risk-reward"), completeLesson(a, "foundations-risk-reward")]);
   assert.equal(one.xpAwarded + two.xpAwarded, 60);
+  assert.equal(one.practiceCapitalAwardedMinor + two.practiceCapitalAwardedMinor, BigInt(200_000));
   assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, BigInt(1_400_000), "concurrent completion awards capital once");
   assert.equal((await getAwards(a)).length, 7);
   assert.equal((await getAwards(b)).length, 6);

@@ -1,10 +1,15 @@
 import { Streak } from "./streak";
 import { DailyGoal } from "./daily-goal";
-import type { Gamification } from "@/features/gamification/domain";
+import type { LearningMomentum } from "@/features/progress/contracts";
+import { formatPracticeCapitalMinor, type SerializedPracticeCapitalMinor } from "@/features/rewards/presentation";
 
-export function LearningStats({ stats, goal = false }: { stats: Gamification; goal?: boolean }) {
+export function LearningStats({ stats, earnedPracticeCapitalMinor, goal = false }: { stats: LearningMomentum; earnedPracticeCapitalMinor: bigint | SerializedPracticeCapitalMinor; goal?: boolean }) {
+  const formattedCapital = formatPracticeCapitalMinor(earnedPracticeCapitalMinor);
   return <div data-testid="learning-stats">
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-6"><Streak days={stats.streak} /><span className="text-ql-small font-bold text-ql-link" data-testid="total-xp">{stats.totalXp} XP</span></div>
+    <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 sm:gap-x-6">
+      <span className="min-w-0 text-ql-small" aria-label={`Practice Capital: ${formattedCapital}`}><span className="block text-microcopy font-semibold text-secondary">Practice Capital</span><span className="block break-words font-bold text-ql-link" data-testid="total-practice-capital" aria-hidden="true">{formattedCapital}</span></span>
+      <Streak days={stats.streak} />
+    </div>
     {goal && <div className="mt-6 max-w-sm"><DailyGoal completed={stats.todayCompleted} target={stats.dailyTarget} /></div>}
   </div>;
 }

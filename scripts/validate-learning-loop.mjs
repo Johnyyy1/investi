@@ -25,6 +25,25 @@ const rows = (id) => sql`select * from lesson_progress where user_id = ${id} ord
 const awards = (id) => sql`select * from lesson_award where user_id = ${id} order by lesson_id`;
 const total = async (id) => Number((await sql`select coalesce(sum(xp), 0)::int as xp from lesson_award where user_id = ${id}`)[0].xp);
 const practiceCapitalTotal = async (id) => BigInt((await sql`select coalesce(sum(practice_capital_minor), 0)::text as total from lesson_award where user_id = ${id}`)[0].total);
+async function finishReview(page) {
+  for (let step = 0; step < 20; step += 1) {
+    const finish = button(page, "Finish review");
+    if (await finish.isVisible().catch(() => false)) {
+      await finish.click();
+      await heading(page, "Review complete");
+      return;
+    }
+    const checkAnswer = button(page, "Check answer");
+    if (await checkAnswer.isVisible().catch(() => false)) {
+      const radios = page.getByRole("radio");
+      if (await radios.count()) await radios.first().check();
+      else await page.getByRole("textbox", { name: "Your answer", exact: true }).fill("0");
+      await checkAnswer.click();
+    }
+    await button(page, "Continue").click();
+  }
+  throw new Error("Review did not reach its completion screen.");
+}
 async function sessionOwner(context) {
   const result = await context.request.get(`${baseURL}/api/auth/get-session`);
   const session = await result.json();
@@ -107,7 +126,9 @@ async function startDemo(context) {
   assert.equal(await practiceCapitalTotal(owner.id), 1_200_000n);
   assert.ok((await awards(owner.id)).every((award) => BigInt(award.practice_capital_minor) === 200_000n && award.reward_policy_version === 1));
   assert.equal((await rows(owner.id)).length, 7);
-  await page.getByTestId("total-xp").filter({ hasText: "360 XP" }).waitFor();
+  await page.getByTestId("total-practice-capital").filter({ hasText: "12,000 Kč" }).waitFor();
+  assert.equal(await page.getByLabel("Practice Capital: 12,000 Kč").count(), 1, "Learn exposes an unambiguous capital label");
+  assert.equal(await page.getByText(/\bXP\b/).count(), 0, "Learn does not expose XP");
   return { page, owner };
 }
 try {
@@ -161,10 +182,16 @@ try {
   await heading(page, "Lesson complete"); await heading(concurrent, "Lesson complete");
   assert.equal(await total(ownerA.id), 420, "concurrent completions award XP once");
   assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "concurrent completions award Practice Capital once");
+  assert.equal(
+    await page.getByLabel("2,000 Kč Practice Capital earned").count() + await concurrent.getByLabel("2,000 Kč Practice Capital earned").count(),
+    1,
+    "the authoritative first-completion result presents one Practice Capital reward",
+  );
+  assert.equal(await page.getByText(/\bXP\b/).count() + await concurrent.getByText(/\bXP\b/).count(), 0, "completion does not expose XP");
   const completed = await rows(ownerA.id), savedAwards = await awards(ownerA.id);
   assert.equal(savedAwards.length, 7);
   await page.getByText("2 / 2 lessons", { exact: true }).waitFor();
-  await page.getByText("4 day streak", { exact: true }).waitFor();
+  await page.getByText("4 days", { exact: true }).waitFor();
   assert.ok(await button(page, "Next lesson").evaluate((el) => el === document.activeElement));
   await layouts(page, "completion");
   await button(page, "Next lesson").click();
@@ -173,6 +200,10 @@ try {
   await heading(page, "Different outcomes can be equally possible");
   await page.getByRole("radio").nth(1).check(); await button(page, "Check answer").click(); await button(page, "Continue").click();
   await heading(page, "Expected is not realized");
+  await finishReview(page);
+  await page.screenshot({ path: `${screenshotDir}/review-completion.png`, fullPage: true });
+  assert.equal(await page.getByLabel("2,000 Kč Practice Capital earned").count(), 0, "review completion presents no reward");
+  assert.equal(await page.getByText("Review strengthens an idea. No duplicate reward.", { exact: true }).count(), 1, "review completion is neutral about rewards");
   assert.deepEqual(await awards(ownerA.id), savedAwards, "review awards nothing");
   assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "review awards no Practice Capital");
   assert.deepEqual((await rows(ownerA.id)).find((row) => row.lesson_id === "foundations-risk-reward"), completed.find((row) => row.lesson_id === "foundations-risk-reward"), "review preserves completion");
@@ -238,6 +269,9 @@ try {
   await page.evaluate(() => document.documentElement.style.fontSize = "");
   checks.push("Labs: slider keyboard input; weighted scenario and comparison; invalid returns; backtest; benchmark; full table; question; invalid amount/period; reduced motion; 200% text");
   await page.goto(`${baseURL}/progress`); await heading(page, "Look how far you’ve come."); await layouts(page, "progress");
+  await page.getByTestId("total-practice-capital").filter({ hasText: "14,000 Kč" }).waitFor();
+  assert.equal(await page.getByLabel("Practice Capital earned: 14,000 Kč").count(), 1, "Progress exposes an unambiguous earned-capital label");
+  assert.equal(await page.getByText(/\bXP\b/).count(), 0, "Progress does not expose XP");
   assert.equal(await total(ownerA.id), 420, "Lab does not manufacture lesson XP");
   assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "Lab does not manufacture Practice Capital");
 

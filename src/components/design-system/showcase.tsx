@@ -7,7 +7,7 @@ import { ConceptCard } from "@/components/learning/concept-card";
 import { FormulaBlock } from "@/components/learning/formula-block";
 import { LearningChart } from "@/components/learning/learning-chart";
 import { Streak } from "@/components/gamification/streak";
-import { XpCounter } from "@/components/gamification/xp-counter";
+import { PracticeCapitalCounter } from "@/components/gamification/practice-capital-counter";
 import { DailyGoal } from "@/components/gamification/daily-goal";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ModulePath } from "@/components/gamification/module-path";
@@ -36,7 +36,7 @@ const pathItems = [
   { id: "five", title: "Log returns", minutes: 10, state: "locked" as const },
 ];
 export function DesignSystemShowcase() {
-  const [xp, setXp] = useState(120);
+  const [practiceCapitalMinor, setPracticeCapitalMinor] = useState(BigInt(1_200_000));
   const [unlocked, setUnlocked] = useState(false);
   const [message, setMessage] = useState("");
   const [idleSelected, setIdleSelected] = useState(false);
@@ -70,7 +70,7 @@ export function DesignSystemShowcase() {
           <div className="mt-8 grid gap-6 lg:grid-cols-2"><LearningChart title="Follow the changing value" description="Example: 10,000 grows 20%, then falls 20%." data={[{ label: "Start", value: 10000 }, { label: "Period 1", value: 12000 }, { label: "Period 2", value: 9600 }]} formatValue={(value) => value.toLocaleString("en-US")} /><LearningChart title="Your next experiment" description="No observations yet." data={[]} /></div>
         </Section>
         <Section id="motivation" index="06" title="Progress worth noticing" description="Small acknowledgements for a daily practice. These are controlled visual components, with no new persisted gamification model.">
-          <div className="grid gap-10 lg:grid-cols-2"><div className="space-y-8"><div className="flex flex-wrap items-center gap-6"><Streak days={6} /><XpCounter value={xp} /><LearningButton variant="ghost" onClick={() => setXp((value) => value + 20)}>Preview +20 XP</LearningButton></div><DailyGoal completed={2} target={3} /><AchievementBadge title="First principles" description="Finish your first Returns lesson." unlocked /><AchievementBadge title="A steady practice" description="Complete your weekly learning goal." unlocked={unlocked} /><LearningButton variant="secondary" onClick={() => setUnlocked((value) => !value)}>{unlocked ? "Reset achievement" : "Preview unlock"}</LearningButton></div><div><ModulePath items={pathItems} onOpen={(id) => setMessage(`Selected: ${pathItems.find((item) => item.id === id)?.title}. This is a preview.`)} /><p role="status" className="mt-4 text-ql-small text-ql-secondary">{message}</p></div></div>
+          <div className="grid gap-10 lg:grid-cols-2"><div className="space-y-8"><div className="flex flex-wrap items-center gap-6"><Streak days={6} /><PracticeCapitalCounter value={practiceCapitalMinor} /><LearningButton variant="ghost" onClick={() => setPracticeCapitalMinor((value) => value + BigInt(200_000))}>Preview +2,000 Kč</LearningButton></div><DailyGoal completed={2} target={3} /><AchievementBadge title="First principles" description="Finish your first Returns lesson." unlocked /><AchievementBadge title="A steady practice" description="Complete your weekly learning goal." unlocked={unlocked} /><LearningButton variant="secondary" onClick={() => setUnlocked((value) => !value)}>{unlocked ? "Reset achievement" : "Preview unlock"}</LearningButton></div><div><ModulePath items={pathItems} onOpen={(id) => setMessage(`Selected: ${pathItems.find((item) => item.id === id)?.title}. This is a preview.`)} /><p role="status" className="mt-4 text-ql-small text-ql-secondary">{message}</p></div></div>
         </Section>
         <Section id="shell" index="07" title="A little structure. Plenty of space." description="Desktop sidebar and mobile bottom navigation foundations. Practice and Progress remain unavailable until those routes exist; lesson mode hides the bottom navigation.">
           <div className="flex overflow-hidden rounded-ql-xl border border-ql-border"><div className="hidden sm:flex"><AppSidebar activeId="learn" /></div><div className="min-w-0 flex-1 p-6 sm:p-8"><AppHeader heading="h3" title="Keep learning" description="A shell preview, ready for the next screen migration." /><p className="mt-8 text-ql-small text-ql-secondary">Lesson mode gives the content the full viewport, using LessonProgress for navigation.</p></div></div>

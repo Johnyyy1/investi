@@ -11,16 +11,16 @@ import { getModuleBySlug } from "@/features/learning/catalog";
 import { isQuestion } from "@/features/lessons/question-evaluation";
 import type { AuthoredLesson } from "@/features/lessons/types";
 import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "@/features/progress/actions";
-import type { completeLesson } from "@/features/progress/repository";
-import type { Gamification } from "@/features/gamification/domain";
+import type { CompletionRewardPresentation, LearningMomentum } from "@/features/progress/contracts";
+import type { SerializedPracticeCapitalMinor } from "@/features/rewards/presentation";
 import { LearningStats } from "@/components/gamification/learning-stats";
 import { GuidedBlock } from "./guided-block";
 import { GuidedQuestion } from "./guided-question";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Feedback } from "@/components/ui/feedback";
 
-export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCompletedLessons, initialGamification, nextHref }: {
-  lesson: AuthoredLesson; initialStatus: "not_started" | "in_progress" | "completed"; initialPosition: number; initialCompletedLessons: number; initialGamification: Gamification; nextHref: string;
+export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCompletedLessons, initialLearningMomentum, initialEarnedPracticeCapitalMinor, nextHref }: {
+  lesson: AuthoredLesson; initialStatus: "not_started" | "in_progress" | "completed"; initialPosition: number; initialCompletedLessons: number; initialLearningMomentum: LearningMomentum; initialEarnedPracticeCapitalMinor: SerializedPracticeCapitalMinor; nextHref: string;
 }) {
   const router = useRouter();
   const learningModule = getModuleBySlug(lesson.moduleSlug)!;
@@ -31,7 +31,7 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
   const [position, setPosition] = useState(review ? 0 : Math.min(Math.max(initialPosition, 0), steps.length - 1));
   const [finished, setFinished] = useState(false);
   const [completedLessons, setCompletedLessons] = useState(initialCompletedLessons);
-  const [reward, setReward] = useState<Awaited<ReturnType<typeof completeLesson>>>();
+  const [reward, setReward] = useState<CompletionRewardPresentation>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -97,10 +97,10 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
     </header>
     {error ? <Feedback role="alert" state="incorrect" className="mt-5 text-small text-danger-ink">{error}</Feedback> : null}
     {finished ? <div className="mt-7 overflow-hidden rounded-panel border border-primary/30 bg-surface shadow-elevation-1">
-      <CompletionScreen autoFocusAction title={review ? "Review complete" : "Lesson complete"} description={lesson.title} xp={reward && reward.xpAwarded > 0 ? reward.xpAwarded : undefined} actionLabel={reward?.allComplete ? "Explore the Lab" : "Next lesson"} onContinue={() => { router.push(reward?.nextHref ?? nextHref); router.refresh(); }}>
-        {reward && reward.xpAwarded === 0 && <p className="mt-4 text-ql-small text-ql-secondary">{reward.lessonXp} XP already saved for this lesson.</p>}
-        {review && <p className="mt-4 text-ql-small text-ql-secondary">Review strengthens an idea. Rewards are earned on first completion.</p>}
-        <div className="mt-7 rounded-surface border border-border bg-surface p-5 text-left"><LearningStats stats={reward?.gamification ?? initialGamification} goal /></div>
+      <CompletionScreen autoFocusAction title={review ? "Review complete" : "Lesson complete"} description={lesson.title} practiceCapitalAwardedMinor={reward && reward.practiceCapitalAwardedMinor !== "0" ? reward.practiceCapitalAwardedMinor : undefined} actionLabel={reward?.allComplete ? "Explore the Lab" : "Next lesson"} onContinue={() => { router.push(reward?.nextHref ?? nextHref); router.refresh(); }}>
+        {reward && reward.practiceCapitalAwardedMinor === "0" && <p className="mt-4 text-ql-small text-ql-secondary">No duplicate reward.</p>}
+        {review && <p className="mt-4 text-ql-small text-ql-secondary">Review strengthens an idea. No duplicate reward.</p>}
+        <div className="mt-7 rounded-surface border border-border bg-surface p-5 text-left"><LearningStats stats={reward?.learningMomentum ?? initialLearningMomentum} earnedPracticeCapitalMinor={reward?.earnedPracticeCapitalMinor ?? initialEarnedPracticeCapitalMinor} goal /></div>
         {reward && !reward.allComplete && <p className="mt-6 text-ql-small text-ql-secondary">Up next: {reward.nextTitle}</p>}
       </CompletionScreen>
       <div className="border-t border-border px-6 py-4 text-center"><LearningLink variant="ghost" href="/learn"><ArrowLeft aria-hidden="true" className="size-4" />Back to Learn</LearningLink><LearningLink variant="ghost" href={moduleHref}>View module</LearningLink><p className="sr-only" data-testid="completion-progress">{completedLessons} available {learningModule.title} lessons complete · Saved to your account</p></div>

@@ -678,7 +678,7 @@
   animation: progressStatReveal 560ms cubic-bezier(.2, .75, .25, 1) 180ms both;
 }
 .streakStat { transform: rotate(-1.5deg); }
-.xpStat { transform: rotate(1.3deg); animation-delay: 270ms; }
+.capitalStat { transform: rotate(1.3deg); animation-delay: 270ms; }
 .progressStatImage { display: block; width: 72px; height: 72px; flex: 0 0 auto; object-fit: contain; filter: drop-shadow(0 8px 8px rgb(61 82 108 / 12%)); }
 .progressStat > span { display: flex; min-width: 0; flex-direction: column; }
 .progressStat small, .progressSurfaceHeader small, .progressReward small { color: #71869a; font-size: .75rem; line-height: 1.3; font-weight: 750; }

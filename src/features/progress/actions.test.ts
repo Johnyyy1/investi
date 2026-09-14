@@ -5,12 +5,40 @@ vi.mock("./repository", () => ({ completeLesson: mocks.complete, markLessonInPro
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "./actions";
 describe("shared persisted lesson actions", () => {
-  beforeEach(() => { vi.resetAllMocks(); mocks.user.mockResolvedValue({ id: "session-owner" }); mocks.count.mockResolvedValue(2); });
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mocks.user.mockResolvedValue({ id: "session-owner" });
+    mocks.count.mockResolvedValue(2);
+    mocks.complete.mockResolvedValue({
+      xpAwarded: 60,
+      lessonXp: 60,
+      practiceCapitalAwardedMinor: BigInt(200_000),
+      earnedPracticeCapitalMinor: BigInt(1_200_000),
+      gamification: { totalXp: 360, streak: 4, todayCompleted: 1, dailyTarget: 2, timeZone: "Europe/Prague" },
+      nextHref: "/learn/next",
+      nextTitle: "Next lesson",
+      allComplete: false,
+    });
+  });
   it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["foundations-markets", "module-investing-foundations"], ["foundations-risk-reward", "module-investing-foundations"], ["foundations-portfolio", "module-investing-foundations"], ["returns-compounding", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
-    expect(await completeLessonAction(id)).toEqual({ ok: true, completedLessons: 2 });
+    expect(await completeLessonAction(id)).toMatchObject({ ok: true, completedLessons: 2 });
     expect(mocks.complete).toHaveBeenCalledWith("session-owner", id);
     expect(mocks.count).toHaveBeenCalledWith("session-owner", moduleId);
     expect(mocks.revalidate).toHaveBeenCalledWith("/learn", "layout");
+  });
+  it("serializes exact Practice Capital and excludes legacy XP from the client reward contract", async () => {
+    const result = await completeLessonAction("foundations-stocks");
+    expect(result).toMatchObject({
+      ok: true,
+      reward: {
+        practiceCapitalAwardedMinor: "200000",
+        earnedPracticeCapitalMinor: "1200000",
+        learningMomentum: { streak: 4, todayCompleted: 1, dailyTarget: 2, timeZone: "Europe/Prague" },
+      },
+    });
+    if (!("reward" in result) || !result.reward) throw new Error("Expected successful completion reward");
+    expect(result.reward).not.toHaveProperty("xpAwarded");
+    expect(result.reward.learningMomentum).not.toHaveProperty("totalXp");
   });
   it.each(["foundations-checkpoint", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
     expect(await markLessonStartedAction(id)).toMatchObject({ ok: false });

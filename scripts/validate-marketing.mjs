@@ -154,11 +154,12 @@ try {
   await progress.locator("img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
   assert.equal(await progress.getByText("Illustrative progress preview", { exact: true }).count(), 1);
   assert.equal(await progress.getByText("4 days", { exact: true }).count(), 1);
-  assert.equal(await progress.getByText("360 XP", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText("12,000 Kč", { exact: true }).count(), 1);
   assert.equal(await progress.locator("strong").filter({ hasText: "6 of 10 lessons completed" }).count(), 1);
-  assert.equal(await progress.getByText("+60 XP per lesson", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText("+2,000 Kč per lesson", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText(/\bXP\b/).count(), 0, "Progress marketing no longer advertises XP");
   assert.equal(await progress.getByRole("progressbar", { name: "6 of 10 lessons completed" }).getAttribute("value"), "6");
-  const progressAssets = ["flame-icon.webp", "xp-star.webp", "gold-icon.webp", "books-icon.webp"];
+  const progressAssets = ["flame-icon.webp", "growing-coin.webp", "gold-icon.webp", "books-icon.webp"];
   assert.equal(await progress.locator("img").count(), progressAssets.length, "Progress scene uses a curated four-asset composition");
   for (const asset of progressAssets) {
     const image = progress.locator(`img[src*="${asset}"]`);
