@@ -130,7 +130,7 @@ try {
   assert.equal(await page.getByRole("link", { name: "Continue learning", exact: true }).getAttribute("href"), "/learn/investing-foundations/risk-vs-reward");
   await page.getByRole("link", { name: "Continue learning", exact: true }).click();
   await heading(page, "The timing of a need matters");
-  assert.equal(await page.getByRole("navigation").count(), 0, "Focused lesson has no app navigation");
+  assert.equal(await page.getByRole("navigation", { name: /^(Main|Mobile) navigation$/ }).count(), 0, "Focused lesson has no app navigation");
   await layouts(page, "lesson");
   await page.getByRole("radio").first().check();
   await button(page, "Check answer").click();

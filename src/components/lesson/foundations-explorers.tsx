@@ -6,6 +6,7 @@ import { ConceptCard } from "@/components/learning/concept-card";
 import { MetricResult } from "@/components/learning/metric-result";
 import { compoundValue, FinancialInputError, parsePrice } from "@/features/finance/returns";
 import { bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, portfolioWeightedReturn, simpleBondCashflows } from "@/features/finance/foundations";
+import { Calculator } from "lucide-react";
 
 const number = (value: number) => value.toLocaleString("en-IE", { maximumSignificantDigits: 8, notation: value !== 0 && (Math.abs(value) < 0.000001 || Math.abs(value) >= 1e15) ? "scientific" : "standard" });
 const euros = (value: number) => value.toLocaleString("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
@@ -52,9 +53,17 @@ export function ShareExplorer({ kind }: { kind: "ownership" | "market-cap" }) {
     result = { total: shares, value: input, amount: ownership ? ownershipPercentage(input, shares) : marketCapitalization(input, shares) };
   } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
   const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
-  return <section aria-label={ownership ? "Ownership explorer" : "Market cap explorer"} className="space-y-6 min-w-0">
-    <div className="grid gap-5 sm:grid-cols-2"><FinanceInput {...invalid} label="Total shares" value={total} onValueChange={setTotal} /><FinanceInput {...invalid} label={ownership ? "Owned shares" : "Share price"} prefix={ownership ? undefined : "€"} value={value} onValueChange={setValue} /></div>
-    {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : result ? <div aria-live="polite" aria-atomic="true" className="space-y-4 border-y border-ql-border py-6"><MetricResult label={ownership ? "Your ownership" : "Market capitalization"} value={ownership ? `${number(result.amount)}%` : euros(result.amount)} /><p className="break-words text-ql-small text-ql-secondary">{ownership ? `${number(result.value)} ÷ ${number(result.total)} × 100 = ${number(result.amount)}%` : `${euros(result.value)} × ${number(result.total)} shares = ${euros(result.amount)}`}</p><p className="text-ql-small text-ql-secondary">{ownership ? "Assumes equal ownership per share. Changing the share price alone does not change your ownership fraction." : "The current market value of equity. It is not revenue, profit, cash, or enterprise value."}</p></div> : null}
+  return <section aria-label={ownership ? "Ownership explorer" : "Market cap explorer"} className="min-w-0 space-y-6">
+    <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+      {ownership ? <FinanceInput {...invalid} label="Owned shares" value={value} onValueChange={setValue} /> : <FinanceInput {...invalid} label="Share price" prefix="€" value={value} onValueChange={setValue} />}
+      <span aria-hidden="true" className="hidden min-h-12 items-center pb-1 text-section-title font-bold text-primary-hover sm:flex">{ownership ? "÷" : "×"}</span>
+      <FinanceInput {...invalid} label="Total shares" value={total} onValueChange={setTotal} />
+    </div>
+    {error ? <p id={errorId} role="alert" className="rounded-control border border-danger bg-danger-soft px-4 py-3 text-small text-danger-ink">{error}</p> : result ? <div aria-live="polite" aria-atomic="true" className="rounded-surface border border-primary/35 bg-primary-soft p-5 sm:p-6">
+      <div className="flex items-start gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-primary-hover"><Calculator className="size-5" /></span><MetricResult label={ownership ? "Your ownership" : "Market capitalization"} value={ownership ? `${number(result.amount)}%` : euros(result.amount)} /></div>
+      <p className="mt-5 break-words rounded-control bg-surface px-4 py-3 text-small font-bold tabular-nums text-foreground">{ownership ? `${number(result.value)} owned ÷ ${number(result.total)} total × 100 = ${number(result.amount)}%` : `${euros(result.value)} × ${number(result.total)} shares = ${euros(result.amount)}`}</p>
+      <p className="mt-3 text-small text-secondary">{ownership ? "Assumes equal ownership per share. Changing the share price alone does not change your ownership fraction." : "The current market value of equity. It is not revenue, profit, cash, or enterprise value."}</p>
+    </div> : null}
   </section>;
 }
 

@@ -30,7 +30,7 @@ try {
     await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
     await page.getByRole("textbox", { name: "Password", exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await page.getByRole("heading", { name: /^(Good morning|Good afternoon|Good evening|Welcome),/ }).waitFor();
+    await page.getByRole("heading", { name: "Ready for the next step?", exact: true }).waitFor();
   }
   async function signOut() {
     const response = await page.request.post(`${baseURL}/api/auth/sign-out`, { data: {}, headers: { Origin: baseURL } });
@@ -45,7 +45,7 @@ try {
   await page.getByRole("textbox", { name: "Password", exact: true }).fill(password);
   await page.getByRole("button", { name: "Create account", exact: true }).click();
   await finishOnboarding(page);
-  await page.getByRole("heading", { name: /^(Good morning|Good afternoon|Good evening|Welcome),/ }).waitFor();
+  await page.getByRole("heading", { name: "Ready for the next step?", exact: true }).waitFor();
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   assert.equal(await page.locator(".learning-theme").count(), 1, "Dashboard uses the shared theme");
   await heading("Continue learning");
@@ -63,7 +63,7 @@ try {
   assert.equal(await page.getByRole("listitem").filter({ hasText: "Log returns" }).getByRole("button").count(), 0);
   await compounding.getByRole("button", { name: "Start lesson" }).click();
   await heading("From one period to a sequence");
-  assert.equal(await page.getByRole("navigation").count(), 0, "Lesson mode has no app navigation");
+  assert.equal(await page.getByRole("navigation", { name: /^(Main|Mobile) navigation$/ }).count(), 0, "Lesson mode has no app navigation");
   await next("Make a prediction");
   assert.equal((await row()).status, "in_progress");
   assert.equal((await row()).last_position, 1);
@@ -163,7 +163,7 @@ try {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
   await next("Make a prediction");
-  assert.equal(await page.getByRole("button", { name: "Previous step" }).evaluate((element) => getComputedStyle(element).transitionDuration), "0s");
+  assert.equal(await page.getByRole("button", { name: "Previous" }).evaluate((element) => getComputedStyle(element).transitionDuration), "0s");
   assert.deepEqual(await row(), completed, "Review never modifies persisted completion or cursor");
   await page.goto(`${baseURL}/learn/returns/simple-returns`);
   assert.equal(await page.locator(".learning-theme").count(), 1, "Lesson 2 uses the shared theme");

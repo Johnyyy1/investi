@@ -6,21 +6,23 @@ import { FinanceInput } from "@/components/learning/finance-input";
 import { LearningButton } from "@/components/learning/learning-button";
 import { LessonFeedback } from "@/components/learning/lesson-feedback";
 import { evaluateQuestion, type QuestionBlock } from "@/features/lessons/question-evaluation";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
-export function GuidedQuestion({ block, onContinue, pending, continueButtonRef }: { block: QuestionBlock; onContinue: (answers: Record<string, string>) => void; pending: boolean; continueButtonRef?: Ref<HTMLButtonElement> }) {
+export function GuidedQuestion({ block, onContinue, onPrevious, pending, continueButtonRef }: { block: QuestionBlock; onContinue: (answers: Record<string, string>) => void; onPrevious?: () => void; pending: boolean; continueButtonRef?: Ref<HTMLButtonElement> }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<boolean>();
   const evaluation = evaluateQuestion(block, answers);
   function answer(id: string, value: string) { setAnswers((current) => ({ ...current, [id]: value })); }
   const fields = block.type === "multiNumericQuestion" ? block.answers : block.type === "numericQuestion" ? [{ id: "answer", label: "Your answer", unit: block.unit }] : [];
-  return <section aria-labelledby={`${block.id}-question`} className="mt-8">
-    <div className="px-6 pb-8 sm:px-10">
-      <h3 id={`${block.id}-question`} className="text-ql-title font-semibold">{block.prompt}</h3>
+  return <section aria-labelledby={`${block.id}-question`} className="mt-7 overflow-hidden rounded-panel border border-border bg-surface shadow-elevation-1">
+    <div className="px-5 pt-6 pb-7 sm:px-7 sm:pt-7">
+      <p className="text-microcopy font-extrabold tracking-[0.08em] text-primary-hover uppercase">Check your understanding</p>
+      <h3 id={`${block.id}-question`} className="mt-2 text-card-title font-bold sm:text-[1.35rem]">{block.prompt}</h3>
       {block.type === "multipleChoiceQuestion" ? <fieldset className="mt-6 space-y-3">
         <legend className="sr-only">Choose an answer</legend>
         {block.options.map((option) => <AnswerOption key={option.id} name={block.id} value={option.id} checked={answers.answer === option.id} disabled={feedback !== undefined} onChange={(value) => answer("answer", value)} state={answers.answer === option.id ? feedback === undefined ? "selected" : feedback ? "correct" : "incorrect" : "idle"}>{option.label}</AnswerOption>)}
       </fieldset> : <div className="mt-6 grid gap-5 sm:grid-cols-2">{fields.map((field) => <FinanceInput key={field.id} label={field.label} suffix={field.unit} value={answers[field.id] ?? ""} onValueChange={(value) => answer(field.id, value)} disabled={feedback !== undefined} hint="Enter a numeric percentage." error={answers[field.id] && !Number.isFinite(Number(answers[field.id])) ? "Enter a finite number." : undefined} />)}</div>}
     </div>
-    {feedback === undefined ? <div className="sticky bottom-0 z-20 border-t border-ql-border bg-ql-surface px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-10"><LearningButton className="w-full sm:w-auto" disabled={evaluation === undefined || pending} onClick={() => setFeedback(evaluation)}>Check answer</LearningButton></div> : <LessonFeedback sticky autoFocusAction actionButtonRef={continueButtonRef} state={feedback ? "correct" : "incorrect"} title={feedback ? "That’s right" : "Let’s work through it"} onContinue={() => onContinue(answers)} actionPending={pending}>{feedback ? block.correctExplanation : block.incorrectExplanation}</LessonFeedback>}
+    {feedback === undefined ? <div className="flex flex-col gap-2 border-t border-border bg-surface-muted/55 px-5 py-4 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between sm:px-7"><LearningButton className="order-2 w-full min-[420px]:w-auto" disabled={evaluation === undefined || pending} onClick={() => setFeedback(evaluation)}>Check answer<ArrowRight aria-hidden="true" className="size-4" /></LearningButton>{onPrevious ? <LearningButton className="order-1" variant="ghost" disabled={pending} onClick={onPrevious}><ArrowLeft aria-hidden="true" className="size-4" />Previous</LearningButton> : null}</div> : <div className="p-3"><LessonFeedback sticky autoFocusAction actionButtonRef={continueButtonRef} state={feedback ? "correct" : "incorrect"} title={feedback ? "That’s right" : "Let’s work through it"} onPrevious={onPrevious} onContinue={() => onContinue(answers)} actionPending={pending}>{feedback ? block.correctExplanation : block.incorrectExplanation}</LessonFeedback></div>}
   </section>;
 }

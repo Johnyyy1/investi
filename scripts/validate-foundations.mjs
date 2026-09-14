@@ -40,6 +40,14 @@ try {
       if (screenshots && [320, 390, 1440].includes(width)) await page.screenshot({ path: `${screenshotDir}/${label}-${width}.png`, fullPage: true });
     }
   }
+  async function textScale(label) {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: overflow at 200% text`);
+    assert.equal(await page.locator("h1").count(), 1, `${label}: one h1 at 200% text`);
+    await page.screenshot({ path: `${screenshotDir}/${label}-text-200.png`, fullPage: true });
+    await page.evaluate(() => { document.documentElement.style.removeProperty("font-size"); });
+  }
   async function check(index, correct = true) {
     const radios = page.getByRole("radio");
     await radios.first().press("Space");
@@ -87,7 +95,10 @@ try {
   assert.equal((await profile()).recommended_start, "returns");
   assert.equal((await profile()).onboarding_completed_at.toISOString(), onboardingCompleted);
   await layouts("home", true);
-  assert.deepEqual(await page.locator("#journey-title + ol h3").allTextContents(), ["Investing Foundations", "Returns & Compounding"]);
+  await textScale("home");
+  assert.deepEqual(await page.getByTestId("journey-modules").getByRole("heading", { level: 3 }).allTextContents(), ["Investing Foundations", "Returns & Compounding"]);
+  assert.equal(await page.getByRole("list", { name: "Investing Foundations lesson progress" }).getByRole("listitem").count(), 8);
+  assert.equal(await page.locator('[aria-current="step"]').filter({ hasText: "Why invest?" }).count(), 1, "Journey identifies the next lesson without relying on color");
   await layouts("learn", true);
   await page.locator('a[href="/learn/investing-foundations"]').click(); await heading("Investing Foundations");
   assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 7 available lessons complete");
@@ -97,7 +108,7 @@ try {
   await layouts("module", true);
   await pathItems.first().getByRole("button").click();
   await heading("Same money, different purchasing power");
-  assert.equal(await page.getByRole("navigation").count(), 0);
+  assert.equal(await page.getByRole("navigation", { name: /^(Main|Mobile) navigation$/ }).count(), 0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await layouts("opening", true); await check(1); await layouts("feedback", true);
   await failThenRetry("Continue", "foundations-why-invest");
@@ -120,6 +131,7 @@ try {
   await button("Mark lesson complete").click(); await heading("Lesson complete");
   assert.equal((await row("foundations-why-invest")).status, "completed");
   await layouts("completion", true);
+  await textScale("completion");
   await button("Next lesson").click(); await heading("Imagine a business split into pieces");
   await check(1); await next("How much of the business?"); await page.getByText("0.01%", { exact: true }).waitFor();
   for (const [label, invalid, valid] of [["Total shares", "0", "1000000"], ["Owned shares", "-1", "100"], ["Owned shares", "1000001", "100"]]) {
@@ -127,6 +139,7 @@ try {
     await page.getByLabel(label, { exact: true }).fill(valid);
   }
   await page.getByLabel("Owned shares", { exact: true }).fill("100000"); await page.getByText("10%", { exact: true }).waitFor(); await layouts("ownership", true);
+  await textScale("ownership");
   await next("A price is attached to each piece"); await next("Put a value on all the shares"); await page.getByText("€50,000,000.00", { exact: true }).waitFor();
   await page.getByLabel("Share price", { exact: true }).fill("-1"); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
   await page.getByLabel("Share price", { exact: true }).fill("25"); await page.getByText("€25,000,000.00", { exact: true }).waitFor(); await layouts("market-cap", true);

@@ -3,15 +3,17 @@ import { useId, type ReactNode, type Ref } from "react";
 import { cn } from "@/lib/utils";
 import { LearningButton } from "./learning-button";
 import { feedbackVariants } from "@/components/ui/feedback";
+import { ArrowLeft, CheckCircle2, Info, XCircle } from "lucide-react";
 
-export function LessonFeedback({ state, title, children, onContinue, actionLabel = "Continue", sticky = false, autoFocusAction = false, actionPending = false, actionButtonRef }: {
-  state: "correct" | "incorrect" | "informational"; title: string; children: ReactNode; onContinue?: () => void; actionLabel?: string; sticky?: boolean; autoFocusAction?: boolean; actionPending?: boolean; actionButtonRef?: Ref<HTMLButtonElement>;
+export function LessonFeedback({ state, title, children, onContinue, onPrevious, actionLabel = "Continue", sticky = false, autoFocusAction = false, actionPending = false, actionButtonRef }: {
+  state: "correct" | "incorrect" | "informational"; title: string; children: ReactNode; onContinue?: () => void; onPrevious?: () => void; actionLabel?: string; sticky?: boolean; autoFocusAction?: boolean; actionPending?: boolean; actionButtonRef?: Ref<HTMLButtonElement>;
 }) {
   const descriptionId = useId();
-  return <section aria-label="Answer feedback" className={cn("border-t-2 px-6 py-5", feedbackVariants({ state }), sticky && "sticky bottom-0 z-20 pb-[max(1.25rem,env(safe-area-inset-bottom))]")}>
-    <div className="mx-auto flex max-w-3xl flex-col justify-between gap-4 sm:flex-row sm:items-center">
-      <div id={descriptionId} role="status" aria-live="polite"><h3 className="text-ql-title font-semibold">{title}</h3><div className="mt-1 max-w-xl text-ql-small">{children}</div></div>
-      {onContinue ? <LearningButton buttonRef={actionButtonRef} loading={actionPending} autoFocus={autoFocusAction} aria-describedby={descriptionId} variant={state === "correct" ? "success" : "primary"} onClick={onContinue}>{actionLabel}</LearningButton> : null}
+  const Icon = state === "correct" ? CheckCircle2 : state === "incorrect" ? XCircle : Info;
+  return <section aria-label="Answer feedback" className={cn("rounded-surface px-5 py-5 sm:px-6", feedbackVariants({ state }), sticky && "sticky bottom-3 z-20 shadow-elevation-2")}>
+    <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 gap-3"><Icon aria-hidden="true" className={cn("mt-0.5 size-6 shrink-0", state === "correct" ? "text-success-ink" : state === "incorrect" ? "text-danger-ink" : "text-info-ink")} /><div id={descriptionId} role="status" aria-live="polite"><h3 className="text-card-title font-bold">{title}</h3><div className="mt-1 max-w-xl text-small">{children}</div></div></div>
+      <div className="flex flex-col-reverse gap-2 min-[420px]:flex-row sm:shrink-0">{onPrevious ? <LearningButton disabled={actionPending} variant="ghost" onClick={onPrevious}><ArrowLeft aria-hidden="true" className="size-4" />Previous</LearningButton> : null}{onContinue ? <LearningButton buttonRef={actionButtonRef} loading={actionPending} autoFocus={autoFocusAction} aria-describedby={descriptionId} variant={state === "correct" ? "success" : "primary"} onClick={onContinue}>{actionLabel}</LearningButton> : null}</div>
     </div>
   </section>;
 }

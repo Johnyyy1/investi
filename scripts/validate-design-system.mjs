@@ -80,7 +80,7 @@ try {
       return heading && heading.getBoundingClientRect().top >= 0;
     });
     await finish.press("Enter");
-    assert.equal(await page.getByRole("button", { name: "Back to lesson overview" }).evaluate((element) => element === document.activeElement), true);
+    assert.equal(await page.getByRole("button", { name: "Back to Learn" }).evaluate((element) => element === document.activeElement), true);
     console.log(`Keyboard flow and motion preference: ${reducedMotion} passed`);
   }
 

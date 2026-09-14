@@ -63,7 +63,7 @@ try {
   await page.locator('a[href="/learn/returns"]').click(); await heading("Returns & Compounding"); await layouts("returns-empty");
   await page.getByRole("listitem").filter({ hasText: "What is a return?" }).getByRole("button", { name: "Start lesson" }).click();
   await heading("What does a return measure?"); await layouts("lesson-1-intro");
-  assert.equal(await page.getByRole("navigation").count(), 0);
+  assert.equal(await page.getByRole("navigation", { name: /^(Main|Mobile) navigation$/ }).count(), 0);
   await page.route("**/learn/returns/what-is-a-return", (route) => route.request().method() === "POST" ? route.abort() : route.continue());
   await button("Continue").click();
   await page.getByRole("alert").filter({ hasText: "Your place could not be saved" }).waitFor();
