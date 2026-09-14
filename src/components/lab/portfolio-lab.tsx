@@ -1,67 +1,194 @@
 "use client";
-import { useRef, useState } from "react";
-import { FinanceInput } from "@/components/learning/finance-input";
-import { LearningButton } from "@/components/learning/learning-button";
-import { parsePrice } from "@/features/finance/returns";
-import { portfolioAssets, portfolioScenario, rebalanceAllocation } from "@/features/lab/portfolio";
-import { Select, Slider } from "@/components/ui/form-controls";
 
-const scenarios = [
-  { name: "Stocks rise", returns: [8, 2, 0] },
-  { name: "Stocks fall", returns: [-20, 2, 0] },
-  { name: "Stocks & bonds fall", returns: [-15, -8, 1] },
-];
-const pct = (value: number) => `${value > 0 ? "+" : ""}${(value === 0 ? 0 : value * 100).toLocaleString("en-GB", { maximumFractionDigits: 2 })}%`;
-const money = (value: number) => `${value.toLocaleString("en-GB", { maximumFractionDigits: 0 })} Kč`;
-type Run = ReturnType<typeof portfolioScenario> & { weights: number[]; returns: number[]; initial: number };
+import { Search, X } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { Button, ButtonLink, IconButton } from "@/components/ui/button";
+import { Feedback } from "@/components/ui/feedback";
+import { Input } from "@/components/ui/form-controls";
+import type { InstrumentSearchResult } from "@/features/market-data/contracts";
+import {
+  buyPortfolioAction,
+  loadInstrumentPreviewAction,
+  resetPortfolioAction,
+  searchPortfolioInstrumentsAction,
+  sellPortfolioAction,
+} from "@/features/portfolio/actions";
+import { parseQuantity, QUANTITY_SCALE, roundDivide } from "@/features/portfolio/decimal";
+import type { InstrumentPreview, PortfolioView } from "@/features/portfolio/service";
+import { formatPracticeCapitalMinor } from "@/features/rewards/presentation";
 
-export function PortfolioLab() {
-  const [weights, setWeights] = useState([60, 30, 10]);
-  const [returns, setReturns] = useState(["-20", "2", "0"]);
-  const [scenario, setScenario] = useState("Stocks fall");
-  const [amount, setAmount] = useState("100000");
-  const [run, setRun] = useState<Run>();
-  const [previous, setPrevious] = useState<Run>();
-  const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState<string>();
-  const output = useRef<HTMLHeadingElement>(null);
-  function execute() {
-    try {
-      const initial = parsePrice(amount, "Starting amount");
-      const parsed = returns.map((value, index) => parsePrice(value, `${portfolioAssets[index].label} return`) / 100);
-      const result = portfolioScenario(weights.map((value) => value / 100), parsed, initial);
-      setPrevious(run); setRun({ ...result, weights: [...weights], returns: parsed, initial }); setDirty(false); setError(undefined);
-      requestAnimationFrame(() => output.current?.focus());
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Check your inputs and try again."); }
+type Holding = PortfolioView["holdings"][number];
+
+function percentFromBasisPoints(value: string | null, signed = true) {
+  if (value === null) return "Unavailable";
+  const basisPoints = BigInt(value);
+  const sign = basisPoints > 0n && signed ? "+" : basisPoints < 0n ? "−" : "";
+  const absolute = basisPoints < 0n ? -basisPoints : basisPoints;
+  return `${sign}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}%`;
+}
+
+function quotePrice(value: string | null, currency: string | null) {
+  if (!value || !currency) return "Unavailable";
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 }).format(Number(value))} ${currency}`;
+}
+
+function quantityLabel(value: string) {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 }).format(Number(value));
+}
+
+function timestamp(value: string) {
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function estimatedMinor(quantity: string, unitMinor: string) {
+  try { return roundDivide(parseQuantity(quantity) * BigInt(unitMinor), QUANTITY_SCALE); }
+  catch { return null; }
+}
+
+function parseQuantitySafe(value: string) {
+  try { return parseQuantity(value); } catch { return 0n; }
+}
+
+export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<readonly InstrumentSearchResult[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [selected, setSelected] = useState<InstrumentPreview | null>(null);
+  const [sellHolding, setSellHolding] = useState<Holding | null>(null);
+  const [quantity, setQuantity] = useState("0.25");
+  const [feedback, setFeedback] = useState<{ state: "completed" | "warning"; message: string } | null>(null);
+  const [searchPending, startSearch] = useTransition();
+  const [previewPending, startPreview] = useTransition();
+  const [mutationPending, startMutation] = useTransition();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const resetDialog = useRef<HTMLDialogElement>(null);
+  const tradeKey = useRef<string | null>(null);
+  const resetKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    const normalized = query.trim();
+    if (!normalized) return;
+    const timeout = window.setTimeout(() => startSearch(async () => {
+      const response = await searchPortfolioInstrumentsAction(normalized);
+      setResults(response.results);
+      setActiveIndex(response.results.length ? 0 : -1);
+      if (!response.ok) setFeedback({ state: "warning", message: response.message });
+    }), 180);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
+
+  function chooseInstrument(instrumentId: string) {
+    setResults([]); setQuery(""); setFeedback(null); setQuantity("0.25"); tradeKey.current = null;
+    startPreview(async () => {
+      const response = await loadInstrumentPreviewAction(instrumentId);
+      if (response.ok) setSelected(response.preview);
+      else setFeedback({ state: "warning", message: response.message });
+    });
   }
-  return <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
-    <form onSubmit={(event) => { event.preventDefault(); execute(); }} className="min-w-0">
-      <fieldset><legend className="text-ql-title font-semibold">Build your mix</legend><p className="mt-2 text-ql-small text-ql-secondary">Sliders keep the mix at 100%.</p>
-        <div className="mt-6 flex h-4 overflow-hidden rounded-full" role="img" aria-label={portfolioAssets.map((asset, i) => `${asset.label} ${weights[i].toFixed(1)}%`).join(", ")}>{portfolioAssets.map((asset, index) => <span key={asset.id} className={asset.color} style={{ width: `${weights[index]}%` }} />)}</div>
-        {portfolioAssets.map((asset, index) => <div key={asset.id} className="mt-5"><label htmlFor={`lab-${asset.id}`} className="flex justify-between gap-3 text-ql-body font-semibold"><span>{asset.label}</span><span className="tabular-nums">{weights[index].toLocaleString("en-GB", { maximumFractionDigits: 1 })}%</span></label><Slider id={`lab-${asset.id}`} min={0} max={100} step={1} value={weights[index]} aria-label={`${asset.label} allocation slider`} aria-valuetext={`${weights[index].toFixed(1)} percent`} onChange={(event) => { setWeights(rebalanceAllocation(weights, index, Number(event.target.value))); setDirty(true); }} /></div>)}
-      </fieldset>
-      <label htmlFor="scenario" className="mt-6 block text-ql-small font-semibold">Hypothetical scenario</label>
-      <Select id="scenario" value={scenario} onChange={(event) => { const selected = scenarios.find((item) => item.name === event.target.value); setScenario(event.target.value); if (selected) setReturns(selected.returns.map(String)); setDirty(true); }} className="mt-2">{scenarios.map((item) => <option key={item.name}>{item.name}</option>)}{scenario === "Custom" && <option>Custom</option>}</Select>
-      <p className="mt-3 text-ql-small text-ql-secondary">Stocks {returns[0]}% · Bonds {returns[1]}% · Cash {returns[2]}%</p>
-      <details className="mt-3"><summary className="flex min-h-12 cursor-pointer items-center text-ql-small text-ql-link">Edit scenario &amp; starting amount</summary><div className="mt-3 grid gap-5 sm:grid-cols-2">{portfolioAssets.map((asset, index) => <FinanceInput key={asset.id} label={`${asset.label} hypothetical return`} mode="percentage" value={returns[index]} onValueChange={(value) => { setReturns((current) => current.map((old, i) => i === index ? value : old)); setScenario("Custom"); setDirty(true); }} />)}<FinanceInput label="Starting amount" value={amount} suffix="Kč" onValueChange={(value) => { setAmount(value); setDirty(true); }} /></div></details>
-      {error && <p role="alert" className="mt-5 text-ql-small text-ql-danger-ink">{error}</p>}
-      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 mt-3 bg-ql-page py-3 lg:static"><LearningButton className="w-full" type="submit">Run scenario</LearningButton></div>
-    </form>
-    <section className="min-w-0 border-t border-ql-border pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-10" aria-label="Scenario outcome">
-      <p className="text-ql-small text-ql-secondary">One period · hypothetical values</p>
-      <h2 ref={output} tabIndex={-1} className="mt-2 text-ql-section font-semibold">{run ? "See what changed" : "What will the mix do?"}</h2>
-      {run ? <>
-        {dirty && <p role="status" className="mt-3 text-ql-small text-ql-warning-ink">Inputs changed. Run the scenario to update this result.</p>}
-        <p className="mt-6 text-ql-small text-ql-secondary">Portfolio return</p><p data-testid="portfolio-return" className="mt-1 text-ql-celebration font-bold">{pct(run.returnValue)}</p>
-        <p className="mt-3 text-ql-body">{money(run.initial)} → <strong>{money(run.finalValue)}</strong></p>
-        <p className="mt-2 text-ql-small text-ql-secondary">{run.weights.map((value) => value.toLocaleString("en-GB", { maximumFractionDigits: 1 })).join(" / ")} mix · Stocks / Bonds / Cash</p>
-        <h3 className="mt-8 text-ql-title font-semibold">Each part contributes</h3>
-        <ul className="mt-3">{portfolioAssets.map((asset, index) => <li key={asset.id} className="flex justify-between gap-4 border-b border-ql-border py-3 text-ql-small"><span>{asset.label} · {pct(run.returns[index])} return</span><strong>{pct(run.contributions[index]).replace("%", " pp")}</strong></li>)}</ul>
-        <p className="mt-4 text-ql-body text-ql-secondary">Each contribution is its allocation × its return. These percentage points (pp) add up to the portfolio return.</p>
-        <p className="mt-4 text-ql-body text-ql-secondary">{run.largestWeight >= 0.8 ? "At least 80% depends on one asset category. Its outcome will dominate this mix." : "This mix spreads exposure across categories. They can still fall together; allocation alone does not measure risk."}</p>
-        {previous && <div className="mt-6 border-t border-ql-border pt-5" data-testid="portfolio-comparison"><h3 className="text-ql-title font-semibold">Compare your last run</h3><p className="mt-2 text-ql-body">{pct(previous.returnValue)} → {pct(run.returnValue)}</p><p className="mt-2 text-ql-small text-ql-secondary">Previous mix: {previous.weights.map((value) => value.toFixed(0)).join(" / ")}. {previous.returns.every((value, index) => value === run.returns[index]) ? "Same asset returns: the difference comes from allocation." : "Asset returns changed too. This is not an allocation-only comparison."}</p></div>}
-      </> : <><p className="mt-5 text-ql-body text-ql-secondary">Stocks fall 20% in the starting example. Will a mix with bonds and cash fall by the same amount?</p><p className="mt-5 text-ql-body text-ql-secondary">Run it, change the stocks slider, and compare.</p></>}
-      <p className="mt-8 text-ql-small text-ql-secondary">Invented examples, not forecasts or suggested allocations. No fees, tax, currency changes, or trades within the period. Asset categories can contain very different holdings.</p>
+
+  function runTrade(side: "BUY" | "SELL") {
+    const instrumentId = side === "BUY" ? selected?.instrument.instrumentId : sellHolding?.instrumentId;
+    if (!instrumentId) return;
+    tradeKey.current ??= crypto.randomUUID();
+    setFeedback(null);
+    startMutation(async () => {
+      const action = side === "BUY" ? buyPortfolioAction : sellPortfolioAction;
+      const response = await action({ instrumentId, quantity, clientIdempotencyKey: tradeKey.current });
+      if (!response.ok) { setFeedback({ state: "warning", message: response.message }); return; }
+      setFeedback({ state: "completed", message: `${side === "BUY" ? "Purchase" : "Sale"} complete. Your portfolio now shows the committed trade.` });
+      setSelected(null); setSellHolding(null); setQuantity("0.25"); tradeKey.current = null;
+    });
+  }
+
+  function reset() {
+    resetKey.current ??= crypto.randomUUID();
+    setFeedback(null);
+    startMutation(async () => {
+      const response = await resetPortfolioAction({ clientIdempotencyKey: resetKey.current });
+      if (!response.ok) { setFeedback({ state: "warning", message: response.message }); return; }
+      resetDialog.current?.close(); resetKey.current = null;
+      setSelected(null); setSellHolding(null);
+      setFeedback({ state: "completed", message: "Portfolio reset. All earned Practice Capital is available again." });
+    });
+  }
+
+  const buyEstimate = selected ? estimatedMinor(quantity, selected.estimatedUnitCostBaseMinor) : null;
+  const heldUnits = sellHolding ? parseQuantitySafe(sellHolding.quantity) : 0n;
+  const sellEstimate = sellHolding?.marketValueMinor && heldUnits > 0n
+    ? roundDivide(BigInt(sellHolding.marketValueMinor) * parseQuantitySafe(quantity), heldUnits)
+    : null;
+
+  return <div className="mt-8 space-y-12">
+    <section aria-labelledby="portfolio-summary" className="border-y border-border py-7">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div><p className="text-small font-semibold text-primary-hover">Educational portfolio</p><h2 id="portfolio-summary" className="mt-1 text-title font-semibold">Your capital at a glance</h2></div>
+        <p className="text-small text-secondary">Sample prices · base currency {portfolio.baseCurrency}</p>
+      </div>
+      <dl className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div><dt className="text-small text-secondary">Practice Capital earned</dt><dd className="mt-1 text-section font-bold tabular-nums" data-testid="portfolio-earned">{formatPracticeCapitalMinor(portfolio.earnedPracticeCapitalMinor)}</dd></div>
+        <div><dt className="text-small text-secondary">Portfolio value</dt><dd className="mt-1 text-section font-bold tabular-nums" data-testid="portfolio-value">{portfolio.portfolioTotalMinor === null ? "Incomplete" : formatPracticeCapitalMinor(portfolio.portfolioTotalMinor)}</dd></div>
+        <div><dt className="text-small text-secondary">Available cash</dt><dd className="mt-1 text-section font-bold tabular-nums" data-testid="portfolio-cash">{formatPracticeCapitalMinor(portfolio.availableCashMinor)}</dd></div>
+        <div><dt className="text-small text-secondary">Investment gain/loss</dt><dd className="mt-1 text-section font-bold tabular-nums">{portfolio.investmentGainLossMinor === null ? "Incomplete" : formatPracticeCapitalMinor(portfolio.investmentGainLossMinor)}<span className="mt-1 block text-small font-normal text-secondary">{percentFromBasisPoints(portfolio.investmentGainLossBasisPoints)} vs contributed capital</span></dd></div>
+      </dl>
+      {!portfolio.valuationComplete && <Feedback state="warning" role="status" className="mt-6">Some sample quotes or FX rates are unavailable, so portfolio valuation is incomplete. Missing values are not counted as zero.</Feedback>}
     </section>
+
+    {feedback && <Feedback state={feedback.state} role={feedback.state === "warning" ? "alert" : "status"}>{feedback.message}</Feedback>}
+
+    <section aria-labelledby="find-investment" className="max-w-2xl">
+      <h2 id="find-investment" className="text-title font-semibold">Search / Add investment</h2>
+      <p className="mt-2 text-body text-secondary">Search the deterministic educational dataset by symbol or name.</p>
+      <div className="relative mt-5">
+        <label htmlFor="instrument-search" className="text-small font-semibold">Instrument</label>
+        <div className="relative mt-2"><Search aria-hidden="true" className="pointer-events-none absolute top-3.5 left-4 size-5 text-secondary" /><Input ref={searchRef} id="instrument-search" role="combobox" aria-autocomplete="list" aria-expanded={results.length > 0} aria-controls="instrument-results" aria-activedescendant={activeIndex >= 0 ? `instrument-option-${activeIndex}` : undefined} autoComplete="off" value={query} placeholder="Try AAPL, Vanguard, or bond" className="pr-11 pl-12" onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) { setResults([]); setActiveIndex(-1); } }} onKeyDown={(event) => {
+          if (!results.length) return;
+          if (event.key === "ArrowDown") { event.preventDefault(); setActiveIndex((index) => (index + 1) % results.length); }
+          if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((index) => (index - 1 + results.length) % results.length); }
+          if (event.key === "Enter" && activeIndex >= 0) { event.preventDefault(); chooseInstrument(results[activeIndex].instrumentId); }
+          if (event.key === "Escape") { setResults([]); setActiveIndex(-1); }
+        }} />{searchPending && <span className="absolute top-3 right-4 text-small text-secondary">Searching…</span>}</div>
+        {results.length > 0 && <ul id="instrument-results" role="listbox" aria-label="Instrument search results" className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-surface border border-border bg-surface p-1 shadow-elevation-2">
+          {results.map((result, index) => <li key={result.instrumentId}><button id={`instrument-option-${index}`} role="option" aria-selected={index === activeIndex} type="button" className="min-h-14 w-full rounded-control px-3 py-2 text-left hover:bg-primary-soft aria-selected:bg-primary-soft" onMouseDown={(event) => event.preventDefault()} onClick={() => chooseInstrument(result.instrumentId)}><span className="font-semibold">{result.symbol}</span><span className="ml-2 text-secondary">{result.name}</span><span className="block text-small text-secondary">{result.assetType} · {result.quoteCurrency}</span></button></li>)}
+        </ul>}
+      </div>
+      {previewPending && <p role="status" className="mt-4 text-small text-secondary">Loading sample quote…</p>}
+      {selected && <div className="mt-6 border-l-4 border-primary bg-primary-soft px-5 py-5">
+        <div className="flex items-start justify-between gap-4"><div><p className="font-semibold">{selected.instrument.symbol} · {selected.instrument.name}</p><p className="mt-1 text-small text-secondary">{selected.instrument.assetType} · sample quote {quotePrice(selected.price, selected.instrument.quoteCurrency)}</p></div><IconButton aria-label="Close buy interaction" variant="ghost" onClick={() => setSelected(null)}><X aria-hidden="true" /></IconButton></div>
+        <p className="mt-3 text-small text-secondary">Deterministic sample data · observed {timestamp(selected.quoteObservedAt)}</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2"><div><label htmlFor="buy-quantity" className="text-small font-semibold">Quantity</label><Input id="buy-quantity" inputMode="decimal" value={quantity} aria-describedby="buy-precision" onChange={(event) => { setQuantity(event.target.value); tradeKey.current = null; }} /></div><dl className="self-end"><dt className="text-small text-secondary">Estimated CZK cost</dt><dd className="text-title font-semibold tabular-nums">{buyEstimate === null ? "—" : formatPracticeCapitalMinor(buyEstimate)}</dd><dt className="mt-1 text-small text-secondary">Available cash {formatPracticeCapitalMinor(portfolio.availableCashMinor)}</dt></dl></div>
+        <p id="buy-precision" className="mt-2 text-small text-secondary">Fractional quantities are supported to 8 decimal places.</p>
+        <Button className="mt-5 w-full sm:w-auto" loading={mutationPending} onClick={() => runTrade("BUY")}>Buy</Button>
+      </div>}
+    </section>
+
+    <section aria-labelledby="holdings-heading">
+      <h2 id="holdings-heading" className="text-title font-semibold">Holdings</h2><p className="mt-2 text-small text-secondary">Allocation is each holding’s share of invested value; available cash is excluded.</p>
+      {portfolio.holdings.length === 0 ? <div className="mt-5 border-y border-border py-8">
+        {BigInt(portfolio.earnedPracticeCapitalMinor) > 0n ? <><h3 className="text-title font-semibold">Your Practice Capital is ready.</h3><p className="mt-2 text-body text-secondary">You’ve earned {formatPracticeCapitalMinor(portfolio.earnedPracticeCapitalMinor)}. Use it to experiment with an educational portfolio.</p><Button className="mt-5" onClick={() => searchRef.current?.focus()}>Find an investment</Button></> : <><h3 className="text-title font-semibold">Complete lessons to earn Practice Capital.</h3><p className="mt-2 text-body text-secondary">Your portfolio is ready when you are.</p><ButtonLink href="/learn" className="mt-5">Continue learning</ButtonLink></>}
+      </div> : <><div className="mt-5 hidden md:block"><HoldingsTable holdings={portfolio.holdings} onSell={(holding) => { setSellHolding(holding); setQuantity(holding.quantity); tradeKey.current = null; }} /></div><HoldingsMobile holdings={portfolio.holdings} onSell={(holding) => { setSellHolding(holding); setQuantity(holding.quantity); tradeKey.current = null; }} /></>}
+    </section>
+
+    {sellHolding && <section aria-labelledby="sell-heading" className="max-w-2xl border-l-4 border-warning bg-warning-soft px-5 py-5">
+      <div className="flex items-start justify-between gap-4"><div><h2 id="sell-heading" className="text-title font-semibold">Sell {sellHolding.symbol}</h2><p className="mt-1 text-small text-secondary">Held quantity {quantityLabel(sellHolding.quantity)} · sample price {quotePrice(sellHolding.currentPrice, sellHolding.currentPriceCurrency)}</p></div><IconButton aria-label="Close sell interaction" variant="ghost" onClick={() => setSellHolding(null)}><X aria-hidden="true" /></IconButton></div>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2"><div><label htmlFor="sell-quantity" className="text-small font-semibold">Quantity to sell</label><Input id="sell-quantity" inputMode="decimal" value={quantity} onChange={(event) => { setQuantity(event.target.value); tradeKey.current = null; }} /></div><dl className="self-end"><dt className="text-small text-secondary">Estimated proceeds</dt><dd className="text-title font-semibold">{sellEstimate === null ? "—" : formatPracticeCapitalMinor(sellEstimate)}</dd></dl></div>
+      <Button className="mt-5 w-full sm:w-auto" loading={mutationPending} onClick={() => runTrade("SELL")}>Sell</Button>
+    </section>}
+
+    {portfolio.holdings.length > 0 && <section aria-labelledby="allocation-heading"><h2 id="allocation-heading" className="text-title font-semibold">Allocation</h2><p className="mt-2 text-small text-secondary">Share of invested value, excluding available cash.</p><ul className="mt-5 max-w-3xl space-y-4">{portfolio.holdings.map((holding, index) => <li key={holding.instrumentId}><div className="mb-2 flex justify-between gap-4 text-small"><span><strong>{holding.symbol}</strong> · {holding.name}</span><span>{percentFromBasisPoints(holding.allocationBasisPoints, false)}</span></div><div className="h-3 overflow-hidden rounded-full bg-border" role="img" aria-label={`${holding.symbol}, ${percentFromBasisPoints(holding.allocationBasisPoints, false)} of invested value`}><div className={index % 3 === 0 ? "h-full bg-primary" : index % 3 === 1 ? "h-full bg-info" : "h-full bg-warning"} style={{ width: holding.allocationBasisPoints === null ? "0%" : `${Number(holding.allocationBasisPoints) / 100}%` }} /></div></li>)}</ul></section>}
+
+    <section aria-labelledby="activity-heading"><h2 id="activity-heading" className="text-title font-semibold">Recent activity</h2>{portfolio.recentActivity.length === 0 ? <p className="mt-3 text-body text-secondary">Your immutable trade history will appear here after your first purchase.</p> : <ul className="mt-4 divide-y divide-border border-y border-border">{portfolio.recentActivity.map((trade) => <li key={trade.id} className="grid gap-1 py-4 text-small sm:grid-cols-[5rem_1fr_auto] sm:items-center"><strong>{trade.side === "BUY" ? "Buy" : "Sell"}</strong><span>{trade.symbol} · {quantityLabel(trade.quantity)} at {quotePrice(trade.unitPrice, trade.quoteCurrency)}</span><span className="tabular-nums text-secondary">{formatPracticeCapitalMinor(trade.grossAmountBaseMinor)} · {timestamp(trade.executedAt)}</span></li>)}</ul>}</section>
+
+    <section className="border-t border-border pt-8"><h2 className="text-title font-semibold">Reset portfolio</h2><p className="mt-2 max-w-2xl text-body text-secondary">Start a new sandbox generation with all legitimately earned Practice Capital. Learning progress and prior trade history are retained.</p><Button variant="secondary" className="mt-5" onClick={() => resetDialog.current?.showModal()}>Reset portfolio</Button></section>
+    <p className="border-t border-border pt-6 text-small text-secondary">This is a virtual educational portfolio using deterministic sample data. No real money is involved, and nothing here is investment advice.</p>
+
+    <dialog ref={resetDialog} aria-labelledby="reset-title" className="m-auto w-[min(32rem,calc(100%-2rem))] rounded-panel border border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35"><div className="p-6"><h2 id="reset-title" className="text-title font-semibold">Reset this portfolio?</h2><p className="mt-3 text-body text-secondary">Your holdings will clear and all earned Practice Capital will become available again. Learning progress and old trades remain recorded.</p><div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button variant="secondary" disabled={mutationPending} onClick={() => resetDialog.current?.close()}>Keep portfolio</Button><Button variant="danger" loading={mutationPending} onClick={reset}>Reset portfolio</Button></div></div></dialog>
   </div>;
+}
+
+function HoldingsTable({ holdings, onSell }: { holdings: Holding[]; onSell: (holding: Holding) => void }) {
+  return <table className="w-full text-left"><caption className="sr-only">Current portfolio holdings</caption><thead><tr className="border-b border-border text-small text-secondary"><th className="py-3 pr-4 font-semibold">Instrument</th><th className="px-3 py-3 font-semibold">Quantity</th><th className="px-3 py-3 font-semibold">Average cost</th><th className="px-3 py-3 font-semibold">Sample price</th><th className="px-3 py-3 font-semibold">Market value</th><th className="px-3 py-3 font-semibold">Allocation</th><th className="px-3 py-3 font-semibold">Gain/loss</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{holdings.map((holding) => <tr key={holding.instrumentId} className="border-b border-border"><td className="py-4 pr-4"><strong>{holding.symbol}</strong><span className="block text-small text-secondary">{holding.name}</span></td><td className="px-3 py-4 tabular-nums">{quantityLabel(holding.quantity)}</td><td className="px-3 py-4 tabular-nums">{formatPracticeCapitalMinor(holding.averageCostBaseMinor)}</td><td className="px-3 py-4 tabular-nums">{quotePrice(holding.currentPrice, holding.currentPriceCurrency)}</td><td className="px-3 py-4 tabular-nums">{holding.marketValueMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.marketValueMinor)}</td><td className="px-3 py-4 tabular-nums">{percentFromBasisPoints(holding.allocationBasisPoints, false)}</td><td className="px-3 py-4 tabular-nums">{holding.gainLossMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.gainLossMinor)}</td><td className="py-4 pl-3"><Button variant="secondary" size="compact" onClick={() => onSell(holding)}>Sell</Button></td></tr>)}</tbody></table>;
+}
+
+function HoldingsMobile({ holdings, onSell }: { holdings: Holding[]; onSell: (holding: Holding) => void }) {
+  return <ul className="mt-5 space-y-5 md:hidden" aria-label="Current portfolio holdings">{holdings.map((holding) => <li key={holding.instrumentId} className="border-y border-border py-5"><div className="flex items-start justify-between gap-4"><div><strong>{holding.symbol}</strong><span className="block text-small text-secondary">{holding.name}</span></div><Button variant="secondary" size="compact" onClick={() => onSell(holding)}>Sell</Button></div><dl className="mt-4 grid grid-cols-2 gap-4 text-small"><div><dt className="text-secondary">Quantity</dt><dd className="mt-1 font-semibold">{quantityLabel(holding.quantity)}</dd></div><div><dt className="text-secondary">Market value</dt><dd className="mt-1 font-semibold">{holding.marketValueMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.marketValueMinor)}</dd></div><div><dt className="text-secondary">Average cost</dt><dd className="mt-1">{formatPracticeCapitalMinor(holding.averageCostBaseMinor)}</dd></div><div><dt className="text-secondary">Gain/loss</dt><dd className="mt-1">{holding.gainLossMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.gainLossMinor)}</dd></div></dl></li>)}</ul>;
 }

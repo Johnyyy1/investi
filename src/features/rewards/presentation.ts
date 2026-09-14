@@ -9,7 +9,7 @@ export function serializePracticeCapitalMinor(value: bigint): SerializedPractice
 }
 
 /** Formats exact CZK minor units without passing accounting values through Number. */
-export function formatPracticeCapitalMinor(value: bigint | SerializedPracticeCapitalMinor) {
+export function formatPracticeCapitalMinor(value: bigint | string) {
   const minorUnits = typeof value === "bigint" ? value : BigInt(value);
   const negative = minorUnits < BigInt(0);
   const absolute = negative ? -minorUnits : minorUnits;

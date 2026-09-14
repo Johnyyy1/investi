@@ -7,12 +7,14 @@ import {
   date,
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   primaryKey,
   text,
   timestamp,
   uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 export const progressStatus = pgEnum("progress_status", [
@@ -168,4 +170,66 @@ export const lessonAward = pgTable("lesson_award", {
   check("lesson_award_xp_check", sql`${table.xp} = 60`),
   check("lesson_award_practice_capital_positive_check", sql`${table.practiceCapitalMinor} > 0`),
   check("lesson_award_reward_policy_version_positive_check", sql`${table.rewardPolicyVersion} > 0`),
+]);
+
+export const portfolioTradeSide = pgEnum("portfolio_trade_side", ["BUY", "SELL"]);
+
+/** One auditable sandbox generation. Closed generations and their trades are retained. */
+export const portfolio = pgTable("portfolio", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  baseCurrency: text("base_currency").notNull().default("CZK"),
+  openedAt: timestamp("opened_at", { withTimezone: true }).notNull(),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  resetFromPortfolioId: text("reset_from_portfolio_id").references((): AnyPgColumn => portfolio.id, { onDelete: "set null" }),
+  resetIdempotencyKey: text("reset_idempotency_key"),
+  openingCapitalMinor: bigint("opening_capital_minor", { mode: "bigint" }).notNull(),
+}, (table) => [
+  index("portfolio_user_opened_idx").on(table.userId, table.openedAt),
+  uniqueIndex("portfolio_one_active_per_user_idx").on(table.userId).where(sql`${table.closedAt} is null`),
+  uniqueIndex("portfolio_reset_idempotency_idx").on(table.userId, table.resetIdempotencyKey),
+  check("portfolio_base_currency_check", sql`${table.baseCurrency} in ('CZK', 'USD', 'EUR')`),
+  check("portfolio_opening_capital_nonnegative_check", sql`${table.openingCapitalMinor} >= 0`),
+  check("portfolio_closed_after_opened_check", sql`${table.closedAt} is null or ${table.closedAt} >= ${table.openedAt}`),
+  check("portfolio_reset_not_self_check", sql`${table.resetFromPortfolioId} is null or ${table.resetFromPortfolioId} <> ${table.id}`),
+]);
+
+/** Append-only execution ledger. Numeric strings preserve PostgreSQL decimal precision. */
+export const portfolioTrade = pgTable("portfolio_trade", {
+  id: text("id").primaryKey(),
+  portfolioId: text("portfolio_id").notNull().references(() => portfolio.id, { onDelete: "cascade" }),
+  instrumentId: text("instrument_id").notNull(),
+  instrumentSymbol: text("instrument_symbol").notNull(),
+  instrumentName: text("instrument_name").notNull(),
+  instrumentAssetType: text("instrument_asset_type").notNull(),
+  side: portfolioTradeSide("side").notNull(),
+  quantity: numeric("quantity", { precision: 24, scale: 8 }).notNull(),
+  unitPrice: numeric("unit_price", { precision: 24, scale: 8 }).notNull(),
+  quoteCurrency: text("quote_currency").notNull(),
+  fxRateToBase: numeric("fx_rate_to_base", { precision: 24, scale: 12 }).notNull(),
+  grossAmountBaseMinor: bigint("gross_amount_base_minor", { mode: "bigint" }).notNull(),
+  feeBaseMinor: bigint("fee_base_minor", { mode: "bigint" }).notNull().default(sql`0`),
+  cashDeltaBaseMinor: bigint("cash_delta_base_minor", { mode: "bigint" }).notNull(),
+  quoteObservedAt: timestamp("quote_observed_at", { withTimezone: true }).notNull(),
+  executedAt: timestamp("executed_at", { withTimezone: true }).notNull(),
+  marketDataProvider: text("market_data_provider").notNull(),
+  marketDataDataset: text("market_data_dataset").notNull(),
+  marketDataKind: text("market_data_kind").notNull(),
+  marketDataIsDeterministic: boolean("market_data_is_deterministic").notNull(),
+  clientIdempotencyKey: text("client_idempotency_key").notNull(),
+}, (table) => [
+  index("portfolio_trade_portfolio_executed_idx").on(table.portfolioId, table.executedAt),
+  uniqueIndex("portfolio_trade_idempotency_idx").on(table.portfolioId, table.clientIdempotencyKey),
+  check("portfolio_trade_quantity_positive_check", sql`${table.quantity} > 0`),
+  check("portfolio_trade_unit_price_positive_check", sql`${table.unitPrice} > 0`),
+  check("portfolio_trade_fx_positive_check", sql`${table.fxRateToBase} > 0`),
+  check("portfolio_trade_gross_positive_check", sql`${table.grossAmountBaseMinor} > 0`),
+  check("portfolio_trade_fee_nonnegative_check", sql`${table.feeBaseMinor} >= 0`),
+  check("portfolio_trade_currency_check", sql`${table.quoteCurrency} in ('CZK', 'USD', 'EUR')`),
+  check("portfolio_trade_asset_type_check", sql`${table.instrumentAssetType} in ('equity', 'etf', 'bond', 'cash', 'index')`),
+  check("portfolio_trade_data_kind_check", sql`${table.marketDataKind} in ('synthetic', 'historical', 'live')`),
+  check("portfolio_trade_cash_delta_check", sql`(
+    (${table.side} = 'BUY' and ${table.cashDeltaBaseMinor} = -(${table.grossAmountBaseMinor} + ${table.feeBaseMinor}))
+    or (${table.side} = 'SELL' and ${table.cashDeltaBaseMinor} = ${table.grossAmountBaseMinor} - ${table.feeBaseMinor})
+  )`),
 ]);

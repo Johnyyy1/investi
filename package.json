@@ -17,6 +17,9 @@
     "test:product": "node scripts/validate-learning-loop.mjs",
     "test:persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-persistence.mts",
     "test:migration": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-practice-capital-migration.mts",
+    "test:portfolio-persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-portfolio-persistence.mts",
+    "test:portfolio-browser": "node scripts/validate-portfolio-lab.mjs",
+    "test:portfolio-migration": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-portfolio-migration.mts",
     "demo:cleanup": "node scripts/cleanup-demos.mjs"
   },
   "dependencies": {

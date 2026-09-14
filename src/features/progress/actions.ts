@@ -19,6 +19,7 @@ export async function markLessonStartedAction(lessonId: string) {
     revalidatePath("/learn", "layout");
     revalidatePath("/dashboard");
     revalidatePath("/progress");
+    revalidatePath("/lab/portfolio");
     return { ok: true };
   } catch {
     return { ok: false, message: "Progress could not be saved. Your work is still available on this page." };
