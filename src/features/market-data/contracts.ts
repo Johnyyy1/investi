@@ -26,9 +26,15 @@ export interface InstrumentSearchResult {
   instrumentId: InstrumentId;
   symbol: string;
   name: string;
-  assetType: AssetType;
+  /** Search endpoints may not distinguish an equity from an ETF until profile lookup. */
+  assetType: AssetType | null;
   exchangeMic: string | null;
+  /** Provider-reported exchange code, retained when no reliable MIC mapping exists. */
+  exchangeCode: string | null;
   quoteCurrency: Currency;
+  provider: string;
+  /** Exact provider symbol required for later quote/profile requests. */
+  providerSymbol: string;
 }
 
 export type DataKind = "synthetic" | "historical" | "live";
@@ -56,6 +62,7 @@ export interface QuoteFreshness {
 
 export interface Quote {
   instrumentId: InstrumentId;
+  /** Provider's current/last price field; never a bid, ask, or Investi execution price. */
   price: number;
   currency: Currency;
   observedAt: UtcTimestamp;
@@ -97,10 +104,15 @@ export interface HistoricalPriceRequest {
 
 export interface HistoricalPricePoint {
   date: CalendarDate;
+  /**
+   * Daily OHLC values under the enclosing series' explicit adjustment policy.
+   * `close` is the session close—not a quote, bid, ask, or execution price.
+   */
   open: number;
   high: number;
   low: number;
   close: number;
+  /** Optional comparative adjusted close when a source exposes raw and adjusted values together. */
   adjustedClose?: number;
   volume?: number;
 }

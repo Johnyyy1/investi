@@ -6,6 +6,8 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     DATABASE_URL: z.url(),
+    FMP_API_KEY: z.string().min(1).optional(),
+    MARKET_DATA_PROVIDER: z.enum(["deterministic", "fmp"]).default("deterministic"),
   },
   client: { NEXT_PUBLIC_APP_URL: z.url().optional() },
   experimental__runtimeEnv: { NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL },

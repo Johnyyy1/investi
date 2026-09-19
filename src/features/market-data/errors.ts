@@ -2,6 +2,7 @@ import type { InstrumentId } from "./contracts";
 
 export const marketDataErrorCodes = [
   "InstrumentNotFound",
+  "InvalidSearchQuery",
   "UnsupportedInstrument",
   "UnsupportedAdjustment",
   "UnsupportedInterval",
@@ -10,6 +11,9 @@ export const marketDataErrorCodes = [
   "HistoricalDataUnavailable",
   "FxUnavailable",
   "RateLimited",
+  "ProviderAuthentication",
+  "ProviderConfiguration",
+  "MalformedProviderResponse",
   "ProviderUnavailable",
   "InvalidDateRange",
 ] as const;

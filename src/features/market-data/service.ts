@@ -18,6 +18,8 @@ import type { MarketDataProvider, ProviderQuote } from "./provider";
 const DAY = 24 * 60 * 60 * 1_000;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UTC_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+const SEARCH_CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/;
+const MAX_SEARCH_LENGTH = 80;
 
 export interface MarketDataServiceOptions {
   cache?: MarketDataCache;
@@ -55,6 +57,7 @@ export class MarketDataService {
   private readonly clock: () => Date;
   private readonly freshFor: number;
   private readonly unavailableAfter: number;
+  private readonly inFlight = new Map<string, Promise<unknown>>();
 
   constructor(private readonly provider: MarketDataProvider, options: MarketDataServiceOptions = {}) {
     this.cache = options.cache ?? new NoopMarketDataCache();
@@ -68,60 +71,89 @@ export class MarketDataService {
 
   async searchInstruments(query: string) {
     const normalized = query.trim().toLocaleLowerCase("en-US");
-    if (!normalized) return [];
-    const cached = await this.cache.getSearch(normalized);
-    if (cached) return cached;
-    const results = await this.call("search", () => this.provider.searchInstruments(normalized));
-    await this.cache.setSearch(normalized, results);
-    return results;
+    if (!normalized || normalized.length > MAX_SEARCH_LENGTH || SEARCH_CONTROL_CHARACTER.test(normalized)) {
+      throw new MarketDataError("InvalidSearchQuery", "Enter a valid company name or ticker symbol.", {
+        queryLength: normalized.length,
+      });
+    }
+    return this.loadCached(
+      `search:${JSON.stringify([normalized])}`,
+      () => this.cache.getSearch(normalized),
+      (value) => this.cache.setSearch(normalized, value),
+      () => this.call("search", () => this.provider.searchInstruments(normalized)),
+    );
   }
 
   async getInstrumentMetadata(instrumentId: InstrumentId) {
-    const cached = await this.cache.getInstrument(instrumentId);
-    if (cached) return cached;
-    const instrument = await this.call("metadata", () => this.provider.getInstrumentMetadata(instrumentId));
-    await this.cache.setInstrument(instrumentId, instrument);
-    return instrument;
+    return this.loadCached(
+      `instrument:${JSON.stringify([instrumentId])}`,
+      () => this.cache.getInstrument(instrumentId),
+      (value) => this.cache.setInstrument(instrumentId, value),
+      () => this.call("metadata", () => this.provider.getInstrumentMetadata(instrumentId)),
+    );
   }
 
   async getQuote(instrumentId: InstrumentId): Promise<Quote> {
-    const cached = await this.cache.getQuote(instrumentId);
-    const observation = cached ?? await this.call("quote", () => this.provider.getQuote(instrumentId));
-    if (!cached) await this.cache.setQuote(instrumentId, observation);
+    const observation = await this.loadCached(
+      `quote:${JSON.stringify([instrumentId])}`,
+      () => this.cache.getQuote(instrumentId),
+      (value) => this.cache.setQuote(instrumentId, value),
+      async () => {
+        const value = await this.call("quote", () => this.provider.getQuote(instrumentId));
+        this.validateQuote(value);
+        return value;
+      },
+    );
     this.validateQuote(observation);
     return { ...observation, freshness: this.evaluateFreshness(observation.observedAt) };
   }
 
   async getHistoricalPrices(request: HistoricalPriceRequest) {
     this.validateHistoricalRequest(request);
-    const key = JSON.stringify(request);
-    const cached = await this.cache.getHistory(key);
-    if (cached) return cached;
-    const series = await this.call("history", () => this.provider.getHistoricalPrices(request));
-    await this.cache.setHistory(key, series);
-    return series;
+    const key = JSON.stringify([
+      request.instrumentId,
+      request.startDate,
+      request.endDate,
+      request.interval,
+      request.timeZone,
+      request.adjustment.mode,
+    ]);
+    return this.loadCached(
+      `history:${key}`,
+      () => this.cache.getHistory(key),
+      (value) => this.cache.setHistory(key, value),
+      () => this.call("history", () => this.provider.getHistoricalPrices(request)),
+    );
   }
 
   async getFxRate(baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
     if (!isValidUtcTimestamp(asOf)) {
       throw new MarketDataError("FxUnavailable", "Use a valid UTC timestamp for the FX request.", { baseCurrency, quoteCurrency, asOf });
     }
-    const key = `${baseCurrency}:${quoteCurrency}:${asOf}`;
-    const cached = await this.cache.getFx(key);
-    if (cached) return cached;
-    const rate = await this.call("fx", () => this.provider.getFxRate(baseCurrency, quoteCurrency, asOf));
-    await this.cache.setFx(key, rate);
+    const key = JSON.stringify([baseCurrency, quoteCurrency, asOf]);
+    const rate = await this.loadCached(
+      `fx:${key}`,
+      () => this.cache.getFx(key),
+      (value) => this.cache.setFx(key, value),
+      async () => {
+        const value = await this.call("fx", () => this.provider.getFxRate(baseCurrency, quoteCurrency, asOf));
+        this.validateFxRate(value, baseCurrency, quoteCurrency, asOf);
+        return value;
+      },
+    );
+    this.validateFxRate(rate, baseCurrency, quoteCurrency, asOf);
     return rate;
   }
 
   async getCorporateActions(request: CorporateActionsRequest) {
     validateDateRange(request.startDate, request.endDate);
-    const key = JSON.stringify(request);
-    const cached = await this.cache.getCorporateActions(key);
-    if (cached) return cached;
-    const actions = await this.call("corporate-actions", () => this.provider.getCorporateActions(request));
-    await this.cache.setCorporateActions(key, actions);
-    return actions;
+    const key = JSON.stringify([request.instrumentId, request.startDate, request.endDate]);
+    return this.loadCached(
+      `corporate-actions:${key}`,
+      () => this.cache.getCorporateActions(key),
+      (value) => this.cache.setCorporateActions(key, value),
+      () => this.call("corporate-actions", () => this.provider.getCorporateActions(request)),
+    );
   }
 
   private validateHistoricalRequest(request: HistoricalPriceRequest) {
@@ -137,7 +169,29 @@ export class MarketDataService {
 
   private validateQuote(quote: ProviderQuote) {
     if (!Number.isFinite(quote.price) || quote.price < 0 || !isValidUtcTimestamp(quote.observedAt) || !isValidUtcTimestamp(quote.retrievedAt)) {
-      throw new MarketDataError("ProviderUnavailable", "The provider returned an invalid normalized quote.", { operation: "quote" });
+      throw new MarketDataError("MalformedProviderResponse", "The provider returned an invalid normalized quote.", { operation: "quote" });
+    }
+  }
+
+  private validateFxRate(rate: Awaited<ReturnType<MarketDataProvider["getFxRate"]>>, baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
+    const observed = Date.parse(rate.observedAt);
+    const retrieved = Date.parse(rate.retrievedAt);
+    const requested = Date.parse(asOf);
+    const now = this.clock().getTime();
+    const mismatchedPair = rate.baseCurrency !== baseCurrency || rate.quoteCurrency !== quoteCurrency;
+    if (mismatchedPair || !Number.isFinite(rate.rate) || rate.rate <= 0 || !isValidUtcTimestamp(rate.observedAt) || !isValidUtcTimestamp(rate.retrievedAt)) {
+      throw new MarketDataError("MalformedProviderResponse", "The provider returned an invalid normalized FX rate.", {
+        operation: "fx",
+        baseCurrency,
+        quoteCurrency,
+      });
+    }
+    if (observed > now || retrieved > now || Math.abs(observed - requested) > this.unavailableAfter) {
+      throw new MarketDataError("FxUnavailable", "No sufficiently current FX rate is available for the requested observation.", {
+        baseCurrency,
+        quoteCurrency,
+        asOf,
+      });
     }
   }
 
@@ -163,6 +217,31 @@ export class MarketDataService {
         { operation, provider: this.provider.providerId },
         { cause: error },
       );
+    }
+  }
+
+  private async loadCached<T>(
+    flightKey: string,
+    get: () => Promise<T | undefined>,
+    set: (value: T) => Promise<void>,
+    load: () => Promise<T>,
+  ): Promise<T> {
+    const cached = await get();
+    if (cached !== undefined) return cached;
+    const existing = this.inFlight.get(flightKey) as Promise<T> | undefined;
+    if (existing) return existing;
+    const pending = (async () => {
+      const racedCache = await get();
+      if (racedCache !== undefined) return racedCache;
+      const value = await load();
+      await set(value);
+      return value;
+    })();
+    this.inFlight.set(flightKey, pending);
+    try {
+      return await pending;
+    } finally {
+      if (this.inFlight.get(flightKey) === pending) this.inFlight.delete(flightKey);
     }
   }
 }

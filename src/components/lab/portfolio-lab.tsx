@@ -58,8 +58,8 @@ function parseQuantitySafe(value: string) {
   try { return parseQuantity(value); } catch { return 0n; }
 }
 
-function assetTypeLabel(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
+function assetTypeLabel(value: string | null) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : "Security";
 }
 
 function restoreTriggerFocus(trigger: HTMLButtonElement | null, fallback: HTMLButtonElement | null) {

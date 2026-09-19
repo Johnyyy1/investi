@@ -37,8 +37,8 @@ describe("deterministic instrument search", () => {
     expect((await service.searchInstruments("WORLD"))[0]).toMatchObject({ symbol: "VWCE", assetType: "etf" });
   });
 
-  it("returns stable empty results for empty and unmatched searches", async () => {
-    expect(await service.searchInstruments("  ")).toEqual([]);
+  it("rejects invalid queries and returns stable empty results for valid unmatched searches", async () => {
+    await expect(service.searchInstruments("  ")).rejects.toMatchObject({ code: "InvalidSearchQuery" });
     expect(await service.searchInstruments("not-in-the-fixture")).toEqual([]);
   });
 });

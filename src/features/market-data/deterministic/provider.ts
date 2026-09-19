@@ -70,7 +70,12 @@ export class DeterministicMarketDataProvider implements MarketDataProvider {
       })
       .filter(({ rank }) => rank < 3)
       .sort((a, b) => a.rank - b.rank || a.fixtureOrder - b.fixtureOrder)
-      .map(({ instrument }) => ({ ...instrument }));
+      .map(({ instrument }) => ({
+        ...instrument,
+        exchangeCode: instrument.exchangeMic,
+        provider: this.providerId,
+        providerSymbol: instrument.symbol,
+      }));
   }
 
   async getInstrumentMetadata(instrumentId: InstrumentId) {
