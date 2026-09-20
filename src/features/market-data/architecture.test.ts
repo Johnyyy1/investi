@@ -29,6 +29,9 @@ describe("market-data architecture boundary", () => {
       "fmp/client.ts",
       "fmp/provider.ts",
       "fmp/service.ts",
+      "frankfurter/client.ts",
+      "frankfurter/provider.ts",
+      "frankfurter/service.ts",
     ];
     for (const modulePath of serverModules) {
       const source = await readFile(path.join(sourceRoot, "features/market-data", modulePath), "utf8");
@@ -41,7 +44,7 @@ describe("market-data architecture boundary", () => {
     for (const file of files) {
       const source = await readFile(file, "utf8");
       if (!/^"use client";/.test(source)) continue;
-      expect(source, path.relative(repositoryRoot, file)).not.toMatch(/features\/market-data\/(?:cache|composition|environment|service|provider|deterministic|fmp)/);
+      expect(source, path.relative(repositoryRoot, file)).not.toMatch(/features\/market-data\/(?:cache|composition|environment|service|provider|deterministic|fmp|frankfurter)/);
     }
   });
 

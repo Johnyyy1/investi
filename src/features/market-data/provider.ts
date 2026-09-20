@@ -25,13 +25,21 @@ export interface ProviderQuote {
   provenance: MarketDataProvenance;
 }
 
-/** Server-only port implemented by deterministic data now and external adapters later. */
-export interface MarketDataProvider {
+/** Security-data capabilities. FX may be composed from a different provider. */
+export interface SecurityMarketDataProvider {
   readonly providerId: string;
   searchInstruments(query: string): Promise<readonly InstrumentSearchResult[]>;
   getInstrumentMetadata(instrumentId: InstrumentId): Promise<Instrument>;
   getQuote(instrumentId: InstrumentId): Promise<ProviderQuote>;
   getHistoricalPrices(request: HistoricalPriceRequest): Promise<HistoricalSeries>;
-  getFxRate(baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp): Promise<FxRate>;
   getCorporateActions(request: CorporateActionsRequest): Promise<CorporateActionSeries>;
 }
+
+/** FX capability kept separate so reference rates need not come from the security provider. */
+export interface FxRateProvider {
+  readonly providerId: string;
+  getFxRate(baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp): Promise<FxRate>;
+}
+
+/** Backward-compatible combined port implemented by the deterministic and FMP adapters. */
+export interface MarketDataProvider extends SecurityMarketDataProvider, FxRateProvider {}

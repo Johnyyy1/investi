@@ -1,7 +1,7 @@
 import "server-only";
 
-import type { Currency, Instrument, Quote, QuoteFreshnessStatus, UtcTimestamp } from "@/features/market-data/contracts";
-import type { MarketDataProviderName } from "@/features/market-data/composition";
+import type { Currency, FxRate, Instrument, Quote, QuoteFreshnessStatus, UtcTimestamp } from "@/features/market-data/contracts";
+import type { FxDataProviderName, MarketDataProviderName } from "@/features/market-data/composition";
 import { isMarketDataError, MarketDataError } from "@/features/market-data/errors";
 import type { MarketDataService } from "@/features/market-data/service";
 import {
@@ -15,6 +15,7 @@ import {
 
 export interface PortfolioMarketDataGateway {
   provider: MarketDataProviderName;
+  fxProvider: FxDataProviderName;
   service: MarketDataService;
 }
 
@@ -28,8 +29,7 @@ export interface PortfolioExecutionObservation {
   priceUnits: bigint;
   fxUnits: bigint;
   grossMinor: bigint;
-  fxObservedAt: UtcTimestamp;
-  fxRetrievedAt: UtcTimestamp;
+  fx: FxRate;
 }
 
 export interface PortfolioHoldingMarketObservation {
@@ -40,8 +40,9 @@ export interface PortfolioHoldingMarketObservation {
   quoteObservedAt: UtcTimestamp | null;
   quoteRetrievedAt: UtcTimestamp | null;
   quoteFreshness: QuoteFreshnessStatus | null;
-  fxObservedAt: UtcTimestamp | null;
+  fxReferenceDate: string | null;
   fxRetrievedAt: UtcTimestamp | null;
+  fxProvider: string | null;
   unavailableReason?: ValuationUnavailableReason;
 }
 
@@ -51,6 +52,8 @@ export interface PortfolioInstrumentPreview {
   estimatedUnitCostBaseMinor: string;
   quoteObservedAt: UtcTimestamp;
   quoteRetrievedAt: UtcTimestamp;
+  fxReferenceDate: string;
+  fxProvider: string;
   provider: string;
   dataset: string;
   marketDataMode: PortfolioMarketDataMode;
@@ -101,11 +104,9 @@ export async function observePortfolioExecution(
   if (quote.freshness.status !== "fresh") {
     throw new PortfolioInputError("QuoteUnavailable", "The current market observation is not fresh enough to simulate this trade.");
   }
-  const fx = quote.currency === baseCurrency
-    ? null
-    : await gateway.service.getFxRate(quote.currency, baseCurrency, quote.observedAt);
+  const fx = await gateway.service.getFxRate(quote.currency, baseCurrency, quote.observedAt);
   const priceUnits = priceUnitsFromNumber(quote.price);
-  const fxUnits = fxUnitsFromNumber(fx?.rate ?? 1);
+  const fxUnits = fxUnitsFromNumber(fx.rate);
   const grossMinor = grossBaseMinor(quantityUnits, priceUnits, fxUnits);
   if (grossMinor <= 0n) throw new PortfolioInputError("InvalidQuantity", "This quantity is too small to produce a one-haléř trade value.");
   return {
@@ -115,8 +116,7 @@ export async function observePortfolioExecution(
     priceUnits,
     fxUnits,
     grossMinor,
-    fxObservedAt: fx?.observedAt ?? quote.observedAt,
-    fxRetrievedAt: fx?.retrievedAt ?? quote.retrievedAt,
+    fx,
   };
 }
 
@@ -130,13 +130,15 @@ export async function loadPortfolioInstrumentPreview(
   const quote = await gateway.service.getQuote(instrumentId);
   assertQuoteMatchesInstrument(instrument, quote);
   if (quote.freshness.status !== "fresh") return null;
-  const fx = quote.currency === "CZK" ? 1 : (await gateway.service.getFxRate(quote.currency, "CZK", quote.observedAt)).rate;
+  const fx = await gateway.service.getFxRate(quote.currency, "CZK", quote.observedAt);
   return {
     instrument,
     price: priceToDecimal(priceUnitsFromNumber(quote.price)),
-    estimatedUnitCostBaseMinor: grossBaseMinor(parseQuantity("1"), priceUnitsFromNumber(quote.price), fxUnitsFromNumber(fx)).toString(),
+    estimatedUnitCostBaseMinor: grossBaseMinor(parseQuantity("1"), priceUnitsFromNumber(quote.price), fxUnitsFromNumber(fx.rate)).toString(),
     quoteObservedAt: quote.observedAt,
     quoteRetrievedAt: quote.retrievedAt,
+    fxReferenceDate: fx.referenceDate,
+    fxProvider: fx.provenance.provider,
     provider: quote.provenance.provider,
     dataset: quote.provenance.dataset,
     marketDataMode: quote.provenance.isDeterministic ? "sample" : "market",
@@ -161,8 +163,9 @@ function unavailableHolding(instrumentId: string, reason: ValuationUnavailableRe
     quoteObservedAt: null,
     quoteRetrievedAt: null,
     quoteFreshness: null,
-    fxObservedAt: null,
+    fxReferenceDate: null,
     fxRetrievedAt: null,
+    fxProvider: null,
     unavailableReason: reason,
   };
 }
@@ -187,20 +190,20 @@ export async function observePortfolioHoldingValue(
   }
 
   try {
-    const fx = quote.currency === baseCurrency
-      ? null
-      : await gateway.service.getFxRate(quote.currency, baseCurrency, quote.observedAt);
+    // Current valuation uses the current reference FX fixing independently from the security observation.
+    const fx = await gateway.service.getFxRate(quote.currency, baseCurrency, quote.retrievedAt);
     const priceUnits = priceUnitsFromNumber(quote.price);
     return {
       instrumentId: holding.instrumentId,
-      marketValueMinor: grossBaseMinor(holding.quantityUnits, priceUnits, fxUnitsFromNumber(fx?.rate ?? 1)),
+      marketValueMinor: grossBaseMinor(holding.quantityUnits, priceUnits, fxUnitsFromNumber(fx.rate)),
       currentPrice: priceToDecimal(priceUnits),
       currentPriceCurrency: quote.currency,
       quoteObservedAt: quote.observedAt,
       quoteRetrievedAt: quote.retrievedAt,
       quoteFreshness: quote.freshness.status,
-      fxObservedAt: fx?.observedAt ?? quote.observedAt,
-      fxRetrievedAt: fx?.retrievedAt ?? quote.retrievedAt,
+      fxReferenceDate: fx.referenceDate,
+      fxRetrievedAt: fx.retrievedAt,
+      fxProvider: fx.provenance.provider,
     };
   } catch (error) {
     return unavailableHolding(holding.instrumentId, failureReason(error, "fx"));

@@ -37,7 +37,7 @@ export interface InstrumentSearchResult {
   providerSymbol: string;
 }
 
-export type DataKind = "synthetic" | "historical" | "live";
+export type DataKind = "synthetic" | "historical" | "live" | "reference";
 export type DataCompleteness = "complete" | "partial";
 export type AdjustmentMode = "raw" | "split-adjusted" | "total-return";
 
@@ -50,6 +50,19 @@ export interface MarketDataProvenance {
   observedAt: UtcTimestamp;
   retrievedAt: UtcTimestamp;
   adjustmentMode: AdjustmentMode | null;
+  completeness: DataCompleteness;
+}
+
+/** Provenance for an FX fixing/reference rate whose source supplies a calendar date, not an intraday observation. */
+export interface FxRateProvenance {
+  provider: string;
+  dataset: string;
+  dataKind: Extract<DataKind, "synthetic" | "reference">;
+  isDeterministic: boolean;
+  isDemo: boolean;
+  referenceDate: CalendarDate;
+  retrievedAt: UtcTimestamp;
+  adjustmentMode: null;
   completeness: DataCompleteness;
 }
 
@@ -130,10 +143,12 @@ export interface HistoricalSeries {
 export interface FxRate {
   baseCurrency: Currency;
   quoteCurrency: Currency;
+  /** Quote-currency units per one base-currency unit. */
   rate: number;
-  observedAt: UtcTimestamp;
+  /** Provider-supplied calendar date; no intraday observation time is implied. */
+  referenceDate: CalendarDate;
   retrievedAt: UtcTimestamp;
-  provenance: MarketDataProvenance;
+  provenance: FxRateProvenance;
 }
 
 interface CorporateActionBase {

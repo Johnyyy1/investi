@@ -43,6 +43,13 @@
       "when": 1789406343034,
       "tag": "0005_sweet_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789892304801,
+      "tag": "0006_flowery_nightmare",
+      "breakpoints": true
     }
   ]
 }

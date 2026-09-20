@@ -149,7 +149,7 @@ describe("FX and corporate actions", () => {
   it("does not invent identity or inverse rates for unavailable pairs", async () => {
     const service = createDeterministicMarketDataService();
     await expect(service.getFxRate("CZK", "USD", AS_OF)).rejects.toMatchObject({ code: "FxUnavailable" });
-    await expect(service.getFxRate("USD", "USD", AS_OF)).rejects.toMatchObject({ code: "FxUnavailable" });
+    await expect(service.getFxRate("USD", "USD", AS_OF)).resolves.toMatchObject({ rate: 1, referenceDate: "2026-01-16", provenance: { provider: "investi-identity" } });
     await expect(service.getFxRate("USD", "CZK", "2026-01-15T16:00:00.000Z")).rejects.toMatchObject({ code: "FxUnavailable" });
     await expect(service.getFxRate("USD", "CZK", "2026-01-16T17:00:00+01:00")).rejects.toMatchObject({ code: "FxUnavailable" });
   });

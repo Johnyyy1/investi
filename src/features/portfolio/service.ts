@@ -44,8 +44,9 @@ export interface PortfolioView {
     quoteObservedAt: string | null;
     quoteRetrievedAt: string | null;
     quoteFreshness: "fresh" | "stale" | "unavailable" | null;
-    fxObservedAt: string | null;
+    fxReferenceDate: string | null;
     fxRetrievedAt: string | null;
+    fxProvider: string | null;
     unavailableReason?: ValuationUnavailableReason;
   }>;
   recentActivity: Array<{
@@ -115,8 +116,9 @@ export async function loadPortfolioView(userId: string): Promise<PortfolioView> 
         quoteObservedAt: holding.quoteObservedAt,
         quoteRetrievedAt: observation?.quoteRetrievedAt ?? null,
         quoteFreshness: observation?.quoteFreshness ?? null,
-        fxObservedAt: observation?.fxObservedAt ?? null,
+        fxReferenceDate: observation?.fxReferenceDate ?? null,
         fxRetrievedAt: observation?.fxRetrievedAt ?? null,
+        fxProvider: observation?.fxProvider ?? null,
         unavailableReason: holding.unavailableReason,
       };
     }),

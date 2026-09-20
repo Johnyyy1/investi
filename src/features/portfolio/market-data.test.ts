@@ -4,6 +4,7 @@ import { createMarketDataService } from "@/features/market-data/composition";
 import type {
   CorporateActionsRequest,
   Currency,
+  FxRateProvenance,
   HistoricalPriceRequest,
   Instrument,
   InstrumentSearchResult,
@@ -40,8 +41,21 @@ function provenance(observedAt = NOW): MarketDataProvenance {
   };
 }
 
+function fxProvenance(referenceDate: string, provider = "test-provider"): FxRateProvenance {
+  return {
+    provider,
+    dataset: "test-reference-rates",
+    dataKind: "reference",
+    isDeterministic: false,
+    isDemo: false,
+    referenceDate,
+    retrievedAt: NOW,
+    adjustmentMode: null,
+    completeness: "complete",
+  };
+}
+
 class MutableMarketDataProvider implements MarketDataProvider {
-  readonly providerId = "test-provider";
   readonly instruments = new Map<string, Instrument>();
   price = 100;
   fxRate = 20;
@@ -51,7 +65,7 @@ class MutableMarketDataProvider implements MarketDataProvider {
   quoteError: unknown;
   fxError: unknown;
 
-  constructor(instruments: readonly Instrument[]) {
+  constructor(instruments: readonly Instrument[], readonly providerId = "test-provider") {
     for (const instrument of instruments) this.instruments.set(instrument.instrumentId, instrument);
   }
 
@@ -77,22 +91,32 @@ class MutableMarketDataProvider implements MarketDataProvider {
   async getFxRate(baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
     this.fxCalls += 1;
     if (this.fxError) throw this.fxError;
+    const referenceDate = asOf.slice(0, 10);
     return {
       baseCurrency,
       quoteCurrency,
       rate: this.fxRate,
-      observedAt: asOf,
+      referenceDate,
       retrievedAt: NOW,
-      provenance: provenance(asOf),
+      provenance: fxProvenance(referenceDate, this.providerId),
     };
   }
   async getHistoricalPrices(request: HistoricalPriceRequest): Promise<never> { void request; throw new Error("unused"); }
   async getCorporateActions(request: CorporateActionsRequest): Promise<never> { void request; throw new Error("unused"); }
 }
 
+function splitGateway(security: MutableMarketDataProvider, fx: MutableMarketDataProvider): PortfolioMarketDataGateway {
+  return {
+    provider: "fmp",
+    fxProvider: "frankfurter",
+    service: new MarketDataService(security, { fxProvider: fx, clock: () => new Date(NOW) }),
+  };
+}
+
 function gateway(provider: MutableMarketDataProvider, configuredProvider: "deterministic" | "fmp" = "fmp"): PortfolioMarketDataGateway {
   return {
     provider: configuredProvider,
+    fxProvider: configuredProvider === "deterministic" ? "deterministic" : "frankfurter",
     service: new MarketDataService(provider, { clock: () => new Date(NOW) }),
   };
 }
@@ -105,6 +129,7 @@ describe("Portfolio Lab configured market data", () => {
   it("keeps the configured deterministic flow operational without an FMP key", async () => {
     const configured: PortfolioMarketDataGateway = {
       provider: "deterministic",
+      fxProvider: "deterministic",
       service: createDeterministicMarketDataService(),
     };
     const observation = await observePortfolioExecution(configured, "US-XNAS:AAPL", "0.25", "CZK");
@@ -125,14 +150,13 @@ describe("Portfolio Lab configured market data", () => {
       if (url.pathname.endsWith("/quote") && symbol === "AAPL") return Response.json([{
         symbol: "AAPL", price: 245.5, timestamp: Date.parse(NOW) / 1_000,
       }]);
-      if (url.pathname.endsWith("/quote") && symbol === "USDCZK") return Response.json([{
-        symbol: "USDCZK", price: 20.9, timestamp: Date.parse(NOW) / 1_000,
-      }]);
       return new Response("not found", { status: 404 });
     });
+    const frankfurterFetch = vi.fn(async () => Response.json({ date: "2026-09-18", base: "USD", quote: "CZK", rate: 20.9 }));
     const configured: PortfolioMarketDataGateway = {
       provider: "fmp",
-      service: createMarketDataService({ provider: "fmp", fmpApiKey: "server-test-key", fetch: fetchMock, clock: () => new Date(NOW) }),
+      fxProvider: "frankfurter",
+      service: createMarketDataService({ provider: "fmp", fxProvider: "frankfurter", fmpApiKey: "server-test-key", fetch: fetchMock, frankfurterFetch, clock: () => new Date(NOW) }),
     };
 
     const results = await configured.service.searchInstruments("apple");
@@ -144,15 +168,49 @@ describe("Portfolio Lab configured market data", () => {
       price: "245.5",
       marketDataMode: "market",
     });
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(frankfurterFetch).toHaveBeenCalledTimes(1);
   });
 
   it("fails explicitly when FMP is selected without a key", () => {
-    expect(() => createMarketDataService({ provider: "fmp" })).toThrowError(expect.objectContaining({ code: "ProviderConfiguration" }));
+    expect(() => createMarketDataService({ provider: "fmp", fxProvider: "frankfurter" })).toThrowError(expect.objectContaining({ code: "ProviderConfiguration" }));
   });
 });
 
 describe("Portfolio execution and current valuation semantics", () => {
+  it("combines an FMP security observation with a Frankfurter reference FX observation", async () => {
+    const fmpFetch = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(input instanceof Request ? input.url : input.toString());
+      if (url.pathname.endsWith("/profile")) return Response.json([{
+        symbol: "AAPL", companyName: "Apple Inc.", currency: "USD", exchange: "NASDAQ", isEtf: false, isFund: false,
+      }]);
+      if (url.pathname.endsWith("/quote")) return Response.json([{
+        symbol: "AAPL", price: 230, timestamp: Date.parse(NOW) / 1_000,
+      }]);
+      return new Response("not found", { status: 404 });
+    });
+    const frankfurterFetch = vi.fn(async () => Response.json({ date: "2026-09-19", base: "USD", quote: "CZK", rate: 20.9 }));
+    const configured: PortfolioMarketDataGateway = {
+      provider: "fmp",
+      fxProvider: "frankfurter",
+      service: createMarketDataService({
+        provider: "fmp",
+        fxProvider: "frankfurter",
+        fmpApiKey: "server-test-key",
+        fetch: fmpFetch,
+        frankfurterFetch,
+        clock: () => new Date(NOW),
+      }),
+    };
+
+    const observation = await observePortfolioExecution(configured, FMP_AAPL, "1", "CZK");
+    expect(observation).toMatchObject({
+      grossMinor: 480_700n,
+      quote: { price: 230, provenance: { provider: "financial-modeling-prep" } },
+      fx: { rate: 20.9, referenceDate: "2026-09-19", provenance: { provider: "frankfurter" } },
+    });
+  });
+
   it("uses a server-fetched USD quote and direct USD-to-CZK execution FX", async () => {
     const provider = new MutableMarketDataProvider([equity()]);
     const observation = await observePortfolioExecution(gateway(provider), FMP_AAPL, "0.25", "CZK");
@@ -202,6 +260,19 @@ describe("Portfolio execution and current valuation semantics", () => {
     expect(valued.holdings[0].gainLossMinor).toBe(100_000n);
   });
 
+  it("keeps separate security and FX providers independent during later valuation", async () => {
+    const security = new MutableMarketDataProvider([equity()], "test-security");
+    const fx = new MutableMarketDataProvider([], "test-fx");
+    const configured = splitGateway(security, fx);
+    const execution = await observePortfolioExecution(configured, FMP_AAPL, "1", "CZK");
+    security.price = 120;
+    fx.fxRate = 25;
+    const current = await observePortfolioHoldingValue(configured, { instrumentId: FMP_AAPL, quantityUnits: execution.quantityUnits }, "CZK");
+
+    expect(execution).toMatchObject({ quote: { price: 100 }, fx: { rate: 20, provenance: { provider: "test-fx" } } });
+    expect(current).toMatchObject({ marketValueMinor: 300_000n, fxProvider: "test-fx" });
+  });
+
   it("allows stale current observations with an explicit freshness label but rejects them for execution", async () => {
     const provider = new MutableMarketDataProvider([equity()]);
     provider.observedAt = "2026-09-19T11:00:00.000Z";
@@ -215,6 +286,58 @@ describe("Portfolio execution and current valuation semantics", () => {
 });
 
 describe("Portfolio market-data failures", () => {
+  it("turns a Frankfurter outage into incomplete valuation rather than zero or fallback FX", async () => {
+    const fmpFetch = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(input instanceof Request ? input.url : input.toString());
+      if (url.pathname.endsWith("/quote")) return Response.json([{
+        symbol: "AAPL", price: 230, timestamp: Date.parse(NOW) / 1_000,
+      }]);
+      if (url.pathname.endsWith("/profile")) return Response.json([{
+        symbol: "AAPL", companyName: "Apple Inc.", currency: "USD", exchange: "NASDAQ", isEtf: false, isFund: false,
+      }]);
+      return new Response("not found", { status: 404 });
+    });
+    const configured: PortfolioMarketDataGateway = {
+      provider: "fmp",
+      fxProvider: "frankfurter",
+      service: createMarketDataService({
+        provider: "fmp",
+        fxProvider: "frankfurter",
+        fmpApiKey: "server-test-key",
+        fetch: fmpFetch,
+        frankfurterFetch: async () => Response.json({ message: "down" }, { status: 503 }),
+        clock: () => new Date(NOW),
+      }),
+    };
+
+    await expect(observePortfolioHoldingValue(configured, { instrumentId: FMP_AAPL, quantityUnits: 100_000_000n }, "CZK")).resolves.toMatchObject({
+      marketValueMinor: null,
+      unavailableReason: "provider",
+      fxReferenceDate: null,
+    });
+  });
+
+  it("keeps security-provider failure independent from FX-provider failure", async () => {
+    const security = new MutableMarketDataProvider([equity()], "test-security");
+    const fx = new MutableMarketDataProvider([], "test-fx");
+    const configured = splitGateway(security, fx);
+    security.quoteError = new MarketDataError("ProviderUnavailable", "security down");
+    await expect(observePortfolioHoldingValue(configured, { instrumentId: FMP_AAPL, quantityUnits: 100_000_000n }, "CZK")).resolves.toMatchObject({
+      marketValueMinor: null,
+      unavailableReason: "provider",
+    });
+    expect(fx.fxCalls).toBe(0);
+
+    security.quoteError = undefined;
+    fx.fxError = new MarketDataError("ProviderUnavailable", "fx down");
+    await expect(observePortfolioHoldingValue(configured, { instrumentId: FMP_AAPL, quantityUnits: 100_000_000n }, "CZK")).resolves.toMatchObject({
+      marketValueMinor: null,
+      unavailableReason: "provider",
+    });
+    expect(security.quoteCalls).toBe(2);
+    expect(fx.fxCalls).toBe(1);
+  });
+
   it("keeps quote, FX, rate-limit, and provider failures explicit", async () => {
     const provider = new MutableMarketDataProvider([equity()]);
     const configured = gateway(provider);

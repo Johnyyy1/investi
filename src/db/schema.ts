@@ -216,6 +216,13 @@ export const portfolioTrade = pgTable("portfolio_trade", {
   marketDataDataset: text("market_data_dataset").notNull(),
   marketDataKind: text("market_data_kind").notNull(),
   marketDataIsDeterministic: boolean("market_data_is_deterministic").notNull(),
+  /** Nullable only for executions created before separate FX provenance was introduced. */
+  fxRateProvider: text("fx_rate_provider"),
+  fxRateDataset: text("fx_rate_dataset"),
+  fxRateKind: text("fx_rate_kind"),
+  fxRateIsDeterministic: boolean("fx_rate_is_deterministic"),
+  fxReferenceDate: date("fx_reference_date"),
+  fxRateRetrievedAt: timestamp("fx_rate_retrieved_at", { withTimezone: true }),
   clientIdempotencyKey: text("client_idempotency_key").notNull(),
 }, (table) => [
   index("portfolio_trade_portfolio_executed_idx").on(table.portfolioId, table.executedAt),
@@ -228,6 +235,11 @@ export const portfolioTrade = pgTable("portfolio_trade", {
   check("portfolio_trade_currency_check", sql`${table.quoteCurrency} in ('CZK', 'USD', 'EUR')`),
   check("portfolio_trade_asset_type_check", sql`${table.instrumentAssetType} in ('equity', 'etf', 'bond', 'cash', 'index')`),
   check("portfolio_trade_data_kind_check", sql`${table.marketDataKind} in ('synthetic', 'historical', 'live')`),
+  check("portfolio_trade_fx_provenance_complete_check", sql`(
+    (${table.fxRateProvider} is null and ${table.fxRateDataset} is null and ${table.fxRateKind} is null and ${table.fxRateIsDeterministic} is null and ${table.fxReferenceDate} is null and ${table.fxRateRetrievedAt} is null)
+    or (${table.fxRateProvider} is not null and ${table.fxRateDataset} is not null and ${table.fxRateKind} is not null and ${table.fxRateIsDeterministic} is not null and ${table.fxReferenceDate} is not null and ${table.fxRateRetrievedAt} is not null)
+  )`),
+  check("portfolio_trade_fx_kind_check", sql`${table.fxRateKind} is null or ${table.fxRateKind} in ('synthetic', 'reference')`),
   check("portfolio_trade_cash_delta_check", sql`(
     (${table.side} = 'BUY' and ${table.cashDeltaBaseMinor} = -(${table.grossAmountBaseMinor} + ${table.feeBaseMinor}))
     or (${table.side} = 'SELL' and ${table.cashDeltaBaseMinor} = ${table.grossAmountBaseMinor} - ${table.feeBaseMinor})

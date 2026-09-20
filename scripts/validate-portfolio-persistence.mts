@@ -45,6 +45,10 @@ try {
   assert.equal((await executeTrade(primary, { instrumentId: "US-XNAS:AAPL", quantity: "0.25", side: "BUY", clientIdempotencyKey: buyKey })).duplicate, false);
   assert.equal((await executeTrade(primary, { instrumentId: "US-XNAS:AAPL", quantity: "0.25", side: "BUY", clientIdempotencyKey: buyKey })).duplicate, true);
   assert.equal(await tradeCount(first.id), 1, "duplicate buy inserts once");
+  const [persistedBuy] = await db.select().from(portfolioTrade).where(eq(portfolioTrade.clientIdempotencyKey, buyKey));
+  assert.equal(persistedBuy.marketDataProvider, "investi-deterministic", "security provenance remains independent");
+  assert.equal(persistedBuy.fxRateProvider, "investi-deterministic", "FX provider provenance is persisted separately");
+  assert.equal(persistedBuy.fxReferenceDate, "2026-01-16", "FX calendar reference date is preserved exactly");
   const sellKey = randomUUID();
   await executeTrade(primary, { instrumentId: "US-XNAS:AAPL", quantity: "0.1", side: "SELL", clientIdempotencyKey: sellKey });
   assert.equal((await executeTrade(primary, { instrumentId: "US-XNAS:AAPL", quantity: "0.1", side: "SELL", clientIdempotencyKey: sellKey })).duplicate, true);

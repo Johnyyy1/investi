@@ -299,7 +299,7 @@ describe("Financial Modeling Prep CZK FX", () => {
       baseCurrency,
       quoteCurrency: "CZK",
       rate: price,
-      observedAt,
+      referenceDate: observedAt.slice(0, 10),
       provenance: { dataset: "stable/quote:forex" },
     });
     expect(new URL(fetchMock.mock.calls[0][0].toString()).searchParams.get("symbol")).toBe(pair);
@@ -319,7 +319,7 @@ describe("Financial Modeling Prep CZK FX", () => {
 
   it("rejects an otherwise valid FX quote when it is stale for the requested observation", async () => {
     const { provider } = mockedProvider([
-      jsonResponse([{ symbol: "USDCZK", price: 22.75, timestamp: Date.parse("2026-09-17T11:55:00.000Z") / 1_000 }]),
+      jsonResponse([{ symbol: "USDCZK", price: 22.75, timestamp: Date.parse("2026-09-10T11:55:00.000Z") / 1_000 }]),
     ]);
     const service = new MarketDataService(provider, { clock: () => new Date(RETRIEVED_AT) });
 

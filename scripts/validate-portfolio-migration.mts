@@ -15,7 +15,10 @@ try {
     order by table_name, ordinal_position
   `;
   assert.equal(columns.filter(({ table_name }) => table_name === "portfolio").length, 8);
-  assert.equal(columns.filter(({ table_name }) => table_name === "portfolio_trade").length, 21);
+  assert.equal(columns.filter(({ table_name }) => table_name === "portfolio_trade").length, 27);
+  for (const legacySafeColumn of ["fx_rate_provider", "fx_rate_dataset", "fx_rate_kind", "fx_rate_is_deterministic", "fx_reference_date", "fx_rate_retrieved_at"]) {
+    assert.equal(columns.find(({ column_name }) => column_name === legacySafeColumn)?.is_nullable, "YES", `${legacySafeColumn} is nullable for legacy trades`);
+  }
   const numeric = Object.fromEntries(columns.filter(({ numeric_precision }) => numeric_precision !== null).map((row) => [row.column_name, row]));
   assert.deepEqual([numeric.quantity.numeric_precision, numeric.quantity.numeric_scale], [24, 8]);
   assert.deepEqual([numeric.unit_price.numeric_precision, numeric.unit_price.numeric_scale], [24, 8]);
@@ -38,6 +41,7 @@ try {
     "portfolio_base_currency_check", "portfolio_opening_capital_nonnegative_check", "portfolio_reset_not_self_check",
     "portfolio_trade_quantity_positive_check", "portfolio_trade_unit_price_positive_check", "portfolio_trade_fx_positive_check",
     "portfolio_trade_gross_positive_check", "portfolio_trade_fee_nonnegative_check", "portfolio_trade_cash_delta_check",
+    "portfolio_trade_fx_provenance_complete_check", "portfolio_trade_fx_kind_check",
   ]) assert.ok(checkNames.includes(expected), `${expected} exists`);
 
   const cascades = await sql`

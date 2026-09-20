@@ -6,6 +6,7 @@ import {
   currencies,
   type CorporateActionsRequest,
   type Currency,
+  type FxRateProvenance,
   type HistoricalPricePoint,
   type HistoricalPriceRequest,
   type Instrument,
@@ -244,6 +245,24 @@ function provenance(input: {
   };
 }
 
+function fxProvenance(input: {
+  dataset: string;
+  referenceDate: string;
+  retrievedAt: UtcTimestamp;
+}): FxRateProvenance {
+  return {
+    provider: FMP_PROVIDER_ID,
+    dataset: input.dataset,
+    dataKind: "reference",
+    isDeterministic: false,
+    isDemo: false,
+    referenceDate: input.referenceDate,
+    retrievedAt: input.retrievedAt,
+    adjustmentMode: null,
+    completeness: "complete",
+  };
+}
+
 function normalizePoint(
   endpoint: string,
   reference: InstrumentReference,
@@ -413,18 +432,17 @@ export class FmpMarketDataProvider implements MarketDataProvider {
     validateFxRequest(baseCurrency, quoteCurrency);
     const retrieved = retrievedAt(this.clock);
     if (baseCurrency === quoteCurrency) {
+      const referenceDate = asOf.slice(0, 10);
       return {
         baseCurrency,
         quoteCurrency,
         rate: 1,
-        observedAt: asOf,
+        referenceDate,
         retrievedAt: retrieved,
-        provenance: provenance({
+        provenance: fxProvenance({
           dataset: "identity",
-          dataKind: "live",
-          observedAt: asOf,
+          referenceDate,
           retrievedAt: retrieved,
-          adjustmentMode: null,
         }),
       };
     }
@@ -445,18 +463,17 @@ export class FmpMarketDataProvider implements MarketDataProvider {
     assertMatchingSymbol(endpoint, pair, quote.symbol);
     if (quote.price <= 0) throw invalidProviderResponse(endpoint, "invalid-fx-rate");
     const observedAt = timestampFromUnixSeconds(quote.timestamp, endpoint);
+    const referenceDate = observedAt.slice(0, 10);
     return {
       baseCurrency,
       quoteCurrency,
       rate: quote.price,
-      observedAt,
+      referenceDate,
       retrievedAt: retrieved,
-      provenance: provenance({
+      provenance: fxProvenance({
         dataset: "stable/quote:forex",
-        dataKind: "live",
-        observedAt,
+        referenceDate,
         retrievedAt: retrieved,
-        adjustmentMode: null,
       }),
     };
   }

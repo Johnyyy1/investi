@@ -3,6 +3,7 @@ import "server-only";
 import { NoopMarketDataCache, type MarketDataCache } from "./cache";
 import {
   adjustmentPolicies,
+  currencies,
   type CorporateActionsRequest,
   type Currency,
   type HistoricalPriceRequest,
@@ -13,7 +14,7 @@ import {
   type UtcTimestamp,
 } from "./contracts";
 import { isMarketDataError, MarketDataError } from "./errors";
-import type { MarketDataProvider, ProviderQuote } from "./provider";
+import type { FxRateProvider, ProviderQuote, SecurityMarketDataProvider } from "./provider";
 
 const DAY = 24 * 60 * 60 * 1_000;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,8 +25,14 @@ const MAX_SEARCH_LENGTH = 80;
 export interface MarketDataServiceOptions {
   cache?: MarketDataCache;
   clock?: () => Date;
+  fxProvider?: FxRateProvider;
+  fxReferenceUnavailableAfterMilliseconds?: number;
   quoteFreshForMilliseconds?: number;
   quoteUnavailableAfterMilliseconds?: number;
+}
+
+function supportsFxRates(provider: SecurityMarketDataProvider): provider is SecurityMarketDataProvider & FxRateProvider {
+  return "getFxRate" in provider && typeof provider.getFxRate === "function";
 }
 
 function isValidCalendarDate(value: string) {
@@ -57,15 +64,30 @@ export class MarketDataService {
   private readonly clock: () => Date;
   private readonly freshFor: number;
   private readonly unavailableAfter: number;
+  private readonly fxReferenceUnavailableAfter: number;
+  private readonly fxProvider: FxRateProvider;
   private readonly inFlight = new Map<string, Promise<unknown>>();
 
-  constructor(private readonly provider: MarketDataProvider, options: MarketDataServiceOptions = {}) {
+  constructor(private readonly provider: SecurityMarketDataProvider, options: MarketDataServiceOptions = {}) {
     this.cache = options.cache ?? new NoopMarketDataCache();
     this.clock = options.clock ?? (() => new Date());
     this.freshFor = options.quoteFreshForMilliseconds ?? 15 * 60 * 1_000;
     this.unavailableAfter = options.quoteUnavailableAfterMilliseconds ?? DAY;
+    this.fxReferenceUnavailableAfter = options.fxReferenceUnavailableAfterMilliseconds ?? 7 * DAY;
+    const fxProvider = options.fxProvider ?? (supportsFxRates(provider) ? provider : undefined);
+    if (!fxProvider) {
+      throw new MarketDataError("ProviderConfiguration", "An FX data provider must be configured separately.", {
+        provider: provider.providerId,
+        operation: "configuration",
+        reason: "missing-fx-provider",
+      });
+    }
+    this.fxProvider = fxProvider;
     if (this.freshFor < 0 || this.unavailableAfter < this.freshFor) {
       throw new RangeError("Quote freshness thresholds must be ordered, nonnegative durations.");
+    }
+    if (!Number.isFinite(this.fxReferenceUnavailableAfter) || this.fxReferenceUnavailableAfter < 0) {
+      throw new RangeError("FX reference availability must be a nonnegative finite duration.");
     }
   }
 
@@ -80,7 +102,7 @@ export class MarketDataService {
       `search:${JSON.stringify([normalized])}`,
       () => this.cache.getSearch(normalized),
       (value) => this.cache.setSearch(normalized, value),
-      () => this.call("search", () => this.provider.searchInstruments(normalized)),
+      () => this.call("search", this.provider, () => this.provider.searchInstruments(normalized)),
     );
   }
 
@@ -89,7 +111,7 @@ export class MarketDataService {
       `instrument:${JSON.stringify([instrumentId])}`,
       () => this.cache.getInstrument(instrumentId),
       (value) => this.cache.setInstrument(instrumentId, value),
-      () => this.call("metadata", () => this.provider.getInstrumentMetadata(instrumentId)),
+      () => this.call("metadata", this.provider, () => this.provider.getInstrumentMetadata(instrumentId)),
     );
   }
 
@@ -99,7 +121,7 @@ export class MarketDataService {
       () => this.cache.getQuote(instrumentId),
       (value) => this.cache.setQuote(instrumentId, value),
       async () => {
-        const value = await this.call("quote", () => this.provider.getQuote(instrumentId));
+        const value = await this.call("quote", this.provider, () => this.provider.getQuote(instrumentId));
         this.validateQuote(value);
         return value;
       },
@@ -122,21 +144,22 @@ export class MarketDataService {
       `history:${key}`,
       () => this.cache.getHistory(key),
       (value) => this.cache.setHistory(key, value),
-      () => this.call("history", () => this.provider.getHistoricalPrices(request)),
+      () => this.call("history", this.provider, () => this.provider.getHistoricalPrices(request)),
     );
   }
 
   async getFxRate(baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
-    if (!isValidUtcTimestamp(asOf)) {
+    if (!currencies.includes(baseCurrency) || !currencies.includes(quoteCurrency) || !isValidUtcTimestamp(asOf)) {
       throw new MarketDataError("FxUnavailable", "Use a valid UTC timestamp for the FX request.", { baseCurrency, quoteCurrency, asOf });
     }
-    const key = JSON.stringify([baseCurrency, quoteCurrency, asOf]);
+    if (baseCurrency === quoteCurrency) return this.identityFxRate(baseCurrency, asOf);
+    const key = JSON.stringify([this.fxProvider.providerId, baseCurrency, quoteCurrency, asOf.slice(0, 10)]);
     const rate = await this.loadCached(
       `fx:${key}`,
       () => this.cache.getFx(key),
       (value) => this.cache.setFx(key, value),
       async () => {
-        const value = await this.call("fx", () => this.provider.getFxRate(baseCurrency, quoteCurrency, asOf));
+        const value = await this.call("fx", this.fxProvider, () => this.fxProvider.getFxRate(baseCurrency, quoteCurrency, asOf));
         this.validateFxRate(value, baseCurrency, quoteCurrency, asOf);
         return value;
       },
@@ -152,7 +175,7 @@ export class MarketDataService {
       `corporate-actions:${key}`,
       () => this.cache.getCorporateActions(key),
       (value) => this.cache.setCorporateActions(key, value),
-      () => this.call("corporate-actions", () => this.provider.getCorporateActions(request)),
+      () => this.call("corporate-actions", this.provider, () => this.provider.getCorporateActions(request)),
     );
   }
 
@@ -173,26 +196,59 @@ export class MarketDataService {
     }
   }
 
-  private validateFxRate(rate: Awaited<ReturnType<MarketDataProvider["getFxRate"]>>, baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
-    const observed = Date.parse(rate.observedAt);
+  private validateFxRate(rate: Awaited<ReturnType<FxRateProvider["getFxRate"]>>, baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
+    const reference = Date.parse(`${rate.referenceDate}T00:00:00.000Z`);
     const retrieved = Date.parse(rate.retrievedAt);
-    const requested = Date.parse(asOf);
+    const requested = Date.parse(`${asOf.slice(0, 10)}T00:00:00.000Z`);
     const now = this.clock().getTime();
     const mismatchedPair = rate.baseCurrency !== baseCurrency || rate.quoteCurrency !== quoteCurrency;
-    if (mismatchedPair || !Number.isFinite(rate.rate) || rate.rate <= 0 || !isValidUtcTimestamp(rate.observedAt) || !isValidUtcTimestamp(rate.retrievedAt)) {
+    const malformedProvenance = rate.provenance.provider !== this.fxProvider.providerId
+      || rate.provenance.referenceDate !== rate.referenceDate
+      || rate.provenance.retrievedAt !== rate.retrievedAt;
+    if (mismatchedPair || malformedProvenance || !Number.isFinite(rate.rate) || rate.rate <= 0 || !isValidCalendarDate(rate.referenceDate) || !isValidUtcTimestamp(rate.retrievedAt)) {
       throw new MarketDataError("MalformedProviderResponse", "The provider returned an invalid normalized FX rate.", {
         operation: "fx",
         baseCurrency,
         quoteCurrency,
       });
     }
-    if (observed > now || retrieved > now || Math.abs(observed - requested) > this.unavailableAfter) {
+    if (reference > requested || retrieved > now || requested - reference > this.fxReferenceUnavailableAfter) {
       throw new MarketDataError("FxUnavailable", "No sufficiently current FX rate is available for the requested observation.", {
         baseCurrency,
         quoteCurrency,
         asOf,
       });
     }
+  }
+
+  private identityFxRate(currency: Currency, asOf: UtcTimestamp) {
+    const retrieved = this.clock();
+    if (Number.isNaN(retrieved.getTime())) {
+      throw new MarketDataError("ProviderUnavailable", "The identity FX observation time is invalid.", { operation: "fx-identity" });
+    }
+    const retrievedAt = retrieved.toISOString();
+    const referenceDate = asOf.slice(0, 10);
+    if (!isValidUtcTimestamp(retrievedAt) || !isValidCalendarDate(referenceDate)) {
+      throw new MarketDataError("ProviderUnavailable", "The identity FX observation time is invalid.", { operation: "fx-identity" });
+    }
+    return {
+      baseCurrency: currency,
+      quoteCurrency: currency,
+      rate: 1,
+      referenceDate,
+      retrievedAt,
+      provenance: {
+        provider: "investi-identity",
+        dataset: "identity",
+        dataKind: "reference" as const,
+        isDeterministic: false,
+        isDemo: false,
+        referenceDate,
+        retrievedAt,
+        adjustmentMode: null,
+        completeness: "complete" as const,
+      },
+    };
   }
 
   private evaluateFreshness(observedAt: UtcTimestamp): QuoteFreshness {
@@ -206,7 +262,7 @@ export class MarketDataService {
     return { status, ageMilliseconds };
   }
 
-  private async call<T>(operation: string, execute: () => Promise<T>): Promise<T> {
+  private async call<T>(operation: string, provider: { providerId: string }, execute: () => Promise<T>): Promise<T> {
     try {
       return await execute();
     } catch (error) {
@@ -214,7 +270,7 @@ export class MarketDataService {
       throw new MarketDataError(
         "ProviderUnavailable",
         "Market data is temporarily unavailable.",
-        { operation, provider: this.provider.providerId },
+        { operation, provider: provider.providerId },
         { cause: error },
       );
     }

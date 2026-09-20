@@ -6,6 +6,7 @@ import {
   type Currency,
   type HistoricalPricePoint,
   type HistoricalPriceRequest,
+  type FxRateProvenance,
   type InstrumentId,
   type MarketDataProvenance,
   type UtcTimestamp,
@@ -46,6 +47,20 @@ function provenance(
     retrievedAt,
     adjustmentMode,
     completeness,
+  };
+}
+
+function fxProvenance(retrievedAt: UtcTimestamp, referenceDate: string): FxRateProvenance {
+  return {
+    provider: DETERMINISTIC_PROVIDER_ID,
+    dataset: DETERMINISTIC_DATASET,
+    dataKind: "synthetic",
+    isDeterministic: true,
+    isDemo: true,
+    referenceDate,
+    retrievedAt,
+    adjustmentMode: null,
+    completeness: "complete",
   };
 }
 
@@ -138,13 +153,14 @@ export class DeterministicMarketDataProvider implements MarketDataProvider {
       throw new MarketDataError("FxUnavailable", "The requested deterministic FX pair is unavailable.", { baseCurrency, quoteCurrency, asOf });
     }
     const retrievedAt = utcTimestamp(this.clock);
+    const referenceDate = FIXTURE_OBSERVED_AT.slice(0, 10);
     return {
       baseCurrency,
       quoteCurrency,
       rate,
-      observedAt: FIXTURE_OBSERVED_AT,
+      referenceDate,
       retrievedAt,
-      provenance: provenance(retrievedAt, FIXTURE_OBSERVED_AT, null),
+      provenance: fxProvenance(retrievedAt, referenceDate),
     };
   }
 

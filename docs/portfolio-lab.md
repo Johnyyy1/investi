@@ -1,6 +1,6 @@
 # Persistent Portfolio Lab accounting
 
-Portfolio Lab is an educational paper portfolio. Its base currency is CZK in Phase 4D, quotes and FX come only from the deterministic market-data provider, and no value represents withdrawable money.
+Portfolio Lab is an educational paper portfolio. Its base currency is CZK. It consumes the configured normalized market-data service: deterministic mode supplies reproducible sample security/FX data, while live mode composes FMP security observations with Frankfurter dated reference FX rates. No value represents withdrawable money or guaranteed broker execution.
 
 ## Generations and contributions
 
@@ -22,6 +22,7 @@ Portfolio total is cash plus current holdings market value. Investment gain/loss
 - Quantities use `numeric(24,8)` and accept at most 8 decimal places.
 - Execution prices use `numeric(24,8)`.
 - FX rates use `numeric(24,12)`.
+- New trades retain separate immutable security and FX provenance; Frankfurter observations preserve a calendar reference date rather than a fabricated intraday timestamp.
 - The server converts normalized market observations once at the ledger boundary, then uses scaled `bigint` arithmetic.
 - Money products and proportional cost-basis allocations round to the nearest minor unit, with half values rounded away from zero.
 

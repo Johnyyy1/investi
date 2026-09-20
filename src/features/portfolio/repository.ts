@@ -69,6 +69,12 @@ function tradeValues(portfolioId: string, observation: PortfolioExecutionObserva
     marketDataDataset: observation.quote.provenance.dataset,
     marketDataKind: observation.quote.provenance.dataKind,
     marketDataIsDeterministic: observation.quote.provenance.isDeterministic,
+    fxRateProvider: observation.fx.provenance.provider,
+    fxRateDataset: observation.fx.provenance.dataset,
+    fxRateKind: observation.fx.provenance.dataKind,
+    fxRateIsDeterministic: observation.fx.provenance.isDeterministic,
+    fxReferenceDate: observation.fx.referenceDate,
+    fxRateRetrievedAt: new Date(observation.fx.retrievedAt),
     clientIdempotencyKey,
   } as const;
 }

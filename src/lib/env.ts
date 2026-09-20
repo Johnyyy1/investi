@@ -7,6 +7,7 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url(),
     DATABASE_URL: z.url(),
     FMP_API_KEY: z.string().min(1).optional(),
+    FX_DATA_PROVIDER: z.enum(["deterministic", "frankfurter"]).optional(),
     MARKET_DATA_PROVIDER: z.enum(["deterministic", "fmp"]).default("deterministic"),
   },
   client: { NEXT_PUBLIC_APP_URL: z.url().optional() },
