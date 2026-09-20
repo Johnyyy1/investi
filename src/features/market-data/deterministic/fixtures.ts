@@ -10,8 +10,8 @@ import type {
 
 export const DETERMINISTIC_PROVIDER_ID = "investi-deterministic";
 export const DETERMINISTIC_DATASET = "investi-education-market-v1";
-export const FIXTURE_OBSERVED_AT = "2026-01-16T16:00:00.000Z";
-export const FIXTURE_RETRIEVED_AT = "2026-01-16T16:05:00.000Z";
+export const FIXTURE_OBSERVED_AT = "2026-01-16T20:45:00.000Z";
+export const FIXTURE_RETRIEVED_AT = "2026-01-16T20:50:00.000Z";
 
 export const deterministicInstruments: readonly Instrument[] = [
   { instrumentId: "US-XNAS:AAPL", symbol: "AAPL", name: "Apple Inc.", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD" },

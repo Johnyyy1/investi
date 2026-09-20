@@ -16,6 +16,8 @@ Set `FX_DATA_PROVIDER` to one of:
 
 The normal local/test configuration explicitly selects `deterministic` for both. Live Portfolio Lab configuration uses `MARKET_DATA_PROVIDER=fmp` and `FX_DATA_PROVIDER=frankfurter`. Selecting FMP without an explicit FX provider or without `FMP_API_KEY` fails during composition. Invalid values fail environment validation. Investi never silently falls back between providers, and deterministic FX is never mixed into FMP mode unless it was explicitly selected. Never prefix the FMP key with `NEXT_PUBLIC_`.
 
+`DETERMINISTIC_MARKET_NOW` is an optional server-only ISO UTC instant for reproducible session-state demos and browser QA. When omitted, deterministic mode keeps its fixed open-session fixture clock. It does not affect FMP or Frankfurter selection.
+
 The current free FMP plan permits the security datasets used by Investi but returns HTTP 402 for FMP forex. Portfolio Lab therefore obtains security data from FMP and reference FX data from Frankfurter instead of upgrading FMP or substituting sample rates.
 
 Portfolio Lab uses the composed service through one server-only composition point and does not select either provider itself. Fully deterministic mode keeps its reproducible educational flow. There is no provider fallback.
@@ -46,11 +48,23 @@ Historical `close` is the end-of-day session close under the series' declared ad
 
 ## Portfolio Lab semantics
 
-Portfolio Lab simulates immediate execution using a fresh server-observed current/last security quote and a dated reference conversion into CZK. Neither is a promise of broker execution, and Investi does not invent bid/ask, FX spreads, or slippage. The browser submits only the instrument ID, quantity, and idempotency key; authoritative price and FX observations are fetched server-side.
+Portfolio Lab simulates immediate execution using a fresh server-observed current/last security quote and a dated reference conversion into CZK. Neither is a promise of broker execution, and Investi does not invent bid/ask, FX spreads, or slippage. The browser submits only the instrument ID, quantity, and idempotency key; authoritative price, market-session state, and FX observations are resolved server-side.
 
 Each new trade permanently stores its execution price, quote currency, exact FX rate to CZK, CZK gross amount, security observation/provenance, and separate FX provider, dataset, kind, reference date, deterministic flag, and retrieval time. The additive fields remain nullable only for pre-4E.4 executions. Later market changes never rewrite those values or the resulting cost basis.
 
-Current valuation is separate. It obtains a current/cached FMP quote and a current/cached Frankfurter reference rate, then computes `quantity × current price × current reference FX`. Security freshness, security observation time, and FX reference date are displayed separately. Stale-but-available security quotes can be shown with an explicit stale label, but only fresh security observations may simulate a new trade.
+Current valuation is separate. It obtains a current/cached FMP quote and a current/cached Frankfurter reference rate, then computes `quantity × last usable market price × current reference FX`. Security observation time, session-aware usability, and FX reference date are displayed separately. A holding with an unusable security or FX observation remains unavailable and is never valued at zero.
+
+## Security quote usability and market sessions
+
+`MarketDataService` calculates structured quote usability after reading a normalized provider observation. The result distinguishes observation age, market-session state, calendar identity, valuation eligibility, and immediate-execution eligibility. Usability is recalculated against the injected current clock on every service read; it is not frozen into the cached quote.
+
+The first supported calendar is U.S. cash equities for `XNAS`, `XNYS`, and `XASE` equity/ETF instruments. Regular hours are 09:30–16:00 in the IANA `America/New_York` timezone, so daylight-saving changes do not rely on a fixed UTC offset. Saturdays, Sundays, and recurring full-day U.S. equity holidays are non-trading days. The calendar includes New Year's Day, Martin Luther King Jr. Day, Washington's Birthday, Good Friday, Memorial Day, Juneteenth (from 2022), Independence Day, Labor Day, Thanksgiving, and Christmas, including the exchanges' normal observed-date rules.
+
+During an open supported session, a quote must satisfy the 15-minute freshness policy to be usable for valuation or immediate simulation. When the market is closed, a valid observation near the close of the most recently completed session is a `closed-market-reference`: it may value a holding and retains its real provider `observedAt`, but it is never executable. Thus Friday's close may value an AAPL holding on Saturday, Sunday, a recognized Monday holiday, or Monday before the open; no simulated trade is accepted at that old close. Once a newer regular session is underway, the old observation is stale and unavailable for valuation.
+
+Unknown exchanges never inherit U.S. hours. Their session state is `unknown`, and Investi retains a conservative explicit age fallback: up to 15 minutes is valuation- and execution-eligible, 15 minutes through 24 hours is valuation-only and labeled stale, and older observations are unavailable. This fallback does not claim that the venue is open.
+
+Extended hours, unscheduled exchange closures, and early-close sessions are not modeled. In particular, the recurring holiday rules do not shorten post-Thanksgiving or Christmas Eve sessions. Those limitations must be addressed before Investi claims complete U.S. exchange-calendar coverage.
 
 If one holding cannot be valued, that holding is marked unavailable and is never treated as zero. Other holdings retain their individual values, while aggregate portfolio value, allocation, and gain/loss remain incomplete until every open holding has a valid valuation. Authentication, rate-limit, provider, instrument, quote, and FX failures remain distinct on the server and are reduced to concise UI messages.
 
@@ -69,10 +83,16 @@ FMP services use a small process-local cache of normalized successful results wi
 
 FX cache keys include provider identity, base currency, quote currency, and request calendar date, so deterministic and Frankfurter entries cannot collide. Identical simultaneous loads are coalesced. Provider errors and malformed responses are not cached. The cache is deliberately neither persistent nor distributed, so separate application processes may each call the external providers.
 
+The quote cache stores only normalized provider observations. Its 30-second TTL does not determine whether a quote is usable: session/calendar policy is evaluated again after every cache read.
+
+## Operational readiness
+
+The server-only readiness diagnostic reports the selected security and FX providers, whether required configuration is present, normalized capabilities, and supported calendar metadata. It is side-effect-free and does not call either provider. Its shape never includes `FMP_API_KEY`, credential values, sensitive headers, or credential-bearing URLs. The manual smoke command includes this safe result alongside live observations.
+
 ## Deferred limitations
 
-Cross-provider security-identity migration, provider health telemetry, historical portfolio FX/performance, corporate-action processing, total-return series, wider Investi currency support, distributed caching, and background refresh are deferred. Fundamentals, statements, ratios, estimates, ratings, DCF, news, intraday data, crypto, and streaming are outside the current market-data scope.
+Cross-provider security-identity migration, live provider health monitoring, early-close/ad-hoc-closure calendars, additional exchange calendars, historical portfolio FX/performance, corporate-action processing, total-return series, wider Investi currency support, distributed caching, and background refresh are deferred. Fundamentals, statements, ratios, estimates, ratings, DCF, news, intraday data, crypto, and streaming are outside the current market-data scope.
 
 ## Manual FMP smoke test
 
-Set `MARKET_DATA_PROVIDER=fmp`, `FX_DATA_PROVIDER=frankfurter`, and `FMP_API_KEY` locally, then run `npm run smoke:fmp`. This manual-only command searches for one instrument, resolves its profile, fetches its security quote from FMP, fetches USD/CZK from Frankfurter, and calculates one example CZK value with Investi's fixed-point arithmetic. It prints separate security/FX provenance and the FX reference date without printing the credential. Automated tests never make external network calls.
+Set `MARKET_DATA_PROVIDER=fmp`, `FX_DATA_PROVIDER=frankfurter`, and `FMP_API_KEY` locally, then run `npm run smoke:fmp`. This manual-only command searches for one instrument, resolves its profile, fetches its security quote from FMP, fetches USD/CZK from Frankfurter, and—when valuation is eligible—calculates one example CZK value with Investi's fixed-point arithmetic. It prints the exchange/calendar, market-session state, quote usability, valuation/execution eligibility, separate security/FX provenance, FX reference date, and safe readiness result without printing the credential. A weekend result with valuation allowed and immediate execution denied is successful. Automated tests never make external network calls.

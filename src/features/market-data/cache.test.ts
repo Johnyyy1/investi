@@ -90,6 +90,22 @@ describe("in-process market-data cache", () => {
     expect(malformedProvider.calls).toBe(2);
   });
 
+  it("recalculates usability from the current clock when the normalized quote is cached", async () => {
+    let now = new Date(FIXTURE_RETRIEVED_AT);
+    const provider = new DeterministicMarketDataProvider(() => new Date(FIXTURE_RETRIEVED_AT));
+    const service = new MarketDataService(provider, {
+      cache: new InMemoryMarketDataCache({ clock: () => now.getTime(), ttls: { quoteMilliseconds: 5 * 24 * 60 * 60 * 1_000 } }),
+      clock: () => now,
+    });
+
+    await expect(service.getQuote(AAPL)).resolves.toMatchObject({ usability: { status: "fresh" } });
+    now = new Date("2026-01-20T15:00:00.000Z");
+    await expect(service.getQuote(AAPL)).resolves.toMatchObject({
+      observedAt: "2026-01-16T20:45:00.000Z",
+      usability: { status: "stale", usableForValuation: false, usableForExecution: false },
+    });
+  });
+
   it("uses unambiguous structured keys for distinct history requests", async () => {
     class RecordingCache extends NoopMarketDataCache {
       readonly keys: string[] = [];

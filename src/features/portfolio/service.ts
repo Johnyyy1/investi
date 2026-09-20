@@ -43,7 +43,9 @@ export interface PortfolioView {
     gainLossMinor: string | null;
     quoteObservedAt: string | null;
     quoteRetrievedAt: string | null;
-    quoteFreshness: "fresh" | "stale" | "unavailable" | null;
+    quoteUsability: "fresh" | "closed-market-reference" | "stale" | "unavailable" | null;
+    marketSessionState: "open" | "closed" | "unknown" | null;
+    usableForExecution: boolean;
     fxReferenceDate: string | null;
     fxRetrievedAt: string | null;
     fxProvider: string | null;
@@ -115,7 +117,9 @@ export async function loadPortfolioView(userId: string): Promise<PortfolioView> 
         gainLossMinor: holding.gainLossMinor?.toString() ?? null,
         quoteObservedAt: holding.quoteObservedAt,
         quoteRetrievedAt: observation?.quoteRetrievedAt ?? null,
-        quoteFreshness: observation?.quoteFreshness ?? null,
+        quoteUsability: observation?.quoteUsability ?? null,
+        marketSessionState: observation?.marketSessionState ?? null,
+        usableForExecution: observation?.usableForExecution ?? false,
         fxReferenceDate: observation?.fxReferenceDate ?? null,
         fxRetrievedAt: observation?.fxRetrievedAt ?? null,
         fxProvider: observation?.fxProvider ?? null,

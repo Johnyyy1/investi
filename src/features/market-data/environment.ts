@@ -4,15 +4,18 @@ import { env } from "@/lib/env";
 import { MarketDataError } from "./errors";
 import { createMarketDataService } from "./composition";
 import type { FxDataProviderName, MarketDataProviderName } from "./composition";
+import { inspectMarketDataReadiness } from "./readiness";
 
 let configuredService: ReturnType<typeof createMarketDataService> | undefined;
 
 /** Server-only application composition; importing this module never exposes provider secrets to clients. */
 export function createConfiguredMarketDataService() {
+  const deterministicNow = env.MARKET_DATA_PROVIDER === "deterministic" ? env.DETERMINISTIC_MARKET_NOW : undefined;
   return createMarketDataService({
     provider: env.MARKET_DATA_PROVIDER,
     fxProvider: env.FX_DATA_PROVIDER,
     fmpApiKey: env.FMP_API_KEY,
+    ...(deterministicNow ? { clock: () => new Date(deterministicNow) } : {}),
   });
 }
 
@@ -33,5 +36,13 @@ export function getConfiguredFxDataProviderName(): FxDataProviderName {
     provider: env.MARKET_DATA_PROVIDER,
     operation: "configuration",
     reason: "missing-fx-provider",
+  });
+}
+
+export function getConfiguredMarketDataReadiness() {
+  return inspectMarketDataReadiness({
+    securityProvider: env.MARKET_DATA_PROVIDER,
+    fxProvider: getConfiguredFxDataProviderName(),
+    fmpApiKey: env.FMP_API_KEY,
   });
 }

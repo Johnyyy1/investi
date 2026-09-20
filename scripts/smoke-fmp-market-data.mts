@@ -3,6 +3,7 @@ import "dotenv/config";
 import assert from "node:assert/strict";
 import { createMarketDataService } from "../src/features/market-data/composition";
 import { isMarketDataError } from "../src/features/market-data/errors";
+import { inspectMarketDataReadiness } from "../src/features/market-data/readiness";
 import { fxUnitsFromNumber, grossBaseMinor, parseQuantity, priceUnitsFromNumber } from "../src/features/portfolio/decimal";
 
 const apiKey = process.env.FMP_API_KEY?.trim();
@@ -18,24 +19,33 @@ try {
 
   const instrument = await service.getInstrumentMetadata(selected.instrumentId);
   const quote = await service.getQuote(selected.instrumentId);
-  // Smoke-test current valuation semantics even when the last security trade occurred on a prior market day.
   const fx = await service.getFxRate(quote.currency, "CZK", quote.retrievedAt);
-  const exampleValueMinor = grossBaseMinor(parseQuantity("1"), priceUnitsFromNumber(quote.price), fxUnitsFromNumber(fx.rate));
+  const exampleValueMinor = quote.usability.usableForValuation
+    ? grossBaseMinor(parseQuantity("1"), priceUnitsFromNumber(quote.price), fxUnitsFromNumber(fx.rate))
+    : null;
+  const readiness = inspectMarketDataReadiness({ securityProvider: "fmp", fxProvider: "frankfurter", fmpApiKey: apiKey });
 
   console.log(JSON.stringify({
-    ok: true,
+    ok: readiness.ready && quote.usability.usableForValuation,
+    readiness,
     searchMatches: results.length,
     instrumentId: instrument.instrumentId,
     symbol: instrument.symbol,
+    exchangeMic: instrument.exchangeMic,
+    marketCalendar: quote.usability.marketCalendar,
     quoteCurrency: quote.currency,
     securityProvider: quote.provenance.provider,
     quoteObservedAt: quote.observedAt,
-    quoteFreshness: quote.freshness.status,
+    marketSessionState: quote.usability.marketState,
+    quoteUsability: quote.usability.status,
+    usableForValuation: quote.usability.usableForValuation,
+    usableForImmediateExecution: quote.usability.usableForExecution,
     fxPair: `${fx.baseCurrency}/${fx.quoteCurrency}`,
     fxProvider: fx.provenance.provider,
     fxReferenceDate: fx.referenceDate,
-    exampleOneShareValueCzkMinor: exampleValueMinor.toString(),
+    exampleOneShareValueCzkMinor: exampleValueMinor?.toString() ?? null,
   }, null, 2));
+  if (!quote.usability.usableForValuation) process.exitCode = 1;
 } catch (error) {
   if (isMarketDataError(error)) {
     console.error(JSON.stringify({

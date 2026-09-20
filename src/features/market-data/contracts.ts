@@ -66,11 +66,17 @@ export interface FxRateProvenance {
   completeness: DataCompleteness;
 }
 
-export type QuoteFreshnessStatus = "fresh" | "stale" | "unavailable";
+export type MarketCalendarId = "us-equities";
+export type MarketSessionState = "open" | "closed" | "unknown";
+export type QuoteUsabilityStatus = "fresh" | "closed-market-reference" | "stale" | "unavailable";
 
-export interface QuoteFreshness {
-  status: QuoteFreshnessStatus;
+export interface QuoteUsability {
+  status: QuoteUsabilityStatus;
   ageMilliseconds: number;
+  marketState: MarketSessionState;
+  marketCalendar: MarketCalendarId | null;
+  usableForValuation: boolean;
+  usableForExecution: boolean;
 }
 
 export interface Quote {
@@ -81,7 +87,7 @@ export interface Quote {
   observedAt: UtcTimestamp;
   retrievedAt: UtcTimestamp;
   provenance: MarketDataProvenance;
-  freshness: QuoteFreshness;
+  usability: QuoteUsability;
 }
 
 export const adjustmentPolicies = {

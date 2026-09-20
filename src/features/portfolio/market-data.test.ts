@@ -24,10 +24,10 @@ import {
   type PortfolioMarketDataGateway,
 } from "./market-data";
 
-const NOW = "2026-09-19T12:00:00.000Z";
+const NOW = "2026-09-18T15:00:00.000Z";
 const FMP_AAPL = "FMP:NASDAQ:AAPL";
 
-function provenance(observedAt = NOW): MarketDataProvenance {
+function provenance(observedAt = NOW, retrievedAt = NOW): MarketDataProvenance {
   return {
     provider: "test-provider",
     dataset: "test-quotes",
@@ -35,7 +35,7 @@ function provenance(observedAt = NOW): MarketDataProvenance {
     isDeterministic: false,
     isDemo: false,
     observedAt,
-    retrievedAt: NOW,
+    retrievedAt,
     adjustmentMode: null,
     completeness: "complete",
   };
@@ -60,6 +60,7 @@ class MutableMarketDataProvider implements MarketDataProvider {
   price = 100;
   fxRate = 20;
   observedAt = NOW;
+  retrievedAt = NOW;
   quoteCalls = 0;
   fxCalls = 0;
   quoteError: unknown;
@@ -84,8 +85,8 @@ class MutableMarketDataProvider implements MarketDataProvider {
       price: this.price,
       currency: instrument.quoteCurrency,
       observedAt: this.observedAt,
-      retrievedAt: NOW,
-      provenance: provenance(this.observedAt),
+      retrievedAt: this.retrievedAt,
+      provenance: provenance(this.observedAt, this.retrievedAt),
     };
   }
   async getFxRate(baseCurrency: Currency, quoteCurrency: Currency, asOf: UtcTimestamp) {
@@ -105,19 +106,19 @@ class MutableMarketDataProvider implements MarketDataProvider {
   async getCorporateActions(request: CorporateActionsRequest): Promise<never> { void request; throw new Error("unused"); }
 }
 
-function splitGateway(security: MutableMarketDataProvider, fx: MutableMarketDataProvider): PortfolioMarketDataGateway {
+function splitGateway(security: MutableMarketDataProvider, fx: MutableMarketDataProvider, now = NOW): PortfolioMarketDataGateway {
   return {
     provider: "fmp",
     fxProvider: "frankfurter",
-    service: new MarketDataService(security, { fxProvider: fx, clock: () => new Date(NOW) }),
+    service: new MarketDataService(security, { fxProvider: fx, clock: () => new Date(now) }),
   };
 }
 
-function gateway(provider: MutableMarketDataProvider, configuredProvider: "deterministic" | "fmp" = "fmp"): PortfolioMarketDataGateway {
+function gateway(provider: MutableMarketDataProvider, configuredProvider: "deterministic" | "fmp" = "fmp", now = NOW): PortfolioMarketDataGateway {
   return {
     provider: configuredProvider,
     fxProvider: configuredProvider === "deterministic" ? "deterministic" : "frankfurter",
-    service: new MarketDataService(provider, { clock: () => new Date(NOW) }),
+    service: new MarketDataService(provider, { clock: () => new Date(now) }),
   };
 }
 
@@ -189,7 +190,7 @@ describe("Portfolio execution and current valuation semantics", () => {
       }]);
       return new Response("not found", { status: 404 });
     });
-    const frankfurterFetch = vi.fn(async () => Response.json({ date: "2026-09-19", base: "USD", quote: "CZK", rate: 20.9 }));
+    const frankfurterFetch = vi.fn(async () => Response.json({ date: "2026-09-18", base: "USD", quote: "CZK", rate: 20.9 }));
     const configured: PortfolioMarketDataGateway = {
       provider: "fmp",
       fxProvider: "frankfurter",
@@ -207,7 +208,7 @@ describe("Portfolio execution and current valuation semantics", () => {
     expect(observation).toMatchObject({
       grossMinor: 480_700n,
       quote: { price: 230, provenance: { provider: "financial-modeling-prep" } },
-      fx: { rate: 20.9, referenceDate: "2026-09-19", provenance: { provider: "frankfurter" } },
+      fx: { rate: 20.9, referenceDate: "2026-09-18", provenance: { provider: "frankfurter" } },
     });
   });
 
@@ -273,14 +274,35 @@ describe("Portfolio execution and current valuation semantics", () => {
     expect(current).toMatchObject({ marketValueMinor: 300_000n, fxProvider: "test-fx" });
   });
 
-  it("allows stale current observations with an explicit freshness label but rejects them for execution", async () => {
+  it("uses the completed Friday session for weekend valuation but rejects immediate execution", async () => {
     const provider = new MutableMarketDataProvider([equity()]);
-    provider.observedAt = "2026-09-19T11:00:00.000Z";
+    provider.observedAt = "2026-09-18T20:00:02.000Z";
+    provider.retrievedAt = "2026-09-19T12:00:00.000Z";
+    const configured = gateway(provider, "fmp", "2026-09-19T12:00:00.000Z");
+    await expect(loadPortfolioInstrumentPreview(configured, FMP_AAPL)).resolves.toMatchObject({
+      quoteObservedAt: "2026-09-18T20:00:02.000Z",
+      quoteUsability: "closed-market-reference",
+      marketSessionState: "closed",
+      usableForExecution: false,
+    });
+    await expect(observePortfolioExecution(configured, FMP_AAPL, "1", "CZK")).rejects.toMatchObject({ code: "MarketClosed" });
+    await expect(observePortfolioHoldingValue(configured, { instrumentId: FMP_AAPL, quantityUnits: 100_000_000n }, "CZK")).resolves.toMatchObject({
+      marketValueMinor: 200_000n,
+      quoteObservedAt: "2026-09-18T20:00:02.000Z",
+      quoteUsability: "closed-market-reference",
+      marketSessionState: "closed",
+      usableForExecution: false,
+    });
+  });
+
+  it("keeps a stale supported-market quote out of valuation once a newer session should exist", async () => {
+    const provider = new MutableMarketDataProvider([equity()]);
+    provider.observedAt = "2026-09-18T14:00:00.000Z";
     const configured = gateway(provider);
     await expect(observePortfolioExecution(configured, FMP_AAPL, "1", "CZK")).rejects.toMatchObject({ code: "QuoteUnavailable" });
     await expect(observePortfolioHoldingValue(configured, { instrumentId: FMP_AAPL, quantityUnits: 100_000_000n }, "CZK")).resolves.toMatchObject({
-      marketValueMinor: 200_000n,
-      quoteFreshness: "stale",
+      marketValueMinor: null,
+      unavailableReason: "quote",
     });
   });
 });

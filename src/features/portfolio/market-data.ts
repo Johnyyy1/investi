@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Currency, FxRate, Instrument, Quote, QuoteFreshnessStatus, UtcTimestamp } from "@/features/market-data/contracts";
+import type { Currency, FxRate, Instrument, MarketSessionState, Quote, QuoteUsabilityStatus, UtcTimestamp } from "@/features/market-data/contracts";
 import type { FxDataProviderName, MarketDataProviderName } from "@/features/market-data/composition";
 import { isMarketDataError, MarketDataError } from "@/features/market-data/errors";
 import type { MarketDataService } from "@/features/market-data/service";
@@ -39,7 +39,9 @@ export interface PortfolioHoldingMarketObservation {
   currentPriceCurrency: Currency | null;
   quoteObservedAt: UtcTimestamp | null;
   quoteRetrievedAt: UtcTimestamp | null;
-  quoteFreshness: QuoteFreshnessStatus | null;
+  quoteUsability: QuoteUsabilityStatus | null;
+  marketSessionState: MarketSessionState | null;
+  usableForExecution: boolean;
   fxReferenceDate: string | null;
   fxRetrievedAt: UtcTimestamp | null;
   fxProvider: string | null;
@@ -57,6 +59,9 @@ export interface PortfolioInstrumentPreview {
   provider: string;
   dataset: string;
   marketDataMode: PortfolioMarketDataMode;
+  quoteUsability: QuoteUsabilityStatus;
+  marketSessionState: MarketSessionState;
+  usableForExecution: boolean;
 }
 
 export function marketDataMode(gateway: PortfolioMarketDataGateway): PortfolioMarketDataMode {
@@ -101,7 +106,10 @@ export async function observePortfolioExecution(
   assertTradeable(instrument);
   const quote = await gateway.service.getQuote(instrument.instrumentId);
   assertQuoteMatchesInstrument(instrument, quote);
-  if (quote.freshness.status !== "fresh") {
+  if (!quote.usability.usableForExecution) {
+    if (quote.usability.marketState === "closed") {
+      throw new PortfolioInputError("MarketClosed", "Market is currently closed. New simulated investments require a current market observation.");
+    }
     throw new PortfolioInputError("QuoteUnavailable", "The current market observation is not fresh enough to simulate this trade.");
   }
   const fx = await gateway.service.getFxRate(quote.currency, baseCurrency, quote.observedAt);
@@ -129,7 +137,7 @@ export async function loadPortfolioInstrumentPreview(
   if (instrument.assetType === "cash" || instrument.assetType === "index") return null;
   const quote = await gateway.service.getQuote(instrumentId);
   assertQuoteMatchesInstrument(instrument, quote);
-  if (quote.freshness.status !== "fresh") return null;
+  if (!quote.usability.usableForValuation) return null;
   const fx = await gateway.service.getFxRate(quote.currency, "CZK", quote.observedAt);
   return {
     instrument,
@@ -142,6 +150,9 @@ export async function loadPortfolioInstrumentPreview(
     provider: quote.provenance.provider,
     dataset: quote.provenance.dataset,
     marketDataMode: quote.provenance.isDeterministic ? "sample" : "market",
+    quoteUsability: quote.usability.status,
+    marketSessionState: quote.usability.marketState,
+    usableForExecution: quote.usability.usableForExecution,
   };
 }
 
@@ -162,7 +173,9 @@ function unavailableHolding(instrumentId: string, reason: ValuationUnavailableRe
     currentPriceCurrency: null,
     quoteObservedAt: null,
     quoteRetrievedAt: null,
-    quoteFreshness: null,
+    quoteUsability: null,
+    marketSessionState: null,
+    usableForExecution: false,
     fxReferenceDate: null,
     fxRetrievedAt: null,
     fxProvider: null,
@@ -184,7 +197,7 @@ export async function observePortfolioHoldingValue(
   let quote: Quote;
   try {
     quote = await gateway.service.getQuote(holding.instrumentId);
-    if (quote.freshness.status === "unavailable") return unavailableHolding(holding.instrumentId, "quote");
+    if (!quote.usability.usableForValuation) return unavailableHolding(holding.instrumentId, "quote");
   } catch (error) {
     return unavailableHolding(holding.instrumentId, failureReason(error, "quote"));
   }
@@ -200,7 +213,9 @@ export async function observePortfolioHoldingValue(
       currentPriceCurrency: quote.currency,
       quoteObservedAt: quote.observedAt,
       quoteRetrievedAt: quote.retrievedAt,
-      quoteFreshness: quote.freshness.status,
+      quoteUsability: quote.usability.status,
+      marketSessionState: quote.usability.marketState,
+      usableForExecution: quote.usability.usableForExecution,
       fxReferenceDate: fx.referenceDate,
       fxRetrievedAt: fx.retrievedAt,
       fxProvider: fx.provenance.provider,

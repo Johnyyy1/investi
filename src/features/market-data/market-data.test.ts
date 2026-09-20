@@ -8,7 +8,7 @@ import { MarketDataService } from "./service";
 
 const AAPL = "US-XNAS:AAPL";
 const BOND = "CZ-XPRA:CZGB35";
-const AS_OF = "2026-01-16T16:00:00.000Z";
+const AS_OF = "2026-01-16T21:00:00.000Z";
 
 function historyRequest(
   instrumentId = AAPL,
@@ -43,7 +43,7 @@ describe("deterministic instrument search", () => {
   });
 });
 
-describe("quotes and freshness", () => {
+describe("quotes and usability", () => {
   it("returns the same normalized deterministic quote on every call", async () => {
     const service = createDeterministicMarketDataService();
     const first = await service.getQuote(AAPL);
@@ -56,7 +56,14 @@ describe("quotes and freshness", () => {
       currency: "USD",
       observedAt: FIXTURE_OBSERVED_AT,
       retrievedAt: FIXTURE_RETRIEVED_AT,
-      freshness: { status: "fresh", ageMilliseconds: 5 * 60 * 1_000 },
+      usability: {
+        status: "fresh",
+        ageMilliseconds: 5 * 60 * 1_000,
+        marketState: "open",
+        marketCalendar: "us-equities",
+        usableForValuation: true,
+        usableForExecution: true,
+      },
       provenance: {
         provider: "investi-deterministic",
         dataset: "investi-education-market-v1",
@@ -71,11 +78,16 @@ describe("quotes and freshness", () => {
     expect(first.provenance.retrievedAt).toBe(first.retrievedAt);
   });
 
-  it("evaluates stale and unavailable states with injected, testable clocks", async () => {
-    const stale = createDeterministicMarketDataService({ clock: () => new Date("2026-01-16T18:00:00.000Z") });
+  it("evaluates stale and unknown-venue unavailable states with injected clocks", async () => {
+    const stale = createDeterministicMarketDataService({ clock: () => new Date("2026-01-20T15:00:00.000Z") });
     const unavailable = createDeterministicMarketDataService({ clock: () => new Date("2026-01-18T16:00:00.000Z") });
-    expect((await stale.getQuote(AAPL)).freshness.status).toBe("stale");
-    expect((await unavailable.getQuote(AAPL)).freshness.status).toBe("unavailable");
+    expect((await stale.getQuote(AAPL)).usability.status).toBe("stale");
+    expect((await unavailable.getQuote("IE-XETR:VWCE")).usability).toMatchObject({
+      status: "unavailable",
+      marketState: "unknown",
+      usableForValuation: false,
+      usableForExecution: false,
+    });
   });
 
   it("reports a normalized missing-instrument failure", async () => {

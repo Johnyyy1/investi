@@ -22,6 +22,8 @@ describe("market-data architecture boundary", () => {
       "cache.ts",
       "composition.ts",
       "environment.ts",
+      "market-session.ts",
+      "readiness.ts",
       "service.ts",
       "deterministic/fixtures.ts",
       "deterministic/provider.ts",

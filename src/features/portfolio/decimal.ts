@@ -12,7 +12,7 @@ const MONEY_SCALE = 100n;
 
 export class PortfolioInputError extends Error {
   constructor(
-    public readonly code: "InvalidQuantity" | "InvalidInstrument" | "InsufficientCash" | "Oversell" | "QuoteUnavailable" | "FxUnavailable" | "PortfolioUnavailable",
+    public readonly code: "InvalidQuantity" | "InvalidInstrument" | "InsufficientCash" | "Oversell" | "MarketClosed" | "QuoteUnavailable" | "FxUnavailable" | "PortfolioUnavailable",
     message: string,
   ) {
     super(message);

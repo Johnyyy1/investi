@@ -10,10 +10,10 @@ import {
   type InstrumentId,
   type PriceAdjustmentPolicy,
   type Quote,
-  type QuoteFreshness,
   type UtcTimestamp,
 } from "./contracts";
 import { isMarketDataError, MarketDataError } from "./errors";
+import { evaluateQuoteUsability } from "./market-session";
 import type { FxRateProvider, ProviderQuote, SecurityMarketDataProvider } from "./provider";
 
 const DAY = 24 * 60 * 60 * 1_000;
@@ -116,6 +116,7 @@ export class MarketDataService {
   }
 
   async getQuote(instrumentId: InstrumentId): Promise<Quote> {
+    const instrument = await this.getInstrumentMetadata(instrumentId);
     const observation = await this.loadCached(
       `quote:${JSON.stringify([instrumentId])}`,
       () => this.cache.getQuote(instrumentId),
@@ -127,7 +128,20 @@ export class MarketDataService {
       },
     );
     this.validateQuote(observation);
-    return { ...observation, freshness: this.evaluateFreshness(observation.observedAt) };
+    if (observation.instrumentId !== instrument.instrumentId || observation.currency !== instrument.quoteCurrency) {
+      throw new MarketDataError("MalformedProviderResponse", "The quote does not match the normalized instrument.", { operation: "quote", instrumentId });
+    }
+    try {
+      return {
+        ...observation,
+        usability: evaluateQuoteUsability(instrument, observation.observedAt, this.clock(), {
+          freshForMilliseconds: this.freshFor,
+          unavailableAfterMilliseconds: this.unavailableAfter,
+        }),
+      };
+    } catch (error) {
+      throw new MarketDataError("ProviderUnavailable", "The quote observation time is invalid.", { operation: "quote-usability" }, { cause: error });
+    }
   }
 
   async getHistoricalPrices(request: HistoricalPriceRequest) {
@@ -249,17 +263,6 @@ export class MarketDataService {
         completeness: "complete" as const,
       },
     };
-  }
-
-  private evaluateFreshness(observedAt: UtcTimestamp): QuoteFreshness {
-    const ageMilliseconds = this.clock().getTime() - Date.parse(observedAt);
-    if (!Number.isFinite(ageMilliseconds) || ageMilliseconds < 0) {
-      throw new MarketDataError("ProviderUnavailable", "The quote observation time is invalid.", { operation: "freshness" });
-    }
-    const status = ageMilliseconds <= this.freshFor
-      ? "fresh"
-      : ageMilliseconds <= this.unavailableAfter ? "stale" : "unavailable";
-    return { status, ageMilliseconds };
   }
 
   private async call<T>(operation: string, provider: { providerId: string }, execute: () => Promise<T>): Promise<T> {
