@@ -4,22 +4,18 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { lessonAward, portfolio, portfolioTrade, user } from "@/db/schema";
-import { createDeterministicMarketDataService } from "@/features/market-data/deterministic/service";
-import type { Currency, Instrument, Quote } from "@/features/market-data/contracts";
+import type { Currency } from "@/features/market-data/contracts";
 import { foldTrades, type LedgerTrade } from "./domain";
 import {
   fxToDecimal,
-  fxUnitsFromNumber,
-  grossBaseMinor,
-  parseQuantity,
   PortfolioInputError,
   priceToDecimal,
-  priceUnitsFromNumber,
   quantityToDecimal,
 } from "./decimal";
+import { portfolioMarketData } from "./environment";
+import { observePortfolioExecution, type PortfolioExecutionObservation } from "./market-data";
 
 const BASE_CURRENCY: Currency = "CZK";
-const marketData = createDeterministicMarketDataService();
 
 type PortfolioRow = typeof portfolio.$inferSelect;
 type TradeRow = typeof portfolioTrade.$inferSelect;
@@ -50,36 +46,7 @@ async function activePortfolio(query: Pick<typeof db, "select">, userId: string)
   return row;
 }
 
-interface ExecutionObservation {
-  instrument: Instrument;
-  quote: Quote;
-  quantityUnits: bigint;
-  priceUnits: bigint;
-  fxUnits: bigint;
-  grossMinor: bigint;
-}
-
-async function observeExecution(instrumentId: string, quantity: string): Promise<ExecutionObservation> {
-  const quantityUnits = parseQuantity(quantity);
-  const instrument = await marketData.getInstrumentMetadata(instrumentId);
-  if (instrument.assetType === "cash" || instrument.assetType === "index") {
-    throw new PortfolioInputError("InvalidInstrument", "Choose a stock, ETF, or bond for this educational portfolio.");
-  }
-  const quote = await marketData.getQuote(instrument.instrumentId);
-  if (quote.freshness.status !== "fresh") {
-    throw new PortfolioInputError("QuoteUnavailable", "The sample quote is not fresh enough to place this trade.");
-  }
-  const fx = quote.currency === BASE_CURRENCY
-    ? 1
-    : (await marketData.getFxRate(quote.currency, BASE_CURRENCY, quote.observedAt)).rate;
-  const priceUnits = priceUnitsFromNumber(quote.price);
-  const fxUnits = fxUnitsFromNumber(fx);
-  const grossMinor = grossBaseMinor(quantityUnits, priceUnits, fxUnits);
-  if (grossMinor <= 0n) throw new PortfolioInputError("InvalidQuantity", "This quantity is too small to produce a one-haléř trade value.");
-  return { instrument, quote, quantityUnits, priceUnits, fxUnits, grossMinor };
-}
-
-function tradeValues(portfolioId: string, observation: ExecutionObservation, side: "BUY" | "SELL", clientIdempotencyKey: string, now: Date) {
+function tradeValues(portfolioId: string, observation: PortfolioExecutionObservation, side: "BUY" | "SELL", clientIdempotencyKey: string, now: Date) {
   const feeBaseMinor = 0n;
   return {
     id: randomUUID(),
@@ -112,7 +79,13 @@ const demoSeeds = [
 ] as const;
 
 async function demoObservations() {
-  return Promise.all(demoSeeds.map((seed) => observeExecution(seed.instrumentId, seed.quantity)));
+  if (portfolioMarketData.provider !== "deterministic") return [];
+  return Promise.all(demoSeeds.map((seed) => observePortfolioExecution(
+    portfolioMarketData,
+    seed.instrumentId,
+    seed.quantity,
+    BASE_CURRENCY,
+  )));
 }
 
 /** Lazy, idempotent generation creation. New demo identities receive one seeded ledger. */
@@ -150,7 +123,20 @@ export async function executeTrade(userId: string, input: {
   side: "BUY" | "SELL";
   clientIdempotencyKey: string;
 }) {
-  const observation = await observeExecution(input.instrumentId, input.quantity);
+  const existing = await activePortfolio(db, userId);
+  if (existing) {
+    const [duplicate] = await db.select().from(portfolioTrade).where(and(
+      eq(portfolioTrade.portfolioId, existing.id),
+      eq(portfolioTrade.clientIdempotencyKey, input.clientIdempotencyKey),
+    ));
+    if (duplicate) return { trade: duplicate, duplicate: true };
+  }
+  const observation = await observePortfolioExecution(
+    portfolioMarketData,
+    input.instrumentId,
+    input.quantity,
+    BASE_CURRENCY,
+  );
   return db.transaction(async (tx) => {
     const [owner] = await tx.select({ id: user.id }).from(user).where(eq(user.id, userId)).for("update");
     if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Your portfolio could not be found.");
@@ -216,5 +202,3 @@ export async function loadPortfolioRows(userId: string) {
   ]);
   return { portfolio: current, earnedPracticeCapitalMinor, trades };
 }
-
-export { marketData };

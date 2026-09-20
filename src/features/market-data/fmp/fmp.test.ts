@@ -85,6 +85,12 @@ describe("Financial Modeling Prep configuration and HTTP boundary", () => {
       code: "RateLimited",
       context: { endpoint: "profile", status: 429 },
     });
+
+    const planLimited = mockedProvider([jsonResponse({ message: "upgrade" }, 402)]).provider;
+    await expect(planLimited.getInstrumentMetadata(AAPL)).rejects.toMatchObject({
+      code: "ProviderConfiguration",
+      context: { endpoint: "profile", status: 402, reason: "plan-entitlement" },
+    });
   });
 
   it("rejects provider error payloads returned with a successful HTTP status", async () => {
@@ -257,6 +263,8 @@ describe("Financial Modeling Prep response validation", () => {
       code: "MalformedProviderResponse",
       context: expect.objectContaining({ endpoint: "quote", reason: "malformed-response" }),
     });
+    const zeroQuote = mockedProvider([jsonResponse([{ symbol: "AAPL", price: 0, timestamp: 1_790_000_000 }])]).provider;
+    await expect(zeroQuote.getQuote(AAPL)).rejects.toMatchObject({ code: "MalformedProviderResponse" });
 
     const malformedHistory = mockedProvider([jsonResponse([
       { symbol: "AAPL", date: "2026-02-30", open: 10, high: 12, low: 9, close: 11, volume: 100 },

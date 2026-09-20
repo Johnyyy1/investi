@@ -92,16 +92,24 @@ export class FmpClient {
 
     if (!response.ok) {
       const authenticationFailure = response.status === 401 || response.status === 403;
-      const code = authenticationFailure ? "ProviderAuthentication" : response.status === 429 ? "RateLimited" : "ProviderUnavailable";
+      const entitlementFailure = response.status === 402;
+      const code = authenticationFailure
+        ? "ProviderAuthentication"
+        : entitlementFailure
+          ? "ProviderConfiguration"
+          : response.status === 429 ? "RateLimited" : "ProviderUnavailable";
       throw new MarketDataError(code, authenticationFailure
         ? "Financial Modeling Prep rejected the configured credentials."
-        : response.status === 429
-          ? "Financial Modeling Prep rate-limited the request."
-          : "Financial Modeling Prep returned an unsuccessful response.", {
+        : entitlementFailure
+          ? "The configured Financial Modeling Prep plan does not permit this dataset."
+          : response.status === 429
+            ? "Financial Modeling Prep rate-limited the request."
+            : "Financial Modeling Prep returned an unsuccessful response.", {
         provider: FMP_PROVIDER_ID,
         operation: "request",
         endpoint,
         status: response.status,
+        ...(entitlementFailure ? { reason: "plan-entitlement" } : {}),
       });
     }
 

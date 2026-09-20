@@ -168,7 +168,7 @@ export class MarketDataService {
   }
 
   private validateQuote(quote: ProviderQuote) {
-    if (!Number.isFinite(quote.price) || quote.price < 0 || !isValidUtcTimestamp(quote.observedAt) || !isValidUtcTimestamp(quote.retrievedAt)) {
+    if (!Number.isFinite(quote.price) || quote.price <= 0 || !isValidUtcTimestamp(quote.observedAt) || !isValidUtcTimestamp(quote.retrievedAt)) {
       throw new MarketDataError("MalformedProviderResponse", "The provider returned an invalid normalized quote.", { operation: "quote" });
     }
   }

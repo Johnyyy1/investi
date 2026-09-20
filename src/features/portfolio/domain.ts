@@ -84,7 +84,7 @@ export interface HoldingValuation {
   instrumentId: string;
   marketValueMinor: bigint | null;
   quoteObservedAt: string | null;
-  unavailableReason?: "quote" | "fx";
+  unavailableReason?: "quote" | "fx" | "instrument" | "rate-limit" | "provider";
 }
 
 export function valuePortfolio(

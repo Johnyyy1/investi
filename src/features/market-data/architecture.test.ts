@@ -45,6 +45,13 @@ describe("market-data architecture boundary", () => {
     }
   });
 
+  it("keeps the Portfolio Lab composition and market operations server-only", async () => {
+    for (const modulePath of ["environment.ts", "market-data.ts", "repository.ts", "service.ts"]) {
+      const source = await readFile(path.join(sourceRoot, "features/portfolio", modulePath), "utf8");
+      expect(source, modulePath).toMatch(/^import "server-only";/);
+    }
+  });
+
   it("does not install a vendor market-data SDK", async () => {
     const manifest = JSON.parse(await readFile(path.join(repositoryRoot, "package.json"), "utf8")) as { dependencies: Record<string, string> };
     const packageNames = Object.keys(manifest.dependencies).join(" ").toLocaleLowerCase("en-US");

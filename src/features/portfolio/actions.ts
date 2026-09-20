@@ -5,19 +5,20 @@ import { z } from "zod";
 import { isMarketDataError } from "@/features/market-data/errors";
 import { getCurrentUser } from "@/lib/session";
 import { PortfolioInputError } from "./decimal";
-import { executeTrade, marketData, resetActivePortfolio } from "./repository";
+import { portfolioMarketData } from "./environment";
+import { idempotencySchema, instrumentIdSchema, tradeInputSchema } from "./input";
+import { executeTrade, resetActivePortfolio } from "./repository";
 import { loadInstrumentPreview, loadPortfolioView } from "./service";
-
-const instrumentIdSchema = z.string().trim().min(1).max(100);
-const quantitySchema = z.string().trim().min(1).max(40);
-const idempotencySchema = z.string().uuid();
 
 function messageFor(error: unknown) {
   if (error instanceof PortfolioInputError) return error.message;
   if (isMarketDataError(error)) {
-    if (error.code === "FxUnavailable") return "The sample FX rate is unavailable. No trade was placed.";
-    if (error.code === "InstrumentNotFound") return "That instrument is not available in the educational dataset.";
-    return "The sample quote is unavailable. No trade was placed.";
+    if (error.code === "FxUnavailable") return "The required CZK exchange rate is unavailable. No trade was placed.";
+    if (error.code === "InstrumentNotFound" || error.code === "UnsupportedInstrument") return "That instrument is not available from the configured market-data source.";
+    if (error.code === "RateLimited") return "Market data is temporarily rate limited. Please try again shortly.";
+    if (error.code === "ProviderAuthentication" || error.code === "ProviderConfiguration") return "Market data is not configured correctly. No trade was placed.";
+    if (error.code === "InvalidSearchQuery") return "Enter at least two valid characters to search.";
+    return "The current market observation is unavailable. No trade was placed.";
   }
   return "The portfolio could not be updated. Please try again.";
 }
@@ -31,8 +32,10 @@ async function authenticatedUser() {
 export async function searchPortfolioInstrumentsAction(query: string) {
   try {
     await authenticatedUser();
-    const value = z.string().trim().max(80).parse(query);
-    const results = await marketData.searchInstruments(value);
+    const parsed = z.string().trim().min(2).max(80).safeParse(query);
+    if (!parsed.success) return { ok: false as const, message: "Enter at least two valid characters to search.", results: [] };
+    const value = parsed.data;
+    const results = await portfolioMarketData.service.searchInstruments(value);
     return { ok: true as const, results: results.filter(({ assetType }) => assetType !== "cash" && assetType !== "index") };
   } catch (error) {
     return { ok: false as const, message: messageFor(error), results: [] };
@@ -53,11 +56,7 @@ export async function loadInstrumentPreviewAction(instrumentId: string) {
 async function tradeAction(input: unknown, side: "BUY" | "SELL") {
   try {
     const current = await authenticatedUser();
-    const parsed = z.object({
-      instrumentId: instrumentIdSchema,
-      quantity: quantitySchema,
-      clientIdempotencyKey: idempotencySchema,
-    }).parse(input);
+    const parsed = tradeInputSchema.parse(input);
     const result = await executeTrade(current.id, { ...parsed, side });
     const portfolio = await loadPortfolioView(current.id);
     revalidatePath("/lab/portfolio");

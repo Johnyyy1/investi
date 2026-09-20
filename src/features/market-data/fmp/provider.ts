@@ -28,7 +28,7 @@ const searchResultSchema = z.object({
 });
 const quoteSchema = z.object({
   symbol: z.string().min(1),
-  price: z.number().finite().nonnegative(),
+  price: z.number().finite().positive(),
   timestamp: z.number().int().nonnegative(),
 });
 const profileSchema = z.object({
