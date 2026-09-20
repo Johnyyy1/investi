@@ -30,7 +30,32 @@ Learn investing by doing. The authenticated product is organized around three de
    npm run dev
    ```
 
-`db:seed` is idempotent. Migrations through `0004_awesome_sebastian_shaw.sql` must precede this application version because completion writes require the Practice Capital fields on `lesson_award`.
+`db:seed` is idempotent. Apply all committed migrations through `0005_sweet_anthem.sql`: completion writes require the Practice Capital fields on `lesson_award`, and Portfolio Lab requires the `portfolio` and `portfolio_trade` tables.
+
+## Docker
+
+Prerequisites: Docker Desktop (or Docker Engine with the Compose plugin). On first use, create an ignored Compose environment file and replace both placeholder secrets with locally generated values:
+
+```bash
+cp .env.example .env
+```
+
+`BETTER_AUTH_SECRET` must be at least 32 characters. `POSTGRES_PASSWORD` is used only by the Docker PostgreSQL instance. `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` should remain `http://localhost:3000` unless the app is exposed on another host or port. `DATABASE_URL` remains the non-Docker development connection string; Compose supplies its own internal value using the `db` service hostname.
+
+Start the complete development stack:
+
+```bash
+docker compose up --build
+```
+
+The app is available at <http://localhost:3000>. Compose waits for PostgreSQL to pass its healthcheck, then the app automatically runs the committed Drizzle migrations and idempotent curriculum seed before launching Next.js development mode. To run them manually instead, use:
+
+```bash
+docker compose run --rm app npm run db:migrate
+docker compose run --rm app npm run db:seed
+```
+
+Stop the stack with `docker compose down`. PostgreSQL data remains in the named `postgres_data` volume across stops and rebuilds. To remove containers and the persisted development database deliberately, run `docker compose down --volumes`.
 
 ## Verification
 
