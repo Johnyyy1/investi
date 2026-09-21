@@ -35,6 +35,22 @@ export const deterministicPrices: Readonly<Record<InstrumentId, number>> = {
 
 const dates = ["2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16"];
 
+// Synthetic weekday history makes the 1M and 1Y educational chart views distinct.
+// It is used only by the deterministic provider and is not a claim of real trading activity.
+function sampleAaplHistory(): readonly HistoricalPricePoint[] {
+  const points: HistoricalPricePoint[] = [];
+  const end = Date.parse("2025-12-31T00:00:00.000Z");
+  let index = 0;
+  for (let time = Date.parse("2025-01-02T00:00:00.000Z"); time <= end; time += 86_400_000) {
+    const date = new Date(time);
+    if (date.getUTCDay() === 0 || date.getUTCDay() === 6) continue;
+    const close = Number((88 + index * 0.052 + Math.sin(index * 0.13) * 3.2 + Math.sin(index * 0.037) * 2).toFixed(2));
+    points.push({ date: date.toISOString().slice(0, 10), open: close, high: close, low: close, close });
+    index += 1;
+  }
+  return [...points, ...bars([100, 102, 99, 95, 98, 104, 108, 106, 111, 114])];
+}
+
 function bars(closes: readonly (number | null)[], withVolume = true): readonly HistoricalPricePoint[] {
   return closes.flatMap((close, index) => {
     if (close === null) return [];
@@ -56,7 +72,7 @@ export interface DeterministicHistoryFixture {
 }
 
 export const deterministicHistory: Readonly<Record<InstrumentId, DeterministicHistoryFixture>> = {
-  "US-XNAS:AAPL": { points: bars([100, 102, 99, 95, 98, 104, 108, 106, 111, 114]), completeness: "complete" },
+  "US-XNAS:AAPL": { points: sampleAaplHistory(), completeness: "complete" },
   "US-XNAS:MSFT": { points: bars([200, 201, 203, 202, 205, 207, 206, 208, 210, 212]), completeness: "complete" },
   "US-XNAS:NVDA": { points: bars([150, 158, 153, 143, 147, 160, 168, 164, 172, 178]), completeness: "complete" },
   "IE-XETR:VWCE": { points: bars([120, 120.5, 119.8, 118.5, 119.4, 121, 122.2, 121.8, 123, 124]), completeness: "complete" },

@@ -1,21 +1,23 @@
 "use client";
 
-import { ArrowLeft, Check, ChevronRight, Ellipsis, Search, X } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Check, Ellipsis, Search, X } from "lucide-react";
 import { useEffect, useRef, useState, useTransition, type MouseEvent, type RefObject } from "react";
 import { Button, ButtonLink, IconButton } from "@/components/ui/button";
 import { Feedback } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/form-controls";
 import type { InstrumentSearchResult } from "@/features/market-data/contracts";
+import { instrumentDetailHref } from "@/features/instruments/routes";
 import {
-  buyPortfolioAction,
-  loadInstrumentPreviewAction,
   resetPortfolioAction,
   searchPortfolioInstrumentsAction,
   sellPortfolioAction,
 } from "@/features/portfolio/actions";
-import { parseQuantity, QUANTITY_SCALE, roundDivide } from "@/features/portfolio/decimal";
+import { roundDivide } from "@/features/portfolio/decimal";
+import { parseQuantitySafe } from "@/features/portfolio/order-presentation";
 import { gainLossState, portfolioDataSourceLabel, showSampleDataIndicator } from "@/features/portfolio/presentation";
-import type { InstrumentPreview, PortfolioView } from "@/features/portfolio/service";
+import type { PortfolioView } from "@/features/portfolio/service";
 import { formatPracticeCapitalMinor } from "@/features/rewards/presentation";
 
 type Holding = PortfolioView["holdings"][number];
@@ -49,15 +51,6 @@ function timestamp(value: string) {
   return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
-function estimatedMinor(quantity: string, unitMinor: string) {
-  try { return roundDivide(parseQuantity(quantity) * BigInt(unitMinor), QUANTITY_SCALE); }
-  catch { return null; }
-}
-
-function parseQuantitySafe(value: string) {
-  try { return parseQuantity(value); } catch { return 0n; }
-}
-
 function assetTypeLabel(value: string | null) {
   return value ? value.charAt(0).toUpperCase() + value.slice(1) : "Security";
 }
@@ -85,12 +78,11 @@ function portfolioUiSignature(portfolio: PortfolioView) {
 }
 
 export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<readonly InstrumentSearchResult[]>([]);
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [selected, setSelected] = useState<InstrumentPreview | null>(null);
-  const [reviewing, setReviewing] = useState(false);
   const [sellHolding, setSellHolding] = useState<Holding | null>(null);
   const [quantity, setQuantity] = useState("0.25");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -99,10 +91,8 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
   const [holdingMenu, setHoldingMenu] = useState<string | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [, startSearch] = useTransition();
-  const [previewPending, startPreview] = useTransition();
   const [mutationPending, startMutation] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
-  const orderHeadingRef = useRef<HTMLHeadingElement>(null);
   const investDialog = useRef<HTMLDialogElement>(null);
   const sellDialog = useRef<HTMLDialogElement>(null);
   const resetDialog = useRef<HTMLDialogElement>(null);
@@ -114,7 +104,6 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
   const tradeKey = useRef<string | null>(null);
   const resetKey = useRef<string | null>(null);
   const searchRequest = useRef(0);
-  const previewRequest = useRef(0);
   const focusAfterPortfolioChange = useRef<{ signature: string; targetId: string } | null>(null);
   const hasCapital = BigInt(portfolio.earnedPracticeCapitalMinor) > 0n;
   const hasHoldings = portfolio.holdings.length > 0;
@@ -154,16 +143,11 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
 
   function resetInvestFlow() {
     searchRequest.current += 1;
-    previewRequest.current += 1;
     setQuery("");
     setResults([]);
     setSearchState("idle");
     setActiveIndex(-1);
-    setSelected(null);
-    setReviewing(false);
-    setQuantity("0.25");
     setSheetError(null);
-    tradeKey.current = null;
   }
 
   function openInvest(event: MouseEvent<HTMLButtonElement>) {
@@ -178,30 +162,8 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
   }
 
   function chooseInstrument(instrumentId: string) {
-    const request = ++previewRequest.current;
-    setResults([]);
-    setSearchState("idle");
-    setQuery("");
-    setSheetError(null);
-    setQuantity("0.25");
-    setReviewing(false);
-    tradeKey.current = null;
-    startPreview(async () => {
-      const response = await loadInstrumentPreviewAction(instrumentId);
-      if (request !== previewRequest.current) return;
-      if (response.ok) {
-        setSelected(response.preview);
-        requestAnimationFrame(() => orderHeadingRef.current?.focus({ preventScroll: true }));
-      } else setSheetError(response.message);
-    });
-  }
-
-  function returnToSearch() {
-    previewRequest.current += 1;
-    setSelected(null);
-    setReviewing(false);
-    setSheetError(null);
-    requestAnimationFrame(() => searchRef.current?.focus());
+    investDialog.current?.close();
+    router.push(instrumentDetailHref(instrumentId));
   }
 
   function openSell(holding: Holding, trigger: HTMLButtonElement) {
@@ -218,40 +180,33 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
     if (!mutationPending) sellDialog.current?.close();
   }
 
-  const buyEstimate = selected ? estimatedMinor(quantity, selected.estimatedUnitCostBaseMinor) : null;
   const heldUnits = sellHolding ? parseQuantitySafe(sellHolding.quantity) : 0n;
   const sellEstimate = sellHolding?.marketValueMinor && heldUnits > 0n
     ? roundDivide(BigInt(sellHolding.marketValueMinor) * parseQuantitySafe(quantity), heldUnits)
     : null;
 
-  function runTrade(side: "BUY" | "SELL") {
+  function runSell() {
     if (mutationPending) return;
-    const instrumentId = side === "BUY" ? selected?.instrument.instrumentId : sellHolding?.instrumentId;
-    const symbol = side === "BUY" ? selected?.instrument.symbol : sellHolding?.symbol;
-    const estimate = side === "BUY" ? buyEstimate : sellEstimate;
-    const executable = side === "BUY" ? selected?.usableForExecution : sellHolding?.usableForExecution;
-    if (!instrumentId || !symbol || !executable) return;
+    const instrumentId = sellHolding?.instrumentId;
+    const symbol = sellHolding?.symbol;
+    if (!instrumentId || !symbol || !sellHolding?.usableForExecution) return;
     const completedQuantity = quantity;
     tradeKey.current ??= crypto.randomUUID();
     setSheetError(null);
     startMutation(async () => {
-      const action = side === "BUY" ? buyPortfolioAction : sellPortfolioAction;
-      const response = await action({ instrumentId, quantity, clientIdempotencyKey: tradeKey.current });
+      const response = await sellPortfolioAction({ instrumentId, quantity, clientIdempotencyKey: tradeKey.current });
       if (!response.ok) { setSheetError(response.message); return; }
       focusAfterPortfolioChange.current = {
         signature: portfolioUiSignature(response.portfolio),
-        targetId: side === "BUY" ? "portfolio-primary-invest" : sellReturnFocus.current?.id ?? `holding-actions-${instrumentId}`,
+        targetId: sellReturnFocus.current?.id ?? `holding-actions-${instrumentId}`,
       };
-      if (side === "BUY") investDialog.current?.close();
-      else sellDialog.current?.close();
+      sellDialog.current?.close();
       setNotice({
         state: "completed",
-        title: side === "BUY" ? "Investment added" : "Investment sold",
-        detail: `${quantityLabel(completedQuantity)} ${symbol}${estimate === null ? "" : ` · ${formatPracticeCapitalMinor(estimate)}`}`,
+        title: "Investment sold",
+        detail: `${quantityLabel(completedQuantity)} ${symbol}${sellEstimate === null ? "" : ` · ${formatPracticeCapitalMinor(sellEstimate)}`}`,
       });
-      setSelected(null);
       setSellHolding(null);
-      setReviewing(false);
       setQuantity("0.25");
       tradeKey.current = null;
     });
@@ -274,7 +229,6 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
       focusAfterPortfolioChange.current = { signature: portfolioUiSignature(response.portfolio), targetId: "portfolio-primary-invest" };
       resetDialog.current?.close();
       resetKey.current = null;
-      setSelected(null);
       setSellHolding(null);
       setNotice({ state: "completed", title: "Portfolio reset", detail: "All earned Practice Capital is available again." });
     });
@@ -316,21 +270,17 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
 
     </div>
 
-    <dialog ref={investDialog} aria-labelledby="invest-title" aria-describedby="invest-description" onClose={() => { resetInvestFlow(); restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current); requestAnimationFrame(() => restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current)); }} onCancel={(event) => { if (mutationPending) event.preventDefault(); }} className="fixed inset-y-0 right-0 left-auto m-0 h-[100dvh] max-h-none w-full max-w-none overflow-y-auto border-0 border-l border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35 sm:max-w-[34rem] sm:rounded-l-panel">
+    <dialog ref={investDialog} aria-labelledby="invest-title" aria-describedby="invest-description" onClose={() => { resetInvestFlow(); restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current); requestAnimationFrame(() => restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current)); }} className="fixed inset-y-0 right-0 left-auto m-0 h-[100dvh] max-h-none w-full max-w-none overflow-y-auto border-0 border-l border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35 sm:max-w-[34rem] sm:rounded-l-panel">
       <div className="flex min-h-full flex-col">
         <div className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-4 border-b border-border bg-surface/95 px-[min(1.25rem,5vw)] py-5 backdrop-blur sm:px-7">
-          <div className="min-w-0 flex-1"><p className="whitespace-nowrap text-microcopy font-bold uppercase tracking-[0.12em] text-primary-hover">{selected ? reviewing ? "Step 3 of 3" : "Step 2 of 3" : "Step 1 of 3"}</p><h2 id="invest-title" className="mt-1 break-words text-card-title font-bold">Invest Practice Capital</h2><p id="invest-description" className="sr-only">Search for an investment, choose a quantity, review it, then confirm your purchase.</p></div>
-          <IconButton aria-label="Close investment flow" variant="ghost" className="shrink-0" disabled={mutationPending} onClick={closeInvest}><X aria-hidden="true" /></IconButton>
+          <div className="min-w-0 flex-1"><p className="whitespace-nowrap text-microcopy font-bold uppercase tracking-[0.12em] text-primary-hover">Discover</p><h2 id="invest-title" className="mt-1 break-words text-card-title font-bold">Invest Practice Capital</h2><p id="invest-description" className="sr-only">Search for an investment, then select an instrument to inspect its detail page.</p></div>
+          <IconButton aria-label="Close investment flow" variant="ghost" className="shrink-0" onClick={closeInvest}><X aria-hidden="true" /></IconButton>
         </div>
 
         <div className="flex-1 px-[min(1.25rem,5vw)] py-6 sm:px-7 sm:py-8">
           {sheetError ? <Feedback state="warning" role="alert" className="mb-5">{sheetError}</Feedback> : null}
-          {!selected ? <SearchStep query={query} results={results} activeIndex={activeIndex} state={searchState} pending={searchState === "loading" || previewPending} sourceMode={portfolio.marketDataMode} searchRef={searchRef} onQueryChange={(value) => { const normalized = value.trim(); searchRequest.current += 1; setQuery(value); setSheetError(null); setResults([]); setActiveIndex(-1); setSearchState(normalized.length >= 2 ? "loading" : "idle"); }} onActiveIndexChange={setActiveIndex} onChoose={chooseInstrument} /> : reviewing ? <BuyReview preview={selected} quantity={quantity} estimate={buyEstimate} availableCash={portfolio.availableCashMinor} onBack={() => { setReviewing(false); requestAnimationFrame(() => orderHeadingRef.current?.focus()); }} /> : <BuyOrder preview={selected} quantity={quantity} estimate={buyEstimate} availableCash={portfolio.availableCashMinor} headingRef={orderHeadingRef} onBack={returnToSearch} onQuantityChange={(value) => { setQuantity(value); setSheetError(null); tradeKey.current = null; }} />}
+          <SearchStep query={query} results={results} activeIndex={activeIndex} state={searchState} pending={searchState === "loading"} sourceMode={portfolio.marketDataMode} searchRef={searchRef} onQueryChange={(value) => { const normalized = value.trim(); searchRequest.current += 1; setQuery(value); setSheetError(null); setResults([]); setActiveIndex(-1); setSearchState(normalized.length >= 2 ? "loading" : "idle"); }} onActiveIndexChange={setActiveIndex} onChoose={chooseInstrument} />
         </div>
-
-        {selected ? <div className="sticky bottom-0 z-20 border-t border-border bg-surface/95 px-[min(1.25rem,5vw)] py-4 backdrop-blur sm:px-7">
-          {reviewing ? <Button className="w-full" loading={mutationPending} disabled={!selected.usableForExecution} onClick={() => runTrade("BUY")}>Confirm buy {selected.instrument.symbol}</Button> : <Button className="w-full" disabled={!selected.usableForExecution || buyEstimate === null || parseQuantitySafe(quantity) <= 0n} onClick={() => { setReviewing(true); setSheetError(null); }}>Review order <ChevronRight aria-hidden="true" className="size-4" /></Button>}
-        </div> : null}
       </div>
     </dialog>
 
@@ -345,7 +295,7 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
           <dl className="mt-7 border-y border-border py-5"><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2"><dt className="min-w-0 text-small text-secondary">Estimated proceeds</dt><dd className="min-w-0 break-words text-right text-card-title font-bold">{sellEstimate === null ? "—" : formatPracticeCapitalMinor(sellEstimate)}</dd></div></dl>
           <p className="mt-5 text-small text-secondary">The displayed value is an estimate. The server obtains a fresh security reference price and a dated reference FX rate for the simulated sale.</p>
         </div>
-        <div className="sticky bottom-0 z-20 border-t border-border bg-surface/95 px-[min(1.25rem,5vw)] py-4 backdrop-blur sm:px-7"><Button className="w-full" loading={mutationPending} disabled={!sellHolding.usableForExecution || sellEstimate === null || parseQuantitySafe(quantity) <= 0n} onClick={() => runTrade("SELL")}>Sell {sellHolding.symbol}</Button></div>
+        <div className="sticky bottom-0 z-20 border-t border-border bg-surface/95 px-[min(1.25rem,5vw)] py-4 backdrop-blur sm:px-7"><Button className="w-full" loading={mutationPending} disabled={!sellHolding.usableForExecution || sellEstimate === null || parseQuantitySafe(quantity) <= 0n} onClick={runSell}>Sell {sellHolding.symbol}</Button></div>
       </div> : null}
     </dialog>
 
@@ -388,14 +338,6 @@ function SearchStep({ query, results, activeIndex, state, pending, sourceMode, s
   return <section aria-labelledby="search-investments-title"><h3 id="search-investments-title" className="text-section-title font-bold">Find an investment</h3><p className="mt-2 text-body text-secondary">Search by company, fund, bond, or ticker symbol.</p><div className="relative mt-6"><label htmlFor="instrument-search" className="text-small font-bold">Search investments</label><div className="relative mt-2"><Search aria-hidden="true" className="pointer-events-none absolute top-3.5 left-4 size-5 text-secondary" /><Input ref={searchRef} id="instrument-search" role="combobox" aria-autocomplete="list" aria-expanded={results.length > 0} aria-controls="instrument-results" aria-activedescendant={activeIndex >= 0 ? `instrument-option-${activeIndex}` : undefined} aria-busy={pending || undefined} autoComplete="off" value={query} placeholder="Search stocks, ETFs, bonds…" className="pr-12 pl-12" onChange={(event) => onQueryChange(event.target.value)} onKeyDown={(event) => { if (!results.length) return; if (event.key === "ArrowDown") { event.preventDefault(); onActiveIndexChange((activeIndex + 1) % results.length); } if (event.key === "ArrowUp") { event.preventDefault(); onActiveIndexChange((activeIndex - 1 + results.length) % results.length); } if (event.key === "Enter" && activeIndex >= 0) { event.preventDefault(); onChoose(results[activeIndex].instrumentId); } if (event.key === "Escape") { event.stopPropagation(); onActiveIndexChange(-1); } }} />{pending ? <span className="absolute top-3.5 right-4 text-small text-secondary">…</span> : null}</div></div>{results.length > 0 ? <ul id="instrument-results" role="listbox" aria-label="Instrument search results" className="mt-3 divide-y divide-border overflow-hidden rounded-surface border border-border bg-surface shadow-elevation-1">{results.map((result, index) => { const exchange = result.exchangeMic ?? result.exchangeCode; return <li key={result.instrumentId} id={`instrument-option-${index}`} role="option" aria-selected={index === activeIndex} aria-label={`${result.symbol} ${result.name}, ${assetTypeLabel(result.assetType)}, ${exchange ?? "exchange unavailable"}, ${result.quoteCurrency}`} className="aria-selected:bg-primary-soft"><button type="button" tabIndex={-1} className="flex min-h-16 w-full flex-col items-start gap-2 px-4 py-3 text-left hover:bg-primary-soft sm:flex-row sm:items-center sm:justify-between" onMouseDown={(event) => event.preventDefault()} onClick={() => onChoose(result.instrumentId)}><span className="w-full min-w-0 sm:w-auto"><strong className="block">{result.symbol}</strong><span className="block truncate text-small text-secondary">{result.name}</span></span><span className="w-full shrink-0 text-left text-microcopy text-secondary sm:w-auto sm:text-right"><span className="block font-semibold">{assetTypeLabel(result.assetType)} · {result.quoteCurrency}</span><span className="block">{exchange ? `${exchange} · ` : ""}{portfolioDataSourceLabel(sourceMode)}</span></span></button></li>; })}</ul> : state === "empty" ? <p role="status" className="mt-5 text-small text-secondary">No investments found. Try another company name or symbol.</p> : state === "loading" ? <p role="status" className="mt-5 text-small text-secondary">Searching market data…</p> : state === "error" ? null : <div className="mt-8 border-t border-border pt-6"><p className="text-small font-bold">Try a search</p><p className="mt-1 text-small text-secondary">Enter at least two characters from a company name or ticker.</p></div>}</section>;
 }
 
-function BuyOrder({ preview, quantity, estimate, availableCash, headingRef, onBack, onQuantityChange }: { preview: InstrumentPreview; quantity: string; estimate: bigint | null; availableCash: string; headingRef: RefObject<HTMLHeadingElement | null>; onBack: () => void; onQuantityChange: (value: string) => void }) {
-  return <section aria-labelledby="buy-order-title"><button type="button" className="mb-5 inline-flex min-h-11 items-center gap-2 text-small font-bold text-primary-hover" onClick={onBack}><ArrowLeft aria-hidden="true" className="size-4" />Back to search</button><h3 id="buy-order-title" ref={headingRef} tabIndex={-1} className="text-section-title font-bold focus-visible:!outline-none">Choose quantity</h3><div className="mt-5 rounded-surface bg-surface-muted p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0 flex-1"><p className="break-words text-card-title font-bold">{preview.instrument.name}</p><p className="mt-1 text-small text-secondary">{preview.instrument.symbol} · {assetTypeLabel(preview.instrument.assetType)}{preview.instrument.exchangeMic ? ` · ${preview.instrument.exchangeMic}` : ""}</p></div>{showSampleDataIndicator(preview.marketDataMode) ? <span className="shrink-0 rounded-pill border border-info/35 bg-info-soft px-3 py-1 text-microcopy font-bold text-info-ink">Sample data</span> : null}</div><dl className="mt-5 grid grid-cols-2 gap-4 text-small"><div className="min-w-0"><dt className="text-secondary">Last market price</dt><dd className="mt-1 break-words font-bold tabular-nums">{quotePrice(preview.price, preview.instrument.quoteCurrency)}</dd><dd className="mt-1 text-microcopy text-secondary">As of {timestamp(preview.quoteObservedAt)}{preview.quoteUsability === "closed-market-reference" ? " · market closed" : ""}</dd>{preview.instrument.quoteCurrency !== "CZK" ? <dd className="mt-1 text-microcopy text-secondary">Reference FX date {preview.fxReferenceDate}</dd> : null}</div><div className="min-w-0"><dt className="text-secondary">Available cash</dt><dd className="mt-1 break-words font-bold tabular-nums">{formatPracticeCapitalMinor(availableCash)}</dd></div></dl></div>{!preview.usableForExecution ? <Feedback state="warning" role="status" className="mt-5" data-testid="market-execution-unavailable">{executionUnavailableLabel(preview.marketSessionState)}</Feedback> : null}<div className="mt-7"><label htmlFor="buy-quantity" className="text-small font-bold">Quantity</label><Input id="buy-quantity" className="mt-2 tabular-nums" inputMode="decimal" value={quantity} aria-describedby="buy-precision" onChange={(event) => onQuantityChange(event.target.value)} /><p id="buy-precision" className="mt-2 text-small text-secondary">Fractional quantities are supported to 8 decimal places.</p></div><dl className="mt-7 border-y border-border py-5"><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2"><dt className="min-w-0 text-small text-secondary">Estimated cost</dt><dd className="min-w-0 break-words text-right text-card-title font-bold tabular-nums">{estimate === null ? "—" : formatPracticeCapitalMinor(estimate)}</dd></div></dl></section>;
-}
-
-function BuyReview({ preview, quantity, estimate, availableCash, onBack }: { preview: InstrumentPreview; quantity: string; estimate: bigint | null; availableCash: string; onBack: () => void }) {
-  return <section aria-labelledby="buy-review-title"><button type="button" className="mb-5 inline-flex min-h-11 items-center gap-2 text-small font-bold text-primary-hover" onClick={onBack}><ArrowLeft aria-hidden="true" className="size-4" />Edit order</button><h3 id="buy-review-title" className="text-section-title font-bold">Review your investment</h3><p className="mt-2 text-body text-secondary">Check the details before adding it to your portfolio.</p><div className="mt-6 overflow-hidden rounded-surface border border-border"><div className="bg-surface-muted px-5 py-4"><p className="break-words font-bold">{preview.instrument.name}</p><p className="break-words text-small text-secondary">{preview.instrument.symbol} · {assetTypeLabel(preview.instrument.assetType)} · {portfolioDataSourceLabel(preview.marketDataMode)}</p></div><dl className="divide-y divide-border px-5 text-small"><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 py-4"><dt className="min-w-0 text-secondary">Quantity</dt><dd className="min-w-0 break-words text-right font-bold tabular-nums">{quantityLabel(quantity)}</dd></div><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 py-4"><dt className="min-w-0 text-secondary">Observed reference price</dt><dd className="min-w-0 break-words text-right font-bold tabular-nums">{quotePrice(preview.price, preview.instrument.quoteCurrency)}</dd></div><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 py-4"><dt className="min-w-0 text-secondary">Estimated cost</dt><dd className="min-w-0 break-words text-right font-bold tabular-nums">{estimate === null ? "—" : formatPracticeCapitalMinor(estimate)}</dd></div><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 py-4"><dt className="min-w-0 text-secondary">Available cash</dt><dd className="min-w-0 break-words text-right font-bold tabular-nums">{formatPracticeCapitalMinor(availableCash)}</dd></div></dl></div><p className="mt-5 break-words text-small text-secondary">Portfolio Lab simulates immediate execution using a fresh current/last security price and a dated reference FX rate. It does not model broker FX execution, bid/ask, spreads, or slippage; the final observations may differ from this estimate.</p></section>;
-}
-
 function HoldingsList({ holdings, openMenu, onToggleMenu, onSell }: { holdings: Holding[]; openMenu: string | null; onToggleMenu: (instrumentId: string) => void; onSell: (holding: Holding, trigger: HTMLButtonElement) => void }) {
   return <>
     <div className="mt-4 hidden border-y border-border lg:block">
@@ -416,7 +358,7 @@ function HoldingsList({ holdings, openMenu, onToggleMenu, onSell }: { holdings: 
 }
 
 function InstrumentIdentity({ holding }: { holding: Holding }) {
-  return <div className="min-w-0"><span className="block truncate font-bold text-primary-hover">{holding.name}</span><span className="mt-0.5 block truncate text-microcopy font-semibold text-secondary">{holding.symbol} · {assetTypeLabel(holding.assetType)}</span></div>;
+  return <div className="min-w-0"><Link href={instrumentDetailHref(holding.instrumentId)} className="block truncate font-bold text-primary-hover underline-offset-2 hover:underline focus-visible:underline">{holding.name}</Link><span className="mt-0.5 block truncate text-microcopy font-semibold text-secondary">{holding.symbol} · {assetTypeLabel(holding.assetType)}</span></div>;
 }
 
 function MarketPrice({ holding }: { holding: Holding }) {

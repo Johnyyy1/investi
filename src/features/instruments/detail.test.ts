@@ -1,0 +1,52 @@
+import { describe, expect, it, vi } from "vitest";
+import { MarketDataError } from "@/features/market-data/errors";
+import { createDeterministicMarketDataService } from "@/features/market-data/deterministic/service";
+import { historicalRequest } from "./history";
+import { loadInstrumentDetail } from "./detail";
+
+const now = new Date("2026-01-16T20:50:00.000Z");
+
+describe("instrument detail loading", () => {
+  it.each([["US-XNAS:AAPL", "equity"], ["IE-XETR:VWCE", "etf"]])("loads deterministic %s identity, quote and split-adjusted closes", async (id, assetType) => {
+    const detail = await loadInstrumentDetail(createDeterministicMarketDataService(), id, "1Y", now);
+    expect(detail.instrument?.assetType).toBe(assetType);
+    expect(detail.quote?.price).toBeGreaterThan(0);
+    expect(detail.points.length).toBe(id === "US-XNAS:AAPL" ? 260 : 10);
+    expect(detail.historyMessage).toBeNull();
+  });
+  it("preserves quote when history is unavailable", async () => {
+    const service = createDeterministicMarketDataService();
+    vi.spyOn(service, "getHistoricalPrices").mockRejectedValue(new MarketDataError("HistoricalDataUnavailable", "upstream failure"));
+    const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
+    expect(detail.quote?.price).toBe(114);
+    expect(detail.points).toEqual([]);
+    expect(detail.historyMessage).toMatch(/not available/);
+  });
+  it("keeps the expanded AAPL weekday series explicitly synthetic", async () => {
+    const service = createDeterministicMarketDataService();
+    const series = await service.getHistoricalPrices(historicalRequest("US-XNAS:AAPL", "1Y", now));
+    expect(series.provenance).toMatchObject({ dataKind: "synthetic", isDeterministic: true, isDemo: true, adjustmentMode: "split-adjusted" });
+    const month = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1M", now);
+    expect(month.points.length).toBeGreaterThan(10);
+    expect(month.points.length).toBeLessThan(series.points.length);
+    expect(month.points.at(-1)).toEqual({ date: "2026-01-16", close: 114 });
+  });
+  it("preserves chart when quote is unavailable", async () => {
+    const service = createDeterministicMarketDataService();
+    vi.spyOn(service, "getQuote").mockRejectedValue(new MarketDataError("QuoteUnavailable", "upstream failure"));
+    const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
+    expect(detail.quote).toBeNull();
+    expect(detail.quoteMessage).toMatch(/unavailable/);
+    expect(detail.points.length).toBe(260);
+  });
+  it("handles an empty requested range without manufacturing dates", async () => {
+    const detail = await loadInstrumentDetail(createDeterministicMarketDataService(), "US-XNAS:AAPL", "1M", new Date("2026-09-21T00:00:00.000Z"));
+    expect(detail.points).toEqual([]);
+    expect(detail.historyMessage).toMatch(/not available/);
+  });
+  it("keeps a missing instrument distinct from a missing quote", async () => {
+    const detail = await loadInstrumentDetail(createDeterministicMarketDataService(), "FMP:NASDAQ:AAPL", "1Y", now);
+    expect(detail.instrument).toBeNull();
+    expect(detail.metadataMessage).toMatch(/not available/);
+  });
+});

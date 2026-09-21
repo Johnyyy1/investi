@@ -2,6 +2,7 @@ import { finishOnboarding } from "./onboarding-helper.mjs";
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { mkdir } from "node:fs/promises";
 import postgres from "postgres";
 import { chromium } from "playwright";
 
@@ -13,6 +14,8 @@ assert.ok(local(new URL(baseURL).hostname) && local(new URL(databaseUrl).hostnam
 
 const sql = postgres(databaseUrl, { prepare: false });
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "chrome" });
+const screenshotDir = process.env.PORTFOLIO_CLOSED_SCREENSHOT_DIR ?? "/tmp/investi-portfolio-closed-qa";
+await mkdir(screenshotDir, { recursive: true });
 const email = `portfolio-closed-${randomUUID()}@example.com`;
 const password = randomUUID();
 let userId;
@@ -63,13 +66,17 @@ try {
   await dialog.getByRole("combobox", { name: "Search investments" }).fill("AAPL");
   await dialog.getByRole("option", { name: /AAPL/ }).waitFor();
   await dialog.getByRole("combobox", { name: "Search investments" }).press("Enter");
-
-  const warning = dialog.getByTestId("market-execution-unavailable");
-  await warning.waitFor();
-  assert.match(await warning.textContent(), /Market is currently closed/);
-  assert.match(await dialog.textContent(), /Last market price/);
-  assert.match(await dialog.textContent(), /market closed/);
-  assert.equal(await dialog.getByRole("button", { name: "Review order", exact: true }).isDisabled(), true, "closed-market execution is disabled");
+  await page.waitForURL(/\/lab\/instruments\/US-XNAS%3AAAPL/);
+  assert.match(await page.locator("main").textContent(), /Market closed/);
+  await page.screenshot({ path: `${screenshotDir}/instrument-closed-390.png`, fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.screenshot({ path: `${screenshotDir}/instrument-closed-1440.png`, fullPage: true });
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.getByRole("button", { name: /Invest/ }).first().click();
+  const orderDialog = page.getByRole("dialog", { name: "Invest in AAPL" });
+  await orderDialog.getByText(/fresh market observation is required/i).waitFor();
+  assert.equal(await orderDialog.getByRole("button", { name: "Review order", exact: true }).isDisabled(), true, "closed-market execution is disabled");
+  await page.goto(`${baseURL}/lab/portfolio`);
   assert.equal(await page.getByTestId("portfolio-cash").textContent(), cashBeforePreview, "closed-market preview does not deduct Practice Capital");
   const [{ count }] = await sql`select count(*)::int as count from portfolio_trade pt join portfolio p on p.id = pt.portfolio_id where p.user_id = ${userId}`;
   assert.equal(count, 1, "closed-market preview creates no additional trade");
