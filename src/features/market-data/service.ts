@@ -15,6 +15,7 @@ import {
 import { isMarketDataError, MarketDataError } from "./errors";
 import { evaluateQuoteUsability } from "./market-session";
 import type { FxRateProvider, ProviderQuote, SecurityMarketDataProvider } from "./provider";
+import type { EquityFundamentalsProvider, EquityFundamentalsSnapshot } from "./equity-fundamentals";
 
 const DAY = 24 * 60 * 60 * 1_000;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -26,6 +27,7 @@ export interface MarketDataServiceOptions {
   cache?: MarketDataCache;
   clock?: () => Date;
   fxProvider?: FxRateProvider;
+  equityFundamentalsProvider?: EquityFundamentalsProvider;
   fxReferenceUnavailableAfterMilliseconds?: number;
   quoteFreshForMilliseconds?: number;
   quoteUnavailableAfterMilliseconds?: number;
@@ -66,6 +68,7 @@ export class MarketDataService {
   private readonly unavailableAfter: number;
   private readonly fxReferenceUnavailableAfter: number;
   private readonly fxProvider: FxRateProvider;
+  private readonly equityFundamentalsProvider?: EquityFundamentalsProvider;
   private readonly inFlight = new Map<string, Promise<unknown>>();
 
   constructor(private readonly provider: SecurityMarketDataProvider, options: MarketDataServiceOptions = {}) {
@@ -83,6 +86,7 @@ export class MarketDataService {
       });
     }
     this.fxProvider = fxProvider;
+    this.equityFundamentalsProvider = options.equityFundamentalsProvider;
     if (this.freshFor < 0 || this.unavailableAfter < this.freshFor) {
       throw new RangeError("Quote freshness thresholds must be ordered, nonnegative durations.");
     }
@@ -193,6 +197,31 @@ export class MarketDataService {
     );
   }
 
+  async getEquityFundamentals(instrumentId: InstrumentId): Promise<EquityFundamentalsSnapshot> {
+    const instrument = await this.getInstrumentMetadata(instrumentId);
+    if (instrument.assetType !== "equity") throw new MarketDataError("UnsupportedInstrument", "Company fundamentals are available for equities only.", { instrumentId });
+    const provider = this.equityFundamentalsProvider;
+    if (!provider) throw new MarketDataError("ProviderConfiguration", "Equity fundamentals are not configured.", { instrumentId });
+    const key = JSON.stringify([provider.providerId, instrumentId]);
+    const result = await this.loadCached(
+      `equity-fundamentals:${key}`,
+      () => this.cache.getEquityFundamentals(key),
+      (value) => this.cache.setEquityFundamentals(key, value),
+      async () => {
+        const value = await this.call("equity-fundamentals", provider, () => provider.getEquityFundamentals(instrument));
+        if (value.instrumentId !== instrumentId || value.provenance.provider !== provider.providerId) {
+          throw new MarketDataError("MalformedProviderResponse", "Equity fundamentals do not match the instrument.", { instrumentId });
+        }
+        return value;
+      },
+      (value) => value.provenance.unavailableDatasets.length === 0,
+    );
+    if (result.instrumentId !== instrumentId || result.provenance.provider !== provider.providerId) {
+      throw new MarketDataError("MalformedProviderResponse", "Equity fundamentals do not match the instrument.", { instrumentId });
+    }
+    return result;
+  }
+
   private validateHistoricalRequest(request: HistoricalPriceRequest) {
     validateDateRange(request.startDate, request.endDate);
     if (request.interval !== "daily") {
@@ -284,6 +313,7 @@ export class MarketDataService {
     get: () => Promise<T | undefined>,
     set: (value: T) => Promise<void>,
     load: () => Promise<T>,
+    shouldCache: (value: T) => boolean = () => true,
   ): Promise<T> {
     const cached = await get();
     if (cached !== undefined) return cached;
@@ -293,7 +323,7 @@ export class MarketDataService {
       const racedCache = await get();
       if (racedCache !== undefined) return racedCache;
       const value = await load();
-      await set(value);
+      if (shouldCache(value)) await set(value);
       return value;
     })();
     this.inFlight.set(flightKey, pending);

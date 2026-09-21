@@ -31,7 +31,7 @@ export default async function InstrumentPage({ params, searchParams }: { params:
       observedAt: detail.quote.observedAt,
       status: detail.quote.usability.status,
       marketState: detail.quote.usability.marketState,
-    } : null} quoteMessage={detail.quoteMessage} historyMessage={detail.historyMessage} points={detail.points} historyPartial={detail.historyPartial} range={range} portfolio={portfolio} />
+    } : null} quoteMessage={detail.quoteMessage} historyMessage={detail.historyMessage} points={detail.points} historyPartial={detail.historyPartial} fundamentals={detail.fundamentals} fundamentalsMessage={detail.fundamentalsMessage} range={range} portfolio={portfolio} />
       : <div className="mt-6"><h1 className="text-page-title font-bold">Instrument unavailable</h1><Feedback state="warning" role="status" className="mt-5">{detail.metadataMessage}</Feedback></div>}
   </PageFrame>;
 }

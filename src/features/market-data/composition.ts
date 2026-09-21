@@ -3,9 +3,11 @@ import "server-only";
 import { InMemoryMarketDataCache } from "./cache";
 import { FIXTURE_RETRIEVED_AT } from "./deterministic/fixtures";
 import { DeterministicMarketDataProvider } from "./deterministic/provider";
+import { DeterministicEquityFundamentalsProvider } from "./deterministic/fundamentals";
 import type { FmpClientOptions } from "./fmp/client";
 import { FmpClient } from "./fmp/client";
 import { FmpMarketDataProvider } from "./fmp/provider";
+import { FmpEquityFundamentalsProvider } from "./fmp/equity-fundamentals";
 import type { FrankfurterClientOptions } from "./frankfurter/client";
 import { createFrankfurterFxProvider, FRANKFURTER_FX_CACHE_MILLISECONDS } from "./frankfurter/service";
 import { MarketDataError } from "./errors";
@@ -48,10 +50,11 @@ export function createMarketDataService(options: MarketDataCompositionOptions) {
     ? () => new Date(FIXTURE_RETRIEVED_AT)
     : () => new Date());
 
+  const fmpClient = provider === "fmp" ? new FmpClient({ apiKey: fmpApiKey, baseUrl: fmpBaseUrl, fetch }) : undefined;
   const securityProvider = provider === "deterministic"
     ? new DeterministicMarketDataProvider(clock)
     : provider === "fmp"
-      ? new FmpMarketDataProvider(new FmpClient({ apiKey: fmpApiKey, baseUrl: fmpBaseUrl, fetch }), clock)
+      ? new FmpMarketDataProvider(fmpClient!, clock)
       : undefined;
   if (!securityProvider) {
     throw new MarketDataError("ProviderConfiguration", "The configured market-data provider is not supported.", { provider });
@@ -73,5 +76,6 @@ export function createMarketDataService(options: MarketDataCompositionOptions) {
         ttls: fxProviderName === "frankfurter" ? { fxMilliseconds: FRANKFURTER_FX_CACHE_MILLISECONDS } : undefined,
       })
     : undefined);
-  return new MarketDataService(securityProvider, { ...serviceOptions, ...(cache ? { cache } : {}), clock, fxProvider });
+  const equityFundamentalsProvider = provider === "deterministic" ? new DeterministicEquityFundamentalsProvider(clock) : new FmpEquityFundamentalsProvider(fmpClient!, clock);
+  return new MarketDataService(securityProvider, { ...serviceOptions, ...(cache ? { cache } : {}), clock, fxProvider, equityFundamentalsProvider });
 }

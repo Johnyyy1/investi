@@ -13,6 +13,13 @@ describe("instrument detail loading", () => {
     expect(detail.quote?.price).toBeGreaterThan(0);
     expect(detail.points.length).toBe(id === "US-XNAS:AAPL" ? 260 : 10);
     expect(detail.historyMessage).toBeNull();
+    if (assetType === "equity") {
+      expect(detail.fundamentals?.valuation.marketCap).toBeGreaterThan(0);
+      expect(detail.fundamentals?.provenance.isDeterministic).toBe(true);
+    } else {
+      expect(detail.fundamentals).toBeNull();
+      expect(detail.fundamentalsMessage).toBeNull();
+    }
   });
   it("preserves quote when history is unavailable", async () => {
     const service = createDeterministicMarketDataService();
@@ -37,6 +44,15 @@ describe("instrument detail loading", () => {
     const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
     expect(detail.quote).toBeNull();
     expect(detail.quoteMessage).toMatch(/unavailable/);
+    expect(detail.points.length).toBe(260);
+  });
+  it("keeps the chart and quote when all company metrics fail", async () => {
+    const service = createDeterministicMarketDataService();
+    vi.spyOn(service, "getEquityFundamentals").mockRejectedValue(new MarketDataError("ProviderConfiguration", "restricted"));
+    const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
+    expect(detail.fundamentals).toBeNull();
+    expect(detail.fundamentalsMessage).toMatch(/unavailable/);
+    expect(detail.quote?.price).toBe(114);
     expect(detail.points.length).toBe(260);
   });
   it("handles an empty requested range without manufacturing dates", async () => {

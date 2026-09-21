@@ -103,6 +103,18 @@ try {
   assert.equal(await page.getByText("Sample data", { exact: true }).count(), 1, "deterministic detail is labeled as sample data");
   assert.match(await page.getByRole("img", { name: /daily split-adjusted closing price chart/ }).getAttribute("aria-label"), /\d+ observations/, "daily chart uses available sample observations");
   assert.match(await page.locator("main").innerText(), /Selected 1Y price return/);
+  await page.getByRole("heading", { name: "Key metrics" }).waitFor();
+  assert.match(await page.locator("main").innerText(), /Valuation[\s\S]*Market cap[\s\S]*P\/E TTM[\s\S]*Profitability[\s\S]*Financial health[\s\S]*Latest fiscal year/i);
+  assert.match(await page.locator("main").innerText(), /382\.4B USD/);
+  const metricSignal = async (id) => page.locator(`[data-metric="${id}"]`).getAttribute("data-signal");
+  assert.equal(await metricSignal("pe"), "neutral", "P/E remains neutral");
+  assert.equal(await metricSignal("market-cap"), "neutral", "size remains neutral");
+  assert.equal(await metricSignal("operating-margin"), "positive", "operating profitability uses the broad reference");
+  assert.equal(await metricSignal("debt-equity"), "neutral", "middle debt-to-equity values remain neutral");
+  assert.equal(await metricSignal("net-debt-ebitda"), "positive", "low net debt uses the broad reference");
+  await page.getByRole("button", { name: "P/E TTM" }).click();
+  await page.getByText(/Share price relative to trailing twelve-month earnings/).waitFor();
+  await page.getByRole("button", { name: "P/E TTM" }).click();
   await page.screenshot({ path: `${screenshotDir}/instrument-aapl-1y-1440.png`, fullPage: true });
   await page.getByRole("navigation", { name: "Price history timeframe" }).getByRole("link", { name: "1M" }).click();
   await page.waitForURL(/range=1M/);
@@ -126,8 +138,16 @@ try {
     await page.screenshot({ path: `${screenshotDir}/instrument-aapl-${width}.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto(`${baseURL}/lab/instruments/US-XNAS%3ANVDA`);
+  await page.getByRole("heading", { name: "NVIDIA Corporation" }).waitFor();
+  assert.equal(await metricSignal("p-fcf"), "unavailable", "missing valuation stays muted");
+  assert.equal(await metricSignal("fcf"), "unavailable", "missing fiscal cash flow stays muted");
+  assert.match(await page.locator("main").innerText(), /Price \/ FCF TTM\s*—/);
+  assert.match(await page.locator("main").innerText(), /Free cash flow FY\s*—/);
+  await page.screenshot({ path: `${screenshotDir}/instrument-equity-partial-1440.png`, fullPage: true });
   await page.goto(`${baseURL}/lab/instruments/IE-XETR%3AVWCE`);
   await page.getByRole("heading", { name: "Vanguard FTSE All-World UCITS ETF" }).waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Key metrics" }).count(), 0, "ETF detail excludes company fundamentals");
   assert.match(await page.locator("main").innerText(), /VWCE · ETF · XETR/, "ETF detail uses ETF identity and exchange");
   assert.equal(await page.getByText("Last observation · Last observation", { exact: false }).count(), 0, "unknown session state does not duplicate the observation label");
   assert.equal(await page.getByRole("heading", { name: "Your position" }).count(), 0, "unowned ETF has no fake position");
@@ -208,6 +228,7 @@ try {
   await investDialog.getByRole("option", { name: /MSFT/ }).waitFor();
   await investDialog.getByRole("combobox", { name: "Search investments" }).press("Enter");
   await page.waitForURL(/\/lab\/instruments\/US-XNAS%3AMSFT/);
+  assert.equal(await metricSignal("net-debt-ebitda"), "positive", "confirmed sample net cash receives the positive reference");
   await page.getByRole("button", { name: /Invest/ }).first().click();
   const msftDialog = page.getByRole("dialog", { name: "Invest in MSFT" });
   await msftDialog.getByRole("textbox", { name: /Quantity/ }).fill("0.05");

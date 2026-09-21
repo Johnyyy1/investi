@@ -3,6 +3,7 @@ import "server-only";
 import { isMarketDataError } from "@/features/market-data/errors";
 import type { Instrument, Quote } from "@/features/market-data/contracts";
 import type { MarketDataService } from "@/features/market-data/service";
+import type { EquityFundamentalsSnapshot } from "@/features/market-data/equity-fundamentals";
 import { chartPoints, historicalRequest, type ChartRange } from "./history";
 
 export type InstrumentDetail = {
@@ -15,6 +16,8 @@ export type InstrumentDetail = {
   startDate: string;
   endDate: string;
   historyPartial: boolean;
+  fundamentals: EquityFundamentalsSnapshot | null;
+  fundamentalsMessage: string | null;
 };
 
 function safeMessage(error: unknown, subject: "instrument" | "quote" | "history") {
@@ -28,11 +31,12 @@ export async function loadInstrumentDetail(service: MarketDataService, instrumen
   const request = historicalRequest(instrumentId, range, now);
   let instrument: Instrument;
   try { instrument = await service.getInstrumentMetadata(instrumentId); }
-  catch (error) { return { instrument: null, quote: null, points: [], metadataMessage: safeMessage(error, "instrument"), quoteMessage: null, historyMessage: null, startDate: request.startDate, endDate: request.endDate, historyPartial: false }; }
+  catch (error) { return { instrument: null, quote: null, points: [], metadataMessage: safeMessage(error, "instrument"), quoteMessage: null, historyMessage: null, startDate: request.startDate, endDate: request.endDate, historyPartial: false, fundamentals: null, fundamentalsMessage: null }; }
 
-  const [quoteResult, historyResult] = await Promise.allSettled([
+  const [quoteResult, historyResult, fundamentalsResult] = await Promise.allSettled([
     service.getQuote(instrumentId),
     service.getHistoricalPrices(request),
+    instrument.assetType === "equity" ? service.getEquityFundamentals(instrumentId) : Promise.resolve(null),
   ]);
   const quote = quoteResult.status === "fulfilled" && quoteResult.value.instrumentId === instrumentId && quoteResult.value.currency === instrument.quoteCurrency ? quoteResult.value : null;
   const series = historyResult.status === "fulfilled" ? historyResult.value : null;
@@ -48,5 +52,7 @@ export async function loadInstrumentDetail(service: MarketDataService, instrumen
     startDate: request.startDate,
     endDate: request.endDate,
     historyPartial: series?.provenance.completeness === "partial",
+    fundamentals: fundamentalsResult.status === "fulfilled" ? fundamentalsResult.value : null,
+    fundamentalsMessage: instrument.assetType === "equity" && fundamentalsResult.status === "rejected" ? "Company metrics are unavailable right now. Price history and investing remain available." : null,
   };
 }

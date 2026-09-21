@@ -20,6 +20,14 @@ export interface Instrument {
   assetType: AssetType;
   exchangeMic: string | null;
   quoteCurrency: Currency;
+  /** Normalized company context from profile data; present only for equities. */
+  equityProfile?: {
+    sector: string | null;
+    industry: string | null;
+    country: string | null;
+    /** Profile market capitalization in the instrument's quote currency. */
+    marketCap: number | null;
+  };
 }
 
 export interface InstrumentSearchResult {

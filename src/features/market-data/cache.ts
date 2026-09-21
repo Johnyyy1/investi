@@ -8,6 +8,7 @@ import type {
   InstrumentSearchResult,
 } from "./contracts";
 import type { ProviderQuote } from "./provider";
+import type { EquityFundamentalsSnapshot } from "./equity-fundamentals";
 
 const MINUTE = 60 * 1_000;
 const HOUR = 60 * MINUTE;
@@ -20,6 +21,8 @@ export const defaultMarketDataCacheTtls = {
   historyMilliseconds: 24 * HOUR,
   fxMilliseconds: 5 * MINUTE,
   corporateActionsMilliseconds: HOUR,
+  /** Financial reports and TTM ratios update far less often than quotes. */
+  equityFundamentalsMilliseconds: 6 * HOUR,
 } as const;
 
 export interface MarketDataCacheTtls {
@@ -29,6 +32,7 @@ export interface MarketDataCacheTtls {
   historyMilliseconds: number;
   fxMilliseconds: number;
   corporateActionsMilliseconds: number;
+  equityFundamentalsMilliseconds: number;
 }
 
 export interface InMemoryMarketDataCacheOptions {
@@ -78,6 +82,8 @@ export interface MarketDataCache {
   setFx(key: string, value: FxRate): Promise<void>;
   getCorporateActions(key: string): Promise<CorporateActionSeries | undefined>;
   setCorporateActions(key: string, value: CorporateActionSeries): Promise<void>;
+  getEquityFundamentals(key: string): Promise<EquityFundamentalsSnapshot | undefined>;
+  setEquityFundamentals(key: string, value: EquityFundamentalsSnapshot): Promise<void>;
 }
 
 export class NoopMarketDataCache implements MarketDataCache {
@@ -93,6 +99,8 @@ export class NoopMarketDataCache implements MarketDataCache {
   async setFx(key: string, value: FxRate) { void key; void value; }
   async getCorporateActions(key: string) { void key; return undefined; }
   async setCorporateActions(key: string, value: CorporateActionSeries) { void key; void value; }
+  async getEquityFundamentals(key: string) { void key; return undefined; }
+  async setEquityFundamentals(key: string, value: EquityFundamentalsSnapshot) { void key; void value; }
 }
 
 /**
@@ -106,6 +114,7 @@ export class InMemoryMarketDataCache implements MarketDataCache {
   private readonly history: TtlStore<HistoricalSeries>;
   private readonly fx: TtlStore<FxRate>;
   private readonly corporateActions: TtlStore<CorporateActionSeries>;
+  private readonly equityFundamentals: TtlStore<EquityFundamentalsSnapshot>;
 
   constructor(options: InMemoryMarketDataCacheOptions = {}) {
     const clock = options.clock ?? Date.now;
@@ -119,6 +128,7 @@ export class InMemoryMarketDataCache implements MarketDataCache {
     this.history = new TtlStore(ttls.historyMilliseconds, clock);
     this.fx = new TtlStore(ttls.fxMilliseconds, clock);
     this.corporateActions = new TtlStore(ttls.corporateActionsMilliseconds, clock);
+    this.equityFundamentals = new TtlStore(ttls.equityFundamentalsMilliseconds, clock);
   }
 
   async getSearch(key: string) { return this.search.get(key); }
@@ -133,4 +143,6 @@ export class InMemoryMarketDataCache implements MarketDataCache {
   async setFx(key: string, value: FxRate) { this.fx.set(key, value); }
   async getCorporateActions(key: string) { return this.corporateActions.get(key); }
   async setCorporateActions(key: string, value: CorporateActionSeries) { this.corporateActions.set(key, value); }
+  async getEquityFundamentals(key: string) { return this.equityFundamentals.get(key); }
+  async setEquityFundamentals(key: string, value: EquityFundamentalsSnapshot) { this.equityFundamentals.set(key, value); }
 }

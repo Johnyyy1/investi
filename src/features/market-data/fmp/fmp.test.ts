@@ -167,6 +167,14 @@ describe("Financial Modeling Prep normalization", () => {
       assetType: "equity",
       exchangeMic: "XNAS",
       quoteCurrency: "USD",
+      equityProfile: { sector: null, industry: null, country: null, marketCap: null },
+    });
+  });
+
+  it("reuses normalized company classification and market cap from the cached profile", async () => {
+    const { provider } = mockedProvider([jsonResponse([{ ...profilePayload[0], sector: "Technology", industry: "Devices", country: "US", marketCap: 3_420_000_000_000 }])]);
+    await expect(provider.getInstrumentMetadata(AAPL)).resolves.toMatchObject({
+      equityProfile: { sector: "Technology", industry: "Devices", country: "US", marketCap: 3_420_000_000_000 },
     });
   });
 

@@ -14,9 +14,9 @@ export const FIXTURE_OBSERVED_AT = "2026-01-16T20:45:00.000Z";
 export const FIXTURE_RETRIEVED_AT = "2026-01-16T20:50:00.000Z";
 
 export const deterministicInstruments: readonly Instrument[] = [
-  { instrumentId: "US-XNAS:AAPL", symbol: "AAPL", name: "Apple Inc.", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD" },
-  { instrumentId: "US-XNAS:MSFT", symbol: "MSFT", name: "Microsoft Corporation", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD" },
-  { instrumentId: "US-XNAS:NVDA", symbol: "NVDA", name: "NVIDIA Corporation", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD" },
+  { instrumentId: "US-XNAS:AAPL", symbol: "AAPL", name: "Apple Inc.", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD", equityProfile: { sector: "Technology", industry: "Consumer devices", country: "US", marketCap: 2_850_000_000_000 } },
+  { instrumentId: "US-XNAS:MSFT", symbol: "MSFT", name: "Microsoft Corporation", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD", equityProfile: { sector: "Technology", industry: "Software", country: "US", marketCap: 2_240_000_000_000 } },
+  { instrumentId: "US-XNAS:NVDA", symbol: "NVDA", name: "NVIDIA Corporation", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD", equityProfile: { sector: "Technology", industry: "Semiconductors", country: "US", marketCap: 1_920_000_000_000 } },
   { instrumentId: "IE-XETR:VWCE", symbol: "VWCE", name: "Vanguard FTSE All-World UCITS ETF", assetType: "etf", exchangeMic: "XETR", quoteCurrency: "EUR" },
   { instrumentId: "CZ-XPRA:CZGB35", symbol: "CZGB35", name: "Czech Government Bond 2035", assetType: "bond", exchangeMic: "XPRA", quoteCurrency: "CZK" },
   { instrumentId: "CASH:CZK", symbol: "CZK", name: "Czech Koruna Cash", assetType: "cash", exchangeMic: null, quoteCurrency: "CZK" },

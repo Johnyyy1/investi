@@ -39,7 +39,14 @@ const profileSchema = z.object({
   exchange: z.string().min(1),
   isEtf: z.boolean(),
   isFund: z.boolean(),
+  sector: z.unknown().optional(),
+  industry: z.unknown().optional(),
+  country: z.unknown().optional(),
+  marketCap: z.unknown().optional(),
 });
+
+function optionalText(value: unknown): string | null { return typeof value === "string" && value.trim() ? value.trim() : null; }
+function optionalPositiveNumber(value: unknown): number | null { return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null; }
 const historicalPointSchema = z.object({
   symbol: z.string().min(1),
   date: z.string().min(1),
@@ -338,6 +345,12 @@ export class FmpMarketDataProvider implements MarketDataProvider {
       assetType: profile.isEtf ? "etf" : "equity",
       exchangeMic: reference.exchangeMic ?? fmpMic,
       quoteCurrency: validateCurrency(profile.currency, instrumentId),
+      ...(profile.isEtf ? {} : { equityProfile: {
+        sector: optionalText(profile.sector),
+        industry: optionalText(profile.industry),
+        country: optionalText(profile.country),
+        marketCap: optionalPositiveNumber(profile.marketCap),
+      } }),
     };
   }
 
