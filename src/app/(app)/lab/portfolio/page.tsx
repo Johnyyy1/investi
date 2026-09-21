@@ -9,5 +9,5 @@ export default async function PortfolioLabPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
   const portfolio = await loadPortfolioView(user.id);
-  return <PageFrame width="wide"><Link href="/lab" className="inline-flex min-h-12 items-center text-small font-semibold text-primary-hover">← Lab</Link><PortfolioLab portfolio={portfolio} /></PageFrame>;
+  return <PageFrame width="wide" className="max-w-[80rem] pt-6 sm:pt-7 lg:pt-8"><Link href="/lab" className="inline-flex min-h-11 items-center text-small font-semibold text-primary-hover">← Lab</Link><PortfolioLab portfolio={portfolio} /></PageFrame>;
 }

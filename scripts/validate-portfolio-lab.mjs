@@ -16,6 +16,7 @@ await mkdir(screenshotDir, { recursive: true });
 const email = `portfolio-browser-${randomUUID()}@example.com`;
 const password = randomUUID();
 let userId;
+const minorFromCzk = (value) => BigInt(Math.round(Number(value.replace(/[^\d.-]/g, "")) * 100));
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 950 }, timezoneId: "Europe/Prague" });
   const errors = [];
@@ -29,6 +30,7 @@ try {
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   await page.goto(`${baseURL}/lab/portfolio`);
   await page.getByRole("heading", { name: "Portfolio Lab", exact: true }).waitFor();
+  assert.equal(await page.getByText("Sample data", { exact: true }).count(), 1, "deterministic mode is labeled as sample data");
   await page.getByRole("heading", { name: "Build capital by learning", exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: /Invest/ }).count(), 0, "zero capital does not suggest investing is possible");
   assert.equal(await page.getByRole("heading", { name: "Holdings", exact: true }).count(), 0);
@@ -54,16 +56,19 @@ try {
   });
   await page.reload();
   assert.equal(await page.getByTestId("portfolio-cash").textContent(), "2,000 Kč", "later reward becomes available cash");
+  assert.equal(await page.getByTestId("portfolio-invested").textContent(), "0 Kč", "an empty portfolio has no invested value");
+  assert.equal(await page.getByText("Practice Capital earned", { exact: true }).count(), 0, "earned-capital copy is absent from the portfolio overview");
   assert.match(await page.locator('section[aria-labelledby="portfolio-value-label"]').textContent(), /0 Kč\s*·\s*0\.00%/, "reward does not create investment gain");
-  await page.getByRole("heading", { name: "Build your first educational portfolio", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Your portfolio is ready", exact: true }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Holdings", exact: true }).count(), 0, "empty state avoids an empty holdings section");
   assert.equal(await page.getByRole("heading", { name: "Recent activity", exact: true }).count(), 0, "empty state avoids an empty activity section");
   assert.equal(await page.getByRole("button", { name: "Portfolio options", exact: true }).count(), 0, "reset is absent from the empty state");
-  for (const width of [320, 375, 390, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     if (width === 320) {
       await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "capital/no-holdings state supports 200% text");
+      const overflowing = await page.evaluate(() => [...document.querySelectorAll("body *")].filter((element) => { const box = element.getBoundingClientRect(); return box.right > innerWidth + 1 || box.left < -1; }).slice(0, 8).map((element) => ({ tag: element.tagName, text: element.textContent?.trim().slice(0, 80), className: element.className?.toString().slice(0, 100), box: element.getBoundingClientRect().toJSON() })));
+      assert.deepEqual(overflowing, [], "capital/no-holdings state supports 200% text");
       await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     }
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `capital/no-holdings state has no overflow at ${width}`);
@@ -85,7 +90,7 @@ try {
   const search = investDialog.getByRole("combobox", { name: "Search investments" });
   await search.fill("apple");
   await investDialog.getByRole("option", { name: /AAPL/ }).waitFor();
-  for (const width of [320, 375, 390, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `search sheet has no overflow at ${width}`);
     await page.screenshot({ path: `${screenshotDir}/search-open-${width}.png`, fullPage: true });
@@ -133,13 +138,24 @@ try {
   assert.equal(await page.getByTestId("portfolio-cash").textContent(), "1,351.62 Kč");
   const aapl = page.getByTestId("holding-AAPL");
   await aapl.waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Your portfolio is ready", exact: true }).count(), 0, "onboarding disappears after the first investment");
+  assert.equal(await page.getByText("Performance history not available yet", { exact: true }).count(), 1, "the hero is honest about missing performance history");
+  assert.equal(await page.getByRole("heading", { name: "Allocation", exact: true }).count(), 0, "allocation is part of holdings, not a separate panel");
+  assert.match(await aapl.textContent(), /100\.00%/, "a single holding owns the full invested weight");
+  const firstCash = minorFromCzk(await page.getByTestId("portfolio-cash").textContent());
+  const firstInvested = minorFromCzk(await page.getByTestId("portfolio-invested").textContent());
+  const firstTotal = minorFromCzk(await page.getByTestId("portfolio-value").textContent());
+  assert.equal(firstCash + firstInvested, firstTotal, "portfolio value equals available cash plus invested value");
+  assert.match(await page.getByTestId("portfolio-gain-loss").textContent(), /0 Kč\s*·\s*0\.00%/, "the initial holding does not fabricate investment performance");
 
-  for (const width of [320, 375, 390, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `populated portfolio has no overflow at ${width}`);
-    if ([320, 375, 390, 1024, 1440].includes(width)) await page.screenshot({ path: `${screenshotDir}/populated-${width}.png`, fullPage: true });
+    if ([320, 390, 768, 1024, 1440].includes(width)) await page.screenshot({ path: `${screenshotDir}/populated-${width}.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 320, height: 900 });
+  await page.getByTestId("holding-mobile-AAPL").waitFor();
+  assert.equal(await page.getByTestId("holding-AAPL").isVisible(), false, "the desktop holdings table gives way to a dedicated mobile row");
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
   const zoomOverflow = await page.evaluate(() => [...document.querySelectorAll("body *")].filter((element) => { const box = element.getBoundingClientRect(); return box.right > innerWidth + 1 || box.left < -1; }).slice(0, 8).map((element) => ({ tag: element.tagName, text: element.textContent?.trim().slice(0, 60), className: element.className?.toString().slice(0, 100), box: element.getBoundingClientRect().toJSON() })));
   assert.deepEqual(zoomOverflow, [], "populated portfolio supports 200% text");
@@ -156,6 +172,36 @@ try {
   await page.keyboard.press("Escape");
   assert.equal(await zoomInvestTrigger.evaluate((element) => element === document.activeElement), true, "zoomed investment sheet returns focus");
   await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  await primaryInvest.click();
+  await investDialog.getByRole("combobox", { name: "Search investments" }).fill("MSFT");
+  await investDialog.getByRole("option", { name: /MSFT/ }).waitFor();
+  await investDialog.getByRole("combobox", { name: "Search investments" }).press("Enter");
+  await investDialog.getByRole("textbox", { name: "Quantity", exact: true }).fill("0.05");
+  await investDialog.getByRole("button", { name: "Review order", exact: true }).click();
+  await investDialog.getByRole("button", { name: "Confirm buy MSFT", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Investment added" }).waitFor();
+  await page.getByTestId("holding-MSFT").waitFor();
+  assert.equal(await page.getByRole("table", { name: "Current portfolio holdings" }).getByRole("row").count(), 3, "the desktop table contains a header plus two holdings");
+  assert.equal(await page.getByRole("table", { name: "Current portfolio holdings" }).getByRole("columnheader", { name: "Gain/loss" }).count(), 1, "absolute holding P&L is labeled as gain/loss");
+  assert.equal(await page.locator("main header").getByRole("button", { name: "Portfolio options", exact: true }).count(), 1, "portfolio options live beside the primary header action");
+  assert.match(await page.getByTestId("holding-AAPL").textContent(), /\d+\.\d{2}%/);
+  assert.match(await page.getByTestId("holding-MSFT").textContent(), /\d+\.\d{2}%/, "multiple holdings show weight in the table");
+  assert.equal(await page.locator('section[aria-labelledby="activity-heading"] li').count(), 2, "recent activity remains secondary and records both buys");
+  const multiCash = minorFromCzk(await page.getByTestId("portfolio-cash").textContent());
+  const multiInvested = minorFromCzk(await page.getByTestId("portfolio-invested").textContent());
+  const multiTotal = minorFromCzk(await page.getByTestId("portfolio-value").textContent());
+  assert.equal(multiCash + multiInvested, multiTotal, "summary metrics remain coherent with multiple holdings");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: `${screenshotDir}/multiple-holdings-1440.png`, fullPage: true });
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.getByTestId("holding-mobile-AAPL").waitFor();
+  await page.getByTestId("holding-mobile-MSFT").waitFor();
+  assert.equal(await page.getByTestId("holding-mobile-AAPL").getByText("Gain/loss", { exact: true }).count(), 1, "mobile holding labels the same absolute P&L correctly");
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "multiple mobile holding rows do not overflow");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: `${screenshotDir}/multiple-holdings-390.png`, fullPage: true });
   await page.setViewportSize({ width: 1440, height: 950 });
 
   await aapl.getByRole("button", { name: "Actions for AAPL", exact: true }).click();
@@ -188,11 +234,44 @@ try {
   await page.reload();
   await page.getByTestId("holding-AAPL").getByText("0.15 shares", { exact: true }).waitFor();
 
+  const [{ id: activePortfolioId }] = await sql`select id from portfolio where user_id = ${userId} and closed_at is null`;
+  const unavailableTradeTime = new Date();
+  await sql`insert into portfolio_trade (
+    id, portfolio_id, instrument_id, instrument_symbol, instrument_name, instrument_asset_type,
+    side, quantity, unit_price, quote_currency, fx_rate_to_base, gross_amount_base_minor,
+    fee_base_minor, cash_delta_base_minor, quote_observed_at, executed_at,
+    market_data_provider, market_data_dataset, market_data_kind, market_data_is_deterministic,
+    fx_rate_provider, fx_rate_dataset, fx_rate_kind, fx_rate_is_deterministic,
+    fx_reference_date, fx_rate_retrieved_at, client_idempotency_key
+  ) values (
+    ${randomUUID()}, ${activePortfolioId}, 'FMP:NASDAQ:NVDA', 'NVDA', 'NVIDIA Corporation', 'equity',
+    'BUY', '0.01', '100', 'USD', '22', 2200,
+    0, -2200, ${unavailableTradeTime}, ${unavailableTradeTime},
+    'fmp', 'quote', 'live', false,
+    'frankfurter', 'ecb-reference', 'reference', false,
+    '2026-09-20', ${unavailableTradeTime}, ${randomUUID()}
+  )`;
+  await page.reload();
+  await page.getByRole("status").filter({ hasText: "2 of 3 positions currently valued" }).waitFor();
+  assert.equal(await page.getByTestId("portfolio-value").textContent(), "—", "partial valuation does not invent a portfolio total");
+  assert.equal(await page.getByText("Incomplete valuation", { exact: true }).count(), 1, "the missing total is labeled explicitly");
+  assert.equal(await page.getByTestId("portfolio-invested").textContent(), "Incomplete", "partial valuation does not treat an unavailable holding as zero");
+  assert.match(await page.getByTestId("holding-NVDA").textContent(), /Unavailable from this data source/, "the unavailable holding explains its state");
+  assert.match(await page.getByTestId("holding-AAPL").textContent(), /Unavailable/, "partial valuation suppresses misleading weight even for a valued holding");
+  await page.screenshot({ path: `${screenshotDir}/partial-valuation-1440.png`, fullPage: true });
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  await page.screenshot({ path: `${screenshotDir}/partial-valuation-320-200-percent.png`, fullPage: true });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "partial valuation supports 320px and 200% text");
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  await page.setViewportSize({ width: 1440, height: 950 });
+
   await page.getByRole("button", { name: "Portfolio options", exact: true }).click();
   await page.screenshot({ path: `${screenshotDir}/portfolio-options-1440.png`, fullPage: true });
   await page.setViewportSize({ width: 320, height: 900 });
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "portfolio options support 200% text");
+  const optionsOverflow = await page.evaluate(() => [...document.querySelectorAll("body *")].filter((element) => { const box = element.getBoundingClientRect(); return box.right > innerWidth + 1 || box.left < -1; }).slice(0, 8).map((element) => ({ tag: element.tagName, text: element.textContent?.trim().slice(0, 80), className: element.className?.toString().slice(0, 100), box: element.getBoundingClientRect().toJSON() })));
+  assert.deepEqual(optionsOverflow, [], "portfolio options support 200% text");
   await page.screenshot({ path: `${screenshotDir}/portfolio-options-320-200-percent.png`, fullPage: true });
   await page.getByRole("menu", { name: "Portfolio options" }).getByRole("menuitem", { name: "Reset portfolio", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Reset this portfolio?" });

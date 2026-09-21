@@ -51,12 +51,11 @@ try {
     '2026-01-16', '2026-01-16T20:50:00.000Z', ${randomUUID()}
   )`;
   await page.reload();
-  const holding = page.getByTestId("holding-AAPL");
+  const holding = page.getByTestId("holding-mobile-AAPL");
   await holding.waitFor();
   assert.match(await holding.textContent(), /648\.38 Kč/, "the last-session quote produces a non-zero closed-market valuation");
-  await holding.getByText("Investment details", { exact: true }).click();
-  assert.match(await holding.textContent(), /Last market price/);
-  assert.match(await holding.textContent(), /market closed/);
+  assert.match(await holding.textContent(), /Market closed/, "the compact holding preserves market-session context");
+  assert.match(await holding.textContent(), /114 USD/, "the compact holding preserves the native reference price");
   const cashBeforePreview = await page.getByTestId("portfolio-cash").textContent();
 
   await page.getByRole("button", { name: "Invest", exact: true }).click();

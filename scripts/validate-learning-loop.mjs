@@ -223,7 +223,6 @@ try {
   await page.goto(`${baseURL}/lab`); await heading(page, "What happens if…"); await layouts(page, "lab");
   await page.getByRole("link", { name: "Open Portfolio Lab", exact: true }).click();
   await heading(page, "Portfolio Lab");
-  await page.getByTestId("portfolio-earned").filter({ hasText: "14,000 Kč" }).waitFor();
   await page.getByTestId("holding-AAPL").waitFor();
   await button(page, "Invest").click();
   const investmentDialog = page.getByRole("dialog", { name: "Invest Practice Capital" });

@@ -140,7 +140,7 @@ try {
   await button("Check answer").click(); await heading("That’s right"); await next("Recovering from a loss"); await check(100); await next("Check your understanding"); await check(0); await next("Bring it together"); await button("Mark lesson complete").click(); await heading("Lesson complete"); await page.getByRole("link", { name: "View module", exact: true }).click(); await heading("Returns & Compounding");
   assert.match(await page.getByTestId("module-progress").textContent(), /3 of 3/); await layouts("returns-completed");
   await page.goto(`${baseURL}/lab/portfolio`); await heading("Portfolio Lab");
-  await page.getByTestId("portfolio-earned").filter({ hasText: "6,000 Kč" }).waitFor();
+  await page.getByTestId("portfolio-cash").filter({ hasText: "6,000 Kč" }).waitFor();
   assert.equal(await page.getByTestId("portfolio-cash").textContent(), "6,000 Kč");
   await button("Invest").click();
   const investmentDialog = page.getByRole("dialog", { name: "Invest Practice Capital" });
