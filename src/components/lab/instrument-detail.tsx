@@ -6,6 +6,7 @@ import { useRef, useState, useTransition, type MouseEvent } from "react";
 import { BuyReview } from "@/components/lab/buy-review";
 import { InstrumentPriceChart } from "@/components/lab/instrument-price-chart";
 import { EquityKeyMetrics } from "@/components/lab/equity-key-metrics";
+import { EtfAnalytics } from "@/components/lab/etf-analytics";
 import { Button, IconButton } from "@/components/ui/button";
 import { Feedback } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/form-controls";
@@ -13,6 +14,7 @@ import type { ChartRange } from "@/features/instruments/history";
 import { periodReturnLabel, periodStatistics } from "@/features/instruments/period-statistics";
 import type { Instrument, MarketSessionState, QuoteUsabilityStatus } from "@/features/market-data/contracts";
 import type { EquityFundamentalsSnapshot } from "@/features/market-data/equity-fundamentals";
+import type { EtfAnalyticsSnapshot } from "@/features/market-data/etf-analytics";
 import { buyPortfolioAction, loadInstrumentPreviewAction, sellPortfolioAction } from "@/features/portfolio/actions";
 import { parseQuantity, roundDivide } from "@/features/portfolio/decimal";
 import { gainLossState, showSampleDataIndicator } from "@/features/portfolio/presentation";
@@ -44,7 +46,7 @@ function sellEstimate(holding: Holding, amount: string) {
   catch { return null; }
 }
 
-export function InstrumentDetailView({ instrument, quote, quoteMessage, points, historyMessage, historyPartial, fundamentals, fundamentalsMessage, range, portfolio: initialPortfolio }: { instrument: Instrument; quote: QuoteView | null; quoteMessage: string | null; points: { date: string; close: number }[]; historyMessage: string | null; historyPartial: boolean; fundamentals: EquityFundamentalsSnapshot | null; fundamentalsMessage: string | null; range: ChartRange; portfolio: PortfolioView }) {
+export function InstrumentDetailView({ instrument, quote, quoteMessage, points, historyMessage, historyPartial, fundamentals, fundamentalsMessage, etfAnalytics, etfAnalyticsMessage, range, portfolio: initialPortfolio }: { instrument: Instrument; quote: QuoteView | null; quoteMessage: string | null; points: { date: string; close: number }[]; historyMessage: string | null; historyPartial: boolean; fundamentals: EquityFundamentalsSnapshot | null; fundamentalsMessage: string | null; etfAnalytics: EtfAnalyticsSnapshot | null; etfAnalyticsMessage: string | null; range: ChartRange; portfolio: PortfolioView }) {
   const router = useRouter();
   const [portfolio, setPortfolio] = useState(initialPortfolio);
   const [preview, setPreview] = useState<InstrumentPreview | null>(null);
@@ -102,7 +104,7 @@ export function InstrumentDetailView({ instrument, quote, quoteMessage, points, 
   return <>
     <header className="mt-3 border-b border-border pb-7 sm:mt-5 sm:pb-8">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-5">
-        <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h1 className="break-words text-page-title font-bold tracking-[-0.025em]">{instrument.name}</h1>{showSampleDataIndicator(portfolio.marketDataMode) ? <span className="rounded-pill border border-border bg-surface-muted px-2.5 py-1 text-microcopy font-semibold text-secondary">Sample data</span> : null}</div><p className="mt-2 text-small font-semibold text-secondary">{instrument.symbol} · {assetTypeLabel(instrument.assetType)}{instrument.exchangeMic ? ` · ${instrument.exchangeMic}` : ""}</p></div>
+        <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h1 className="break-all text-page-title font-bold tracking-[-0.025em]">{instrument.name}</h1>{showSampleDataIndicator(portfolio.marketDataMode) ? <span className="rounded-pill border border-border bg-surface-muted px-2.5 py-1 text-microcopy font-semibold text-secondary">Sample data</span> : null}</div><p className="mt-2 text-small font-semibold text-secondary">{instrument.symbol} · {assetTypeLabel(instrument.assetType)}{instrument.exchangeMic ? ` · ${instrument.exchangeMic}` : ""}</p></div>
         {canInvest ? <Button onClick={openBuy} className="w-full sm:w-auto">+ Invest</Button> : null}
       </div>
       <div className="mt-7"><p className="text-microcopy font-semibold uppercase tracking-[0.11em] text-secondary">{quote?.status === "fresh" && quote.marketState === "open" ? "Current price" : "Last market price"}</p>{quote && quote.status !== "unavailable" ? <><p className="mt-1 break-words text-[clamp(2.25rem,5vw,3.5rem)] leading-tight font-bold tracking-[-0.035em] tabular-nums">{nativePrice(quote.price, instrument.quoteCurrency)}</p><p className="mt-2 text-small text-secondary">{quoteState(quote) ? `${quoteState(quote)} · ` : ""}Last observation {dateTime(quote.observedAt)}</p></> : <p role="status" className="mt-2 text-small text-secondary">{quoteMessage ?? "The current market price is unavailable."}</p>}{periodReturn !== null && periodReturn !== undefined ? <p className="mt-4 text-small font-semibold">Selected {periodReturnLabel(range)} <span className={`ml-1 font-bold tabular-nums ${periodReturn > 0 ? "text-success-ink" : periodReturn < 0 ? "text-danger-ink" : ""}`}>{periodReturn > 0 ? "+" : ""}{periodReturn.toFixed(2)}%</span></p> : null}</div>
@@ -115,6 +117,7 @@ export function InstrumentDetailView({ instrument, quote, quoteMessage, points, 
     {holding ? <section aria-labelledby="position-heading" className="mt-8 border-t border-border pt-7"><div className="flex flex-wrap items-center justify-between gap-4"><h2 id="position-heading" className="text-section-title font-bold">Your position</h2><div className="flex w-full flex-wrap gap-2 sm:w-auto">{canInvest ? <Button size="compact" onClick={openBuy}>Invest more</Button> : null}<Button size="compact" variant="secondary" onClick={openSell}>Sell</Button></div></div><dl className="mt-5 grid gap-4 text-small sm:grid-cols-4"><div><dt className="text-secondary">Quantity</dt><dd className="mt-1 font-bold tabular-nums">{quantity(holding.quantity)} shares</dd></div><div><dt className="text-secondary">Market value</dt><dd className="mt-1 font-bold tabular-nums">{holding.marketValueMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.marketValueMinor)}</dd></div><div><dt className="text-secondary">Gain/loss</dt><dd className={`mt-1 font-bold tabular-nums ${gainLossState(holding.gainLossMinor) === "positive" ? "text-success-ink" : gainLossState(holding.gainLossMinor) === "negative" ? "text-danger-ink" : ""}`}>{signedMoney(holding.gainLossMinor)}</dd></div><div><dt className="text-secondary">Portfolio weight</dt><dd className="mt-1 font-bold tabular-nums">{holding.allocationBasisPoints === null ? "Unavailable" : `${(Number(holding.allocationBasisPoints) / 100).toFixed(2)}%`}</dd></div></dl></section> : null}
 
     {instrument.assetType === "equity" ? <EquityKeyMetrics snapshot={fundamentals} message={fundamentalsMessage} quoteCurrency={instrument.quoteCurrency} /> : null}
+    {instrument.assetType === "etf" ? <EtfAnalytics snapshot={etfAnalytics} message={etfAnalyticsMessage} /> : null}
 
     <section aria-labelledby="instrument-facts-heading" className="mt-8 border-t border-border pt-7"><h2 id="instrument-facts-heading" className="text-card-title font-bold">Instrument details</h2><dl className="mt-4 grid gap-4 text-small sm:grid-cols-3"><div><dt className="text-secondary">Asset type</dt><dd className="mt-1 font-semibold">{assetTypeLabel(instrument.assetType)}</dd></div><div><dt className="text-secondary">Exchange</dt><dd className="mt-1 font-semibold">{instrument.exchangeMic ?? "Not available"}</dd></div><div><dt className="text-secondary">Quote currency</dt><dd className="mt-1 font-semibold">{instrument.quoteCurrency}</dd></div></dl></section>
 

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { NoopMarketDataCache, type MarketDataCache } from "./cache";
+import { NoopMarketDataCache, type CachedEtfDataset, type MarketDataCache } from "./cache";
 import {
   adjustmentPolicies,
   currencies,
@@ -16,6 +16,7 @@ import { isMarketDataError, MarketDataError } from "./errors";
 import { evaluateQuoteUsability } from "./market-session";
 import type { FxRateProvider, ProviderQuote, SecurityMarketDataProvider } from "./provider";
 import type { EquityFundamentalsProvider, EquityFundamentalsSnapshot } from "./equity-fundamentals";
+import type { EtfAnalyticsProvider, EtfAnalyticsSnapshot, EtfDataset, EtfDatasetName } from "./etf-analytics";
 
 const DAY = 24 * 60 * 60 * 1_000;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -28,6 +29,7 @@ export interface MarketDataServiceOptions {
   clock?: () => Date;
   fxProvider?: FxRateProvider;
   equityFundamentalsProvider?: EquityFundamentalsProvider;
+  etfAnalyticsProvider?: EtfAnalyticsProvider;
   fxReferenceUnavailableAfterMilliseconds?: number;
   quoteFreshForMilliseconds?: number;
   quoteUnavailableAfterMilliseconds?: number;
@@ -69,6 +71,7 @@ export class MarketDataService {
   private readonly fxReferenceUnavailableAfter: number;
   private readonly fxProvider: FxRateProvider;
   private readonly equityFundamentalsProvider?: EquityFundamentalsProvider;
+  private readonly etfAnalyticsProvider?: EtfAnalyticsProvider;
   private readonly inFlight = new Map<string, Promise<unknown>>();
 
   constructor(private readonly provider: SecurityMarketDataProvider, options: MarketDataServiceOptions = {}) {
@@ -87,6 +90,7 @@ export class MarketDataService {
     }
     this.fxProvider = fxProvider;
     this.equityFundamentalsProvider = options.equityFundamentalsProvider;
+    this.etfAnalyticsProvider = options.etfAnalyticsProvider;
     if (this.freshFor < 0 || this.unavailableAfter < this.freshFor) {
       throw new RangeError("Quote freshness thresholds must be ordered, nonnegative durations.");
     }
@@ -220,6 +224,57 @@ export class MarketDataService {
       throw new MarketDataError("MalformedProviderResponse", "Equity fundamentals do not match the instrument.", { instrumentId });
     }
     return result;
+  }
+
+  async getEtfAnalytics(instrumentId: InstrumentId): Promise<EtfAnalyticsSnapshot> {
+    const instrument = await this.getInstrumentMetadata(instrumentId);
+    if (instrument.assetType !== "etf") throw new MarketDataError("UnsupportedInstrument", "ETF analytics are available for ETFs only.", { instrumentId });
+    const provider = this.etfAnalyticsProvider;
+    if (!provider) throw new MarketDataError("ProviderConfiguration", "ETF analytics are not configured.", { instrumentId });
+    const load = async <T>(name: EtfDatasetName, execute: () => Promise<EtfDataset<T>>): Promise<EtfDataset<T>> => {
+      const key = `${name}:${JSON.stringify([provider.providerId, instrumentId])}`;
+      return this.loadCached(
+        `etf:${key}`,
+        async () => this.cache.getEtfDataset(key, name) as Promise<EtfDataset<T> | undefined>,
+        (value) => this.cache.setEtfDataset(key, value as CachedEtfDataset, name),
+        async () => {
+          const value = await this.call(`etf-${name}`, provider, execute);
+          if (value.instrumentId !== instrumentId || value.provider !== provider.providerId || !isValidUtcTimestamp(value.retrievedAt)) {
+            throw new MarketDataError("MalformedProviderResponse", "ETF analytics do not match the instrument.", { instrumentId, dataset: name });
+          }
+          if (name !== "info") {
+            const rows = name === "holdings"
+              ? (value as EtfDataset<{ rows: readonly { weight: number }[] }>).value?.rows
+              : (value as EtfDataset<readonly { weight: number }[]>).value;
+            if (!Array.isArray(rows) || rows.length === 0 || rows.some((row) => !row || !Number.isFinite(row.weight) || row.weight < 0 || row.weight > 1)) {
+              throw new MarketDataError("MalformedProviderResponse", "ETF weights must be normalized decimal fractions.", { instrumentId, dataset: name });
+            }
+          }
+          return value;
+        },
+      );
+    };
+    const [info, holdings, sectors, countries] = await Promise.allSettled([
+      load("info", () => provider.getEtfInfo(instrument)),
+      load("holdings", () => provider.getEtfHoldings(instrument)),
+      load("sectors", () => provider.getEtfSectors(instrument)),
+      load("countries", () => provider.getEtfCountries(instrument)),
+    ]);
+    const results = [info, holdings, sectors, countries];
+    if (results.every((result) => result.status === "rejected")) {
+      const first = results[0] as PromiseRejectedResult;
+      if (isMarketDataError(first.reason)) throw first.reason;
+      throw new MarketDataError("ProviderUnavailable", "ETF analytics are unavailable.", { instrumentId });
+    }
+    const names: EtfDatasetName[] = ["info", "holdings", "sectors", "countries"];
+    return {
+      instrumentId,
+      info: info.status === "fulfilled" ? info.value : null,
+      holdings: holdings.status === "fulfilled" ? holdings.value : null,
+      sectors: sectors.status === "fulfilled" ? sectors.value : null,
+      countries: countries.status === "fulfilled" ? countries.value : null,
+      unavailableDatasets: names.filter((_, index) => results[index].status === "rejected"),
+    };
   }
 
   private validateHistoricalRequest(request: HistoricalPriceRequest) {

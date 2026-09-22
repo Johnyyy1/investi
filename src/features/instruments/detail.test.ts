@@ -19,6 +19,9 @@ describe("instrument detail loading", () => {
     } else {
       expect(detail.fundamentals).toBeNull();
       expect(detail.fundamentalsMessage).toBeNull();
+      expect(detail.etfAnalytics?.holdings?.value.rows.length).toBeGreaterThanOrEqual(10);
+      expect(detail.etfAnalytics?.sectors?.value.length).toBeGreaterThan(0);
+      expect(detail.etfAnalytics?.countries?.value.length).toBeGreaterThan(0);
     }
   });
   it("preserves quote when history is unavailable", async () => {
@@ -54,6 +57,15 @@ describe("instrument detail loading", () => {
     expect(detail.fundamentalsMessage).toMatch(/unavailable/);
     expect(detail.quote?.price).toBe(114);
     expect(detail.points.length).toBe(260);
+  });
+  it("keeps the ETF chart and quote when all ETF analytics fail", async () => {
+    const service = createDeterministicMarketDataService();
+    vi.spyOn(service, "getEtfAnalytics").mockRejectedValue(new MarketDataError("ProviderConfiguration", "restricted"));
+    const detail = await loadInstrumentDetail(service, "IE-XETR:VWCE", "1Y", now);
+    expect(detail.etfAnalytics).toBeNull();
+    expect(detail.etfAnalyticsMessage).toMatch(/unavailable/);
+    expect(detail.quote?.price).toBe(124);
+    expect(detail.points.length).toBe(10);
   });
   it("handles an empty requested range without manufacturing dates", async () => {
     const detail = await loadInstrumentDetail(createDeterministicMarketDataService(), "US-XNAS:AAPL", "1M", new Date("2026-09-21T00:00:00.000Z"));

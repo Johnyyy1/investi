@@ -9,6 +9,9 @@ import type {
 } from "./contracts";
 import type { ProviderQuote } from "./provider";
 import type { EquityFundamentalsSnapshot } from "./equity-fundamentals";
+import type { EtfDataset, EtfInfo, EtfHoldings, EtfAllocation } from "./etf-analytics";
+
+export type CachedEtfDataset = EtfDataset<EtfInfo | EtfHoldings | readonly EtfAllocation[]>;
 
 const MINUTE = 60 * 1_000;
 const HOUR = 60 * MINUTE;
@@ -23,6 +26,11 @@ export const defaultMarketDataCacheTtls = {
   corporateActionsMilliseconds: HOUR,
   /** Financial reports and TTM ratios update far less often than quotes. */
   equityFundamentalsMilliseconds: 6 * HOUR,
+  /** ETF composition and fund metadata update independently of intraday quotes. */
+  etfInfoMilliseconds: 24 * HOUR,
+  etfHoldingsMilliseconds: 12 * HOUR,
+  etfSectorsMilliseconds: 24 * HOUR,
+  etfCountriesMilliseconds: 24 * HOUR,
 } as const;
 
 export interface MarketDataCacheTtls {
@@ -33,6 +41,10 @@ export interface MarketDataCacheTtls {
   fxMilliseconds: number;
   corporateActionsMilliseconds: number;
   equityFundamentalsMilliseconds: number;
+  etfInfoMilliseconds: number;
+  etfHoldingsMilliseconds: number;
+  etfSectorsMilliseconds: number;
+  etfCountriesMilliseconds: number;
 }
 
 export interface InMemoryMarketDataCacheOptions {
@@ -84,6 +96,8 @@ export interface MarketDataCache {
   setCorporateActions(key: string, value: CorporateActionSeries): Promise<void>;
   getEquityFundamentals(key: string): Promise<EquityFundamentalsSnapshot | undefined>;
   setEquityFundamentals(key: string, value: EquityFundamentalsSnapshot): Promise<void>;
+  getEtfDataset(key: string, ttlKind: "info" | "holdings" | "sectors" | "countries"): Promise<CachedEtfDataset | undefined>;
+  setEtfDataset(key: string, value: CachedEtfDataset, ttlKind: "info" | "holdings" | "sectors" | "countries"): Promise<void>;
 }
 
 export class NoopMarketDataCache implements MarketDataCache {
@@ -101,6 +115,8 @@ export class NoopMarketDataCache implements MarketDataCache {
   async setCorporateActions(key: string, value: CorporateActionSeries) { void key; void value; }
   async getEquityFundamentals(key: string) { void key; return undefined; }
   async setEquityFundamentals(key: string, value: EquityFundamentalsSnapshot) { void key; void value; }
+  async getEtfDataset(key: string, ttlKind: "info" | "holdings" | "sectors" | "countries") { void key; void ttlKind; return undefined; }
+  async setEtfDataset(key: string, value: CachedEtfDataset, ttlKind: "info" | "holdings" | "sectors" | "countries") { void key; void value; void ttlKind; }
 }
 
 /**
@@ -115,6 +131,7 @@ export class InMemoryMarketDataCache implements MarketDataCache {
   private readonly fx: TtlStore<FxRate>;
   private readonly corporateActions: TtlStore<CorporateActionSeries>;
   private readonly equityFundamentals: TtlStore<EquityFundamentalsSnapshot>;
+  private readonly etfDatasets: Record<"info" | "holdings" | "sectors" | "countries", TtlStore<CachedEtfDataset>>;
 
   constructor(options: InMemoryMarketDataCacheOptions = {}) {
     const clock = options.clock ?? Date.now;
@@ -129,6 +146,12 @@ export class InMemoryMarketDataCache implements MarketDataCache {
     this.fx = new TtlStore(ttls.fxMilliseconds, clock);
     this.corporateActions = new TtlStore(ttls.corporateActionsMilliseconds, clock);
     this.equityFundamentals = new TtlStore(ttls.equityFundamentalsMilliseconds, clock);
+    this.etfDatasets = {
+      info: new TtlStore(ttls.etfInfoMilliseconds, clock),
+      holdings: new TtlStore(ttls.etfHoldingsMilliseconds, clock),
+      sectors: new TtlStore(ttls.etfSectorsMilliseconds, clock),
+      countries: new TtlStore(ttls.etfCountriesMilliseconds, clock),
+    };
   }
 
   async getSearch(key: string) { return this.search.get(key); }
@@ -145,4 +168,6 @@ export class InMemoryMarketDataCache implements MarketDataCache {
   async setCorporateActions(key: string, value: CorporateActionSeries) { this.corporateActions.set(key, value); }
   async getEquityFundamentals(key: string) { return this.equityFundamentals.get(key); }
   async setEquityFundamentals(key: string, value: EquityFundamentalsSnapshot) { this.equityFundamentals.set(key, value); }
+  async getEtfDataset(key: string, ttlKind: keyof typeof this.etfDatasets) { return this.etfDatasets[ttlKind].get(key); }
+  async setEtfDataset(key: string, value: CachedEtfDataset, ttlKind: keyof typeof this.etfDatasets) { this.etfDatasets[ttlKind].set(key, value); }
 }

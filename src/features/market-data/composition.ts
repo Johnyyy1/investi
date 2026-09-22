@@ -4,10 +4,12 @@ import { InMemoryMarketDataCache } from "./cache";
 import { FIXTURE_RETRIEVED_AT } from "./deterministic/fixtures";
 import { DeterministicMarketDataProvider } from "./deterministic/provider";
 import { DeterministicEquityFundamentalsProvider } from "./deterministic/fundamentals";
+import { DeterministicEtfAnalyticsProvider } from "./deterministic/etf-analytics";
 import type { FmpClientOptions } from "./fmp/client";
 import { FmpClient } from "./fmp/client";
 import { FmpMarketDataProvider } from "./fmp/provider";
 import { FmpEquityFundamentalsProvider } from "./fmp/equity-fundamentals";
+import { FmpEtfAnalyticsProvider } from "./fmp/etf-analytics";
 import type { FrankfurterClientOptions } from "./frankfurter/client";
 import { createFrankfurterFxProvider, FRANKFURTER_FX_CACHE_MILLISECONDS } from "./frankfurter/service";
 import { MarketDataError } from "./errors";
@@ -77,5 +79,6 @@ export function createMarketDataService(options: MarketDataCompositionOptions) {
       })
     : undefined);
   const equityFundamentalsProvider = provider === "deterministic" ? new DeterministicEquityFundamentalsProvider(clock) : new FmpEquityFundamentalsProvider(fmpClient!, clock);
-  return new MarketDataService(securityProvider, { ...serviceOptions, ...(cache ? { cache } : {}), clock, fxProvider, equityFundamentalsProvider });
+  const etfAnalyticsProvider = provider === "deterministic" ? new DeterministicEtfAnalyticsProvider(clock) : new FmpEtfAnalyticsProvider(fmpClient!, clock);
+  return new MarketDataService(securityProvider, { ...serviceOptions, ...(cache ? { cache } : {}), clock, fxProvider, equityFundamentalsProvider, etfAnalyticsProvider });
 }

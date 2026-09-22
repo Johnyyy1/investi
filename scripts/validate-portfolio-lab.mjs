@@ -104,6 +104,7 @@ try {
   assert.match(await page.getByRole("img", { name: /daily split-adjusted closing price chart/ }).getAttribute("aria-label"), /\d+ observations/, "daily chart uses available sample observations");
   assert.match(await page.locator("main").innerText(), /Selected 1Y price return/);
   await page.getByRole("heading", { name: "Key metrics" }).waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Fund overview" }).count(), 0, "equities do not render ETF analytics");
   assert.match(await page.locator("main").innerText(), /Valuation[\s\S]*Market cap[\s\S]*P\/E TTM[\s\S]*Profitability[\s\S]*Financial health[\s\S]*Latest fiscal year/i);
   assert.match(await page.locator("main").innerText(), /382\.4B USD/);
   const metricSignal = async (id) => page.locator(`[data-metric="${id}"]`).getAttribute("data-signal");
@@ -151,7 +152,32 @@ try {
   assert.match(await page.locator("main").innerText(), /VWCE · ETF · XETR/, "ETF detail uses ETF identity and exchange");
   assert.equal(await page.getByText("Last observation · Last observation", { exact: false }).count(), 0, "unknown session state does not duplicate the observation label");
   assert.equal(await page.getByRole("heading", { name: "Your position" }).count(), 0, "unowned ETF has no fake position");
+  await page.getByRole("heading", { name: "Fund overview" }).waitFor();
+  assert.match(await page.locator('[data-testid="etf-analytics"]').innerText(), /Expense ratio[\s\S]*0\.22%[\s\S]*AUM[\s\S]*14\.8B EUR[\s\S]*NAV[\s\S]*123\.68 EUR/);
+  assert.match(await page.locator('[data-testid="etf-analytics"]').innerText(), /Top holdings[\s\S]*Top 10 concentration[\s\S]*23\.1%[\s\S]*Sample Atlas Devices/);
+  assert.equal(await page.getByRole("heading", { name: "Sector exposure" }).count(), 1);
+  assert.equal(await page.getByRole("heading", { name: "Country exposure" }).count(), 1);
+  assert.equal(await page.getByText("P/E TTM", { exact: true }).count(), 0, "ETF does not show company ratios");
+  await page.getByLabel("About Expense ratio").focus();
+  await page.keyboard.press("Enter");
+  await page.getByText("Annual fund operating costs as a percentage of assets.").waitFor();
+  await page.keyboard.press("Enter");
+  await page.getByRole("heading", { name: "Fund overview" }).click();
+  const etfScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobile navigation"] { position: static !important; }' });
   await page.screenshot({ path: `${screenshotDir}/instrument-etf-1440.png`, fullPage: true });
+  await page.locator('[data-testid="etf-analytics"] > div').screenshot({ path: `${screenshotDir}/instrument-etf-holdings-sectors.png` });
+  await page.locator('section[aria-labelledby="etf-countries-heading"]').screenshot({ path: `${screenshotDir}/instrument-etf-countries.png` });
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `ETF detail has no overflow at ${width}`);
+    if (width === 320) await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    const etfOverflow = await page.evaluate(() => ({ exceeds: document.documentElement.scrollWidth > innerWidth, elements: [...document.querySelectorAll("main *")].filter((element) => element.scrollWidth > element.clientWidth + 1).slice(0, 18).map((element) => ({ tag: element.tagName, text: element.textContent?.trim().slice(0, 45), className: element.className?.toString().slice(0, 80), scroll: element.scrollWidth, client: element.clientWidth })) }));
+    assert.equal(etfOverflow.exceeds, false, `ETF detail supports ${width}px${width === 320 ? " and 200% text" : ""}: ${JSON.stringify(etfOverflow.elements)}`);
+    await page.screenshot({ path: `${screenshotDir}/instrument-etf-${width}${width === 320 ? "-200-percent" : ""}.png`, fullPage: true });
+    if (width === 320) await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  }
+  await etfScreenshotStyle.evaluate((style) => style.remove());
+  await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto(`${baseURL}/lab/instruments/US-XNAS%3AAAPL`);
   const detailInvest = page.getByRole("button", { name: /Invest/, exact: false }).first();
   await detailInvest.click();
