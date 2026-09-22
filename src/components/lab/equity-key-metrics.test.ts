@@ -26,8 +26,9 @@ describe("equity key metrics fallback", () => {
     const html = renderToStaticMarkup(createElement(EquityKeyMetrics, { snapshot, message: null, quoteCurrency: "USD" }));
     expect(html).toMatch(/data-metric="pe" data-signal="neutral"[^>]*text-foreground/);
     expect(html).toMatch(/data-metric="market-cap" data-signal="neutral"[^>]*text-foreground/);
-    expect(html).toMatch(/data-metric="operating-margin" data-signal="positive"[^>]*text-success-ink/);
-    expect(html).toMatch(/data-metric="net-debt-ebitda" data-signal="positive"[^>]*text-success-ink/);
+    expect(html).toMatch(/data-metric="operating-margin" data-signal="positive"[^>]*font-extrabold text-success-strong/);
+    expect(html).toMatch(/data-metric="net-debt-ebitda" data-signal="positive"[^>]*font-extrabold text-success-strong/);
+    expect(html).not.toContain("border-dotted");
     expect(html).toMatch(/Broad reference: positive/);
     expect(html).toContain("not investment ratings");
     expect(html).toContain("Above Investi&#x27;s broad 10% educational reference.");
@@ -38,5 +39,11 @@ describe("equity key metrics fallback", () => {
     expect(confirmed).toMatch(/data-metric="net-debt-ebitda" data-signal="positive"/);
     const unconfirmed = renderToStaticMarkup(createElement(EquityKeyMetrics, { snapshot: { ...sample, financialHealth: { ...sample.financialHealth, netDebtToEbitdaIsNetCash: false } }, message: null, quoteCurrency: "USD" }));
     expect(unconfirmed).toMatch(/data-metric="net-debt-ebitda" data-signal="neutral"/);
+  });
+  it("emphasizes caution values without coloring their labels", async () => {
+    const sample = await createDeterministicMarketDataService().getEquityFundamentals("US-XNAS:AAPL");
+    const caution = renderToStaticMarkup(createElement(EquityKeyMetrics, { snapshot: { ...sample, profitability: { ...sample.profitability, operatingMarginTtm: -0.05 } }, message: null, quoteCurrency: "USD" }));
+    expect(caution).toMatch(/data-metric="operating-margin" data-signal="caution"[^>]*font-extrabold text-danger-strong/);
+    expect(caution).not.toMatch(/<button[^>]*text-danger-strong/);
   });
 });

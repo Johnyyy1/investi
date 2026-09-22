@@ -102,6 +102,9 @@ try {
   assert.equal(await page.getByRole("heading", { name: "Your position" }).count(), 0, "unowned instrument has no invented position");
   assert.equal(await page.getByText("Sample data", { exact: true }).count(), 1, "deterministic detail is labeled as sample data");
   assert.match(await page.getByRole("img", { name: /daily split-adjusted closing price chart/ }).getAttribute("aria-label"), /\d+ observations/, "daily chart uses available sample observations");
+  assert.equal(await page.locator('[data-chart-tone="positive"]').count(), 1, "positive equity return gives the line chart a green tone");
+  assert.equal(await page.getByRole("button", { name: "Line", exact: true }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.getByRole("button", { name: "Candles", exact: true }).isEnabled(), true, "OHLC supports candlesticks");
   assert.match(await page.locator("main").innerText(), /Selected 1Y price return/);
   await page.getByRole("heading", { name: "Key metrics" }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Fund overview" }).count(), 0, "equities do not render ETF analytics");
@@ -116,23 +119,67 @@ try {
   await page.getByRole("button", { name: "P/E TTM" }).click();
   await page.getByText(/Share price relative to trailing twelve-month earnings/).waitFor();
   await page.getByRole("button", { name: "P/E TTM" }).click();
+  const equityScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobile navigation"] { position: static !important; }' });
   await page.screenshot({ path: `${screenshotDir}/instrument-aapl-1y-1440.png`, fullPage: true });
+  await page.locator('section[aria-labelledby="key-metrics-heading"]').screenshot({ path: `${screenshotDir}/instrument-equity-metrics-clean.png` });
+  const priceHistory = page.locator('section[aria-labelledby="price-history-heading"]');
+  const selectedStatistics = async () => priceHistory.locator("dl").last().innerText();
+  const fullStatistics = await selectedStatistics();
+  const lineHorizon = (await page.getByRole("img", { name: /daily split-adjusted closing price chart/ }).getAttribute("aria-label")).match(/observations from (.*?) to (.*?)\./);
+  assert.ok(lineHorizon, "line chart announces the full observation horizon");
+  await page.getByText("Zoom chart", { exact: true }).click();
+  const startHandle = page.getByRole("slider", { name: "Viewport start" });
+  await startHandle.focus();
+  await startHandle.press("End");
+  for (let index = 0; index < 30; index++) await startHandle.press("ArrowLeft");
+  await page.getByRole("status").filter({ hasText: /Viewing .* within 1Y/ }).waitFor();
+  assert.equal(await selectedStatistics(), fullStatistics, "line zoom leaves selected-period statistics unchanged");
+  assert.match(await page.getByRole("img", { name: /daily split-adjusted closing price chart/ }).getAttribute("aria-label"), /Viewing \d+ of \d+ observations/);
+  await page.screenshot({ path: `${screenshotDir}/instrument-aapl-line-zoom-1440.png`, fullPage: true });
+  await page.getByRole("button", { name: "Candles", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.getByRole("button", { name: "Candles", exact: true }).getAttribute("aria-pressed"), "true", "keyboard activates candle mode");
+  await page.getByRole("img", { name: /weekly split-adjusted candlestick chart/ }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Reset zoom" }).count(), 1, "switching chart type preserves the viewport");
+  const candleStatistics = await selectedStatistics();
+  assert.equal(candleStatistics.match(/1Y price return\n([^\n]+)/)?.[1], fullStatistics.match(/1Y price return\n([^\n]+)/)?.[1], "candle mode keeps the selected-period return");
+  await page.screenshot({ path: `${screenshotDir}/instrument-aapl-candles-zoom-1440.png`, fullPage: true });
+  await page.getByRole("button", { name: "Reset zoom" }).click();
+  assert.equal(await page.getByRole("button", { name: "Reset zoom" }).count(), 0, "reset returns to the full viewport");
+  assert.equal(await selectedStatistics(), candleStatistics, "reset does not change candle selected-period statistics");
+  assert.ok((await page.getByRole("img", { name: /weekly split-adjusted candlestick chart/ }).getAttribute("aria-label")).includes(`covering observations from ${lineHorizon[1]} to ${lineHorizon[2]}`), "reset candle chart covers the original full horizon");
+  assert.ok(await page.locator('[data-testid="candlestick-chart"] [data-direction]').count() >= 2, "candles have wicks and bodies");
+  await page.screenshot({ path: `${screenshotDir}/instrument-aapl-candles-1440.png`, fullPage: true });
+  for (const longRange of ["5Y", "Max"]) {
+    await page.getByRole("navigation", { name: "Price history timeframe" }).getByRole("link", { name: longRange }).click();
+    await page.waitForURL(new RegExp(`range=${longRange}`));
+    await page.getByRole("button", { name: "Candles", exact: true }).click();
+    assert.match(await page.getByRole("img", { name: /monthly split-adjusted candlestick chart/ }).getAttribute("aria-label"), /covering observations from 2 Jan 2025 to 16 Jan 2026/, `${longRange} candles retain all available observations`);
+    await page.screenshot({ path: `${screenshotDir}/instrument-aapl-${longRange.toLowerCase()}-candles-1440.png`, fullPage: true });
+  }
+  await page.getByRole("navigation", { name: "Price history timeframe" }).getByRole("link", { name: "1Y" }).click();
+  await page.waitForURL(/range=1Y/);
+  await equityScreenshotStyle.evaluate((style) => style.remove());
+  await page.getByRole("button", { name: "Line", exact: true }).click();
+  await page.getByText("Zoom chart", { exact: true }).click();
+  await startHandle.press("End");
+  await page.getByRole("status").filter({ hasText: /Viewing .* within 1Y/ }).waitFor();
   await page.getByRole("navigation", { name: "Price history timeframe" }).getByRole("link", { name: "1M" }).click();
   await page.waitForURL(/range=1M/);
+  assert.equal(await page.getByRole("button", { name: "Reset zoom" }).count(), 0, "changing timeframe resets the viewport");
   assert.match(await page.locator("main").innerText(), /Selected 1M price return/);
   assert.match(await page.locator("main").innerText(), /Started · .*Ended · .*Period low.*Period high/s);
   await page.screenshot({ path: `${screenshotDir}/instrument-aapl-1m-1440.png`, fullPage: true });
+  await page.getByRole("button", { name: "Candles", exact: true }).click();
   for (const width of [320, 375, 390, 768, 1024]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.waitForFunction(() => {
-      const plot = document.querySelector('[aria-label*="daily split-adjusted closing price chart"]');
-      const svg = plot?.querySelector("svg");
-      return !svg || svg.getBoundingClientRect().width <= plot.getBoundingClientRect().width + 1;
-    });
+    await page.getByRole("img", { name: /daily split-adjusted candlestick chart/ }).waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `instrument detail has no overflow at ${width}`);
+    if (width === 390) await page.screenshot({ path: `${screenshotDir}/instrument-aapl-candles-390.png`, fullPage: true });
     if (width === 320) {
       await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "instrument detail supports 200% text");
+      await page.screenshot({ path: `${screenshotDir}/instrument-aapl-candles-320-200-percent.png`, fullPage: true });
       await page.screenshot({ path: `${screenshotDir}/instrument-aapl-320-200-percent.png`, fullPage: true });
       await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     }
@@ -165,6 +212,20 @@ try {
   await page.getByRole("heading", { name: "Fund overview" }).click();
   const etfScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobile navigation"] { position: static !important; }' });
   await page.screenshot({ path: `${screenshotDir}/instrument-etf-1440.png`, fullPage: true });
+  await page.locator('[data-testid="etf-analytics"]').screenshot({ path: `${screenshotDir}/instrument-etf-analytics-clean.png` });
+  const etfStatistics = await page.locator('section[aria-labelledby="price-history-heading"] dl').last().innerText();
+  await page.getByText("Zoom chart", { exact: true }).click();
+  await page.getByRole("slider", { name: "Viewport start" }).press("End");
+  await page.getByRole("status").filter({ hasText: /Viewing .* within 1Y/ }).waitFor();
+  assert.equal(await page.locator('section[aria-labelledby="price-history-heading"] dl').last().innerText(), etfStatistics, "ETF line zoom keeps range statistics");
+  await page.screenshot({ path: `${screenshotDir}/instrument-etf-line-zoom-1440.png`, fullPage: true });
+  await page.getByRole("button", { name: "Candles", exact: true }).click();
+  await page.getByRole("img", { name: /weekly split-adjusted candlestick chart/ }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Reset zoom" }).count(), 1, "ETF candle mode preserves zoom");
+  await page.screenshot({ path: `${screenshotDir}/instrument-etf-candles-zoom-1440.png`, fullPage: true });
+  await page.getByRole("button", { name: "Reset zoom" }).click();
+  assert.match(await page.locator('section[aria-labelledby="price-history-heading"]').innerText(), /Period low\s*117\.789 EUR/, "candle summary uses OHLC low instead of closing low");
+  await page.screenshot({ path: `${screenshotDir}/instrument-etf-candles-1440.png`, fullPage: true });
   await page.locator('[data-testid="etf-analytics"] > div').screenshot({ path: `${screenshotDir}/instrument-etf-holdings-sectors.png` });
   await page.locator('section[aria-labelledby="etf-countries-heading"]').screenshot({ path: `${screenshotDir}/instrument-etf-countries.png` });
   for (const width of [390, 320]) {

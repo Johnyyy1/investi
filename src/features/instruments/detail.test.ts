@@ -39,7 +39,7 @@ describe("instrument detail loading", () => {
     const month = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1M", now);
     expect(month.points.length).toBeGreaterThan(10);
     expect(month.points.length).toBeLessThan(series.points.length);
-    expect(month.points.at(-1)).toEqual({ date: "2026-01-16", close: 114 });
+    expect(month.points.at(-1)).toMatchObject({ date: "2026-01-16", close: 114, open: expect.any(Number), high: expect.any(Number), low: expect.any(Number) });
   });
   it("preserves chart when quote is unavailable", async () => {
     const service = createDeterministicMarketDataService();

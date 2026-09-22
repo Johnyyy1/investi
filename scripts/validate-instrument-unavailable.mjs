@@ -38,6 +38,7 @@ try {
   await page.goto(`${baseURL}/lab/instruments/US-XNAS%3AAAPL?range=1M`);
   await page.getByRole("status").filter({ hasText: "Price history is not available for this range" }).waitFor();
   assert.equal(await page.getByRole("img", { name: /daily closing price chart/ }).count(), 0, "an empty range never fabricates chart points");
+  assert.equal(await page.getByText("Zoom chart", { exact: true }).count(), 0, "unavailable history has no zoom controls");
   await page.screenshot({ path: `${screenshotDir}/history-unavailable-1440.png`, fullPage: true });
   await page.setViewportSize({ width: 320, height: 900 });
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });

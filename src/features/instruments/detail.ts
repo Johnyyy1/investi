@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isMarketDataError } from "@/features/market-data/errors";
-import type { Instrument, Quote } from "@/features/market-data/contracts";
+import type { HistoricalPricePoint, Instrument, Quote } from "@/features/market-data/contracts";
 import type { MarketDataService } from "@/features/market-data/service";
 import type { EquityFundamentalsSnapshot } from "@/features/market-data/equity-fundamentals";
 import type { EtfAnalyticsSnapshot } from "@/features/market-data/etf-analytics";
@@ -10,7 +10,7 @@ import { chartPoints, historicalRequest, type ChartRange } from "./history";
 export type InstrumentDetail = {
   instrument: Instrument | null;
   quote: Quote | null;
-  points: { date: string; close: number }[];
+  points: HistoricalPricePoint[];
   quoteMessage: string | null;
   historyMessage: string | null;
   metadataMessage: string | null;
@@ -45,7 +45,7 @@ export async function loadInstrumentDetail(service: MarketDataService, instrumen
   const quote = quoteResult.status === "fulfilled" && quoteResult.value.instrumentId === instrumentId && quoteResult.value.currency === instrument.quoteCurrency ? quoteResult.value : null;
   const series = historyResult.status === "fulfilled" ? historyResult.value : null;
   const points = series && series.instrumentId === instrumentId && series.currency === instrument.quoteCurrency
-    ? chartPoints(series, request.startDate, request.endDate).map(({ date, close }) => ({ date, close })) : [];
+    ? chartPoints(series, request.startDate, request.endDate) : [];
   return {
     instrument,
     quote,

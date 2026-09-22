@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CircleHelp } from "lucide-react";
 import type { Currency } from "@/features/market-data/contracts";
 import type { EquityFundamentalsSnapshot } from "@/features/market-data/equity-fundamentals";
 import { formatMagnitude, formatMultiple, formatPercent, formatPerShare } from "@/features/instruments/fundamentals-presentation";
@@ -58,7 +59,7 @@ function metricGroups(snapshot: EquityFundamentalsSnapshot, quoteCurrency: Curre
 }
 
 const signalColor: Record<MetricSignal, string> = {
-  neutral: "text-foreground", positive: "text-success-ink", caution: "text-danger-ink", unavailable: "text-secondary", "not-meaningful": "text-secondary",
+  neutral: "text-foreground", positive: "font-extrabold text-success-strong", caution: "font-extrabold text-danger-strong", unavailable: "text-secondary", "not-meaningful": "text-secondary",
 };
 
 const signalDescription: Record<MetricSignal, string> = {
@@ -74,7 +75,7 @@ export function EquityKeyMetrics({ snapshot, message, quoteCurrency }: { snapsho
     {classification ? <p className="mt-2 text-small text-secondary">{classification}</p> : null}
     {!snapshot ? <p role="status" className="mt-5 text-small text-secondary">{message ?? "Company metrics are unavailable right now."}</p> : <>
       <div className="mt-6 grid gap-x-10 gap-y-8 lg:grid-cols-2">
-        {metricGroups(snapshot, quoteCurrency).map(({ title, metrics }) => <div key={title} className="min-w-0"><h3 className="border-b border-border pb-2 text-microcopy font-bold uppercase tracking-[0.1em] text-secondary">{title}</h3><dl className="divide-y divide-border/70">{metrics.map((metric) => <div key={metric.id} className="grid min-w-0 grid-cols-1 items-start gap-x-4 py-2.5 text-small min-[375px]:grid-cols-[minmax(0,1fr)_auto]"><dt className="min-w-0"><button type="button" aria-expanded={openMetric === metric.id} aria-controls={`metric-help-${metric.id}`} className="min-h-7 border-b border-dotted border-secondary/60 text-left text-secondary hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-primary" onClick={() => setOpenMetric(openMetric === metric.id ? null : metric.id)}>{metric.label}</button><p id={`metric-help-${metric.id}`} hidden={openMetric !== metric.id} className="mt-1 max-w-[26rem] text-microcopy leading-relaxed text-secondary">{metric.explanation}</p></dt><dd data-metric={metric.id} data-signal={metric.signal} className={`break-words text-left font-bold tabular-nums min-[375px]:max-w-[45vw] min-[375px]:text-right sm:max-w-none ${signalColor[metric.signal]}`}>{metric.value}{signalDescription[metric.signal] ? <span className="sr-only"> {signalDescription[metric.signal]}</span> : null}</dd></div>)}</dl></div>)}
+        {metricGroups(snapshot, quoteCurrency).map(({ title, metrics }) => <div key={title} className="min-w-0"><h3 className="border-b border-border pb-2 text-microcopy font-bold uppercase tracking-[0.1em] text-secondary">{title}</h3><dl className="divide-y divide-border/70">{metrics.map((metric) => <div key={metric.id} className="grid min-w-0 grid-cols-1 items-start gap-x-4 py-2.5 text-small min-[375px]:grid-cols-[minmax(0,1fr)_auto]"><dt className="min-w-0"><button type="button" aria-expanded={openMetric === metric.id} aria-controls={`metric-help-${metric.id}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-sm text-left text-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary" onClick={() => setOpenMetric(openMetric === metric.id ? null : metric.id)}><span>{metric.label}</span><CircleHelp aria-hidden="true" className="size-3.5 shrink-0 text-primary-hover" /></button><p id={`metric-help-${metric.id}`} hidden={openMetric !== metric.id} className="mt-1 max-w-[26rem] text-microcopy leading-relaxed text-secondary">{metric.explanation}</p></dt><dd data-metric={metric.id} data-signal={metric.signal} className={`break-words text-left font-bold tabular-nums min-[375px]:max-w-[45vw] min-[375px]:text-right sm:max-w-none ${signalColor[metric.signal]}`}>{metric.value}{signalDescription[metric.signal] ? <span className="sr-only"> {signalDescription[metric.signal]}</span> : null}</dd></div>)}</dl></div>)}
       </div>
       <p className="mt-6 text-microcopy leading-relaxed text-secondary">TTM ratios use the latest available trailing twelve months. Market cap comes from the company profile. Fiscal-year figures are reported amounts{snapshot.businessPerformance.fiscalYearEnd ? ` for the year ended ${dateLabel(snapshot.businessPerformance.fiscalYearEnd)}` : ""}{snapshot.businessPerformance.filingDate ? `, filed ${dateLabel(snapshot.businessPerformance.filingDate)}` : ""}.</p>
       <p className="mt-2 text-microcopy leading-relaxed text-secondary">Colors use broad educational reference ranges. They are not investment ratings and can vary by industry.</p>
