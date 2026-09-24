@@ -154,11 +154,11 @@ try {
   await progress.locator("img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
   assert.equal(await progress.getByText("Illustrative progress preview", { exact: true }).count(), 1);
   assert.equal(await progress.getByText("4 days", { exact: true }).count(), 1);
-  assert.equal(await progress.getByText("12,000 Kč", { exact: true }).count(), 1);
-  assert.equal(await progress.locator("strong").filter({ hasText: "6 of 10 lessons completed" }).count(), 1);
-  assert.equal(await progress.getByText("+2,000 Kč per lesson", { exact: true }).count(), 1);
-  assert.equal(await progress.getByText(/\bXP\b/).count(), 0, "Progress marketing no longer advertises XP");
-  assert.equal(await progress.getByRole("progressbar", { name: "6 of 10 lessons completed" }).getAttribute("value"), "6");
+  assert.equal(await progress.getByText("5 000 Kč", { exact: true }).count(), 1);
+  assert.equal(await progress.locator("strong").filter({ hasText: "7 of 10 lessons completed" }).count(), 1);
+  assert.equal(await progress.getByText("420 XP · Portfolio Lab unlocked", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText(/per lesson/i).count(), 0, "Progress marketing does not imply a per-lesson capital reward");
+  assert.equal(await progress.getByRole("progressbar", { name: "7 of 10 lessons completed" }).getAttribute("value"), "7");
   const progressAssets = ["flame-icon.webp", "growing-coin.webp", "gold-icon.webp", "books-icon.webp"];
   assert.equal(await progress.locator("img").count(), progressAssets.length, "Progress scene uses a curated four-asset composition");
   for (const asset of progressAssets) {

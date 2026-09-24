@@ -4,7 +4,7 @@ import { foundationsSteps } from "../foundations/content";
 import { availableLessons } from "../../learning/catalog";
 import { returnsLessons } from "./manifest";
 
-type Step = { title: string; blocks: readonly string[] };
+type Step = { title: string; kind?: "lesson" | "mastery"; blocks: readonly string[] };
 const introductionSteps: Step[] = [
   { title: "What does a return measure?", blocks: ["meaning", "price-change"] },
   { title: "Put the change in context", blocks: ["formula-one", "formula-two"] },
@@ -37,7 +37,7 @@ export function getStepDefinitions(lessonId: string): readonly Step[] {
 }
 /** Presentation only: the authored lessons remain the source of every concept and exercise. */
 export function getGuidedSteps(lesson: AuthoredLesson) {
-  return getStepDefinitions(lesson.id).map((step) => ({ title: step.title, blocks: step.blocks.map((id) => {
+  return getStepDefinitions(lesson.id).map((step) => ({ title: step.title, kind: step.kind, blocks: step.blocks.map((id) => {
     const block = lesson.blocks.find((item) => item.id === id);
     if (!block) throw new Error(`Missing authored block: ${id}`);
     return block;

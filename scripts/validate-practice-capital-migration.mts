@@ -9,8 +9,9 @@ const databaseUrl = process.env.DATABASE_URL;
 assert.ok(databaseUrl, "DATABASE_URL is required.");
 assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(new URL(databaseUrl).hostname), "Requires local DB.");
 
-const migration = await readFile(new URL("../drizzle/0004_awesome_sebastian_shaw.sql", import.meta.url), "utf8");
-const statements = migration.split("--> statement-breakpoint").map((statement) => statement.trim()).filter(Boolean);
+const legacyRewardMigration = await readFile(new URL("../drizzle/0004_awesome_sebastian_shaw.sql", import.meta.url), "utf8");
+const xpOnlyRewardMigration = await readFile(new URL("../drizzle/0008_overconfident_shape.sql", import.meta.url), "utf8");
+const statements = (migration: string) => migration.split("--> statement-breakpoint").map((statement) => statement.trim()).filter(Boolean);
 const sql = postgres(databaseUrl, { prepare: false, max: 1 });
 
 function schemaName(label: string) {
@@ -61,8 +62,8 @@ async function createLegacySchema(tx: postgres.TransactionSql) {
   `);
 }
 
-async function applyMigration(tx: postgres.TransactionSql) {
-  for (const statement of statements) await tx.unsafe(statement);
+async function applyMigration(tx: postgres.TransactionSql, migration = legacyRewardMigration) {
+  for (const statement of statements(migration)) await tx.unsafe(statement);
 }
 
 async function receiptSnapshot(tx: postgres.TransactionSql) {
@@ -137,7 +138,42 @@ try {
     }));
   });
 
-  console.log("PASS: Practice Capital migration handles legacy data, reconciliation, partial backfill, and reruns.");
+  await runInSchema("xp_only", async (tx) => {
+    await createLegacySchema(tx);
+    await tx.unsafe(`
+      INSERT INTO lesson VALUES ('legacy', true), ('current', true);
+      INSERT INTO lesson_award VALUES
+        ('learner', 'legacy', 60, '2026-09-08', 'Europe/Prague', '2026-09-08T10:00:00Z');
+    `);
+    await applyMigration(tx);
+
+    const before = await receiptSnapshot(tx);
+    assert.equal(before[0]?.practice_capital_minor, "200000");
+    assert.equal(before[0]?.reward_policy_version, 1);
+
+    await applyMigration(tx, xpOnlyRewardMigration);
+    assert.deepEqual(await receiptSnapshot(tx), before, "policy v2 migration must not rewrite historical receipts");
+
+    await tx.unsafe(`
+      INSERT INTO lesson_award (
+        user_id, lesson_id, xp, practice_capital_minor, reward_policy_version,
+        learning_date, time_zone, awarded_at
+      ) VALUES (
+        'learner', 'current', 60, 0, 2,
+        '2026-09-24', 'Europe/Prague', '2026-09-24T10:00:00Z'
+      )
+    `);
+    const after = await receiptSnapshot(tx);
+    assert.deepEqual(
+      after.map((row) => [row.lesson_id, row.practice_capital_minor, row.reward_policy_version]),
+      [["current", "0", 2], ["legacy", "200000", 1]],
+    );
+    await assert.rejects(() => tx.savepoint(async (savepoint) => {
+      await savepoint.unsafe(`UPDATE lesson_award SET practice_capital_minor = -1 WHERE lesson_id = 'current'`);
+    }));
+  });
+
+  console.log("PASS: Practice Capital migrations preserve v1 receipts, accept v2 zero-capital receipts, reject negatives, and handle reconciliation, partial backfill, and v1 reruns.");
 } finally {
   await sql.end();
 }

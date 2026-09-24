@@ -1,7 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { annualCoupon, bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, portfolioWeightedReturn, simpleBondCashflows, totalCouponPayments, validatePortfolioWeights } from "./foundations";
-import { compoundValue } from "./returns";
+import { annualCoupon, bidAskSpread, compoundReturn, drawdownFromPeak, growthFactor, immediateExecutionPrice, marketCapitalization, ownershipPercentage, portfolioWeight, portfolioWeightedReturn, positionValue, simpleBondCashflows, totalCouponPayments, validatePortfolioWeights, weightedContribution } from "./foundations";
+import { compoundValue, simpleReturn } from "./returns";
 describe("beginner financial examples", () => {
+  it("calculates the Foundations position-value example", () => {
+    expect(positionValue(3, 150)).toBe(450);
+    expect(positionValue(0.25, 100.1)).toBeCloseTo(25.025, 12);
+  });
+  it("calculates simple returns, growth factors, and multiplicative compounding", () => {
+    expect(simpleReturn(100, 110)).toBeCloseTo(0.1, 12);
+    expect(simpleReturn(100, 80)).toBeCloseTo(-0.2, 12);
+    expect(growthFactor(0.1)).toBeCloseTo(1.1, 12);
+    expect(compoundReturn([0.2, -0.2])).toBeCloseTo(-0.04, 12);
+  });
+  it("calculates portfolio weights and weighted contribution", () => {
+    expect(portfolioWeight(2_000, 5_000)).toBeCloseTo(0.4, 12);
+    expect(weightedContribution(0.4, 0.05)).toBeCloseTo(0.02, 12);
+  });
+  it("maps immediate buys to ask and immediate sells to bid", () => {
+    expect(immediateExecutionPrice("buy", 99.8, 100.2)).toBe(100.2);
+    expect(immediateExecutionPrice("sell", 99.8, 100.2)).toBe(99.8);
+    expect(bidAskSpread(99.8, 100.2)).toBeCloseTo(0.4, 12);
+  });
   it("distinguishes fractions from percentages", () => {
     expect(ownershipPercentage(100, 1_000_000)).toBe(0.01);
     expect(ownershipPercentage(0, 100)).toBe(0);

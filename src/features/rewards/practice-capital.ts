@@ -1,9 +1,12 @@
 /**
- * Reward policy v1: one eligible first lesson completion earns 2,000.00 CZK
- * (200,000 minor units) of virtual, non-withdrawable Practice Capital.
+ * Reward policy v2: a first lesson completion earns XP only. Historical v1
+ * receipts retain their stored Practice Capital amount and remain authoritative.
  */
-export const LESSON_PRACTICE_CAPITAL_MINOR = BigInt(200_000);
-export const REWARD_POLICY_VERSION = 1;
+export const LEGACY_REWARD_POLICY_VERSION = 1;
+export const XP_ONLY_REWARD_POLICY_VERSION = 2;
+export const LESSON_PRACTICE_CAPITAL_MINOR = BigInt(0);
+export const REWARD_POLICY_VERSION = XP_ONLY_REWARD_POLICY_VERSION;
+export const LEGACY_LESSON_PRACTICE_CAPITAL_MINOR = BigInt(200_000);
 
 export type PracticeCapitalAward = {
   lessonId: string;

@@ -1,0 +1,2 @@
+ALTER TABLE "lesson_award" DROP CONSTRAINT "lesson_award_practice_capital_positive_check";--> statement-breakpoint
+ALTER TABLE "lesson_award" ADD CONSTRAINT "lesson_award_practice_capital_nonnegative_check" CHECK ("lesson_award"."practice_capital_minor" >= 0);

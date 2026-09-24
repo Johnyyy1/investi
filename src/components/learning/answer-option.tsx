@@ -24,6 +24,6 @@ export function AnswerOption({ name, value, type = "radio", state = "idle", chec
     {shortcut ? <span aria-hidden="true" className="text-ql-meta text-ql-secondary">{shortcut}</span> : null}
     {state === "correct" ? <CircleCheck className="size-5 shrink-0 text-ql-success-ink" aria-hidden="true" /> : null}
     {state === "incorrect" ? <CircleX className="size-5 shrink-0 text-ql-danger-ink" aria-hidden="true" /> : null}
-    <span id={id} className="sr-only">{state === "correct" ? "Correct answer" : state === "incorrect" ? "Incorrect answer" : ""}</span>
+    <span id={id} className="sr-only">{state === "correct" ? "Správná odpověď" : state === "incorrect" ? "Nesprávná odpověď" : ""}</span>
   </label>;
 }

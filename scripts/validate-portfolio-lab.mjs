@@ -16,7 +16,7 @@ await mkdir(screenshotDir, { recursive: true });
 const email = `portfolio-browser-${randomUUID()}@example.com`;
 const password = randomUUID();
 let userId;
-const minorFromCzk = (value) => BigInt(Math.round(Number(value.replace(/[^\d.-]/g, "")) * 100));
+const minorFromCzk = (value) => BigInt(Math.round(Number(value.replace(/\s/g, "").replace("Kč", "").replace("−", "-").replace(",", ".")) * 100));
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 950 }, timezoneId: "Europe/Prague" });
   const errors = [];
@@ -30,7 +30,7 @@ try {
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   await page.goto(`${baseURL}/lab/portfolio`);
   await page.getByRole("heading", { name: "Portfolio Lab", exact: true }).waitFor();
-  assert.equal(await page.getByRole("link", { name: "Continue learning", exact: true }).getAttribute("href"), "/learn", "new learner sees unlock path");
+  assert.equal(await page.getByRole("link", { name: "Pokračovat v učení", exact: true }).getAttribute("href"), "/learn", "new learner sees unlock path");
   // This suite exercises the existing zero-capital trade UI with an explicit
   // entitlement fixture. The progression suite covers the real unlock grant.
   await sql`insert into progression_unlock (user_id, unlock_id, practice_capital_minor, reason, unlocked_at)
@@ -62,10 +62,10 @@ try {
     await tx`insert into lesson_award (user_id, lesson_id, xp, practice_capital_minor, reward_policy_version, learning_date, time_zone, awarded_at) values (${userId}, ${lessonId}, 60, 200000, 1, '2026-09-14', 'Europe/Prague', ${now})`;
   });
   await page.reload();
-  assert.equal(await page.getByTestId("portfolio-cash").textContent(), "2,000 Kč", "later reward becomes available cash");
-  assert.equal(await page.getByTestId("portfolio-invested").textContent(), "0 Kč", "an empty portfolio has no invested value");
+  assert.equal(await page.getByTestId("portfolio-cash").textContent(), "2\u00a0000\u00a0Kč", "later reward becomes available cash");
+  assert.equal(await page.getByTestId("portfolio-invested").textContent(), "0\u00a0Kč", "an empty portfolio has no invested value");
   assert.equal(await page.getByText("Practice Capital earned", { exact: true }).count(), 0, "earned-capital copy is absent from the portfolio overview");
-  assert.match(await page.locator('section[aria-labelledby="portfolio-value-label"]').textContent(), /0 Kč\s*·\s*0\.00%/, "reward does not create investment gain");
+  assert.match(await page.locator('section[aria-labelledby="portfolio-value-label"]').textContent(), /0\sKč\s*·\s*0\.00%/, "reward does not create investment gain");
   await page.getByRole("heading", { name: "Your portfolio is ready", exact: true }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Holdings", exact: true }).count(), 0, "empty state avoids an empty holdings section");
   assert.equal(await page.getByRole("heading", { name: "Recent activity", exact: true }).count(), 0, "empty state avoids an empty activity section");
@@ -278,7 +278,7 @@ try {
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto(`${baseURL}/lab/portfolio`);
   const primaryInvest = page.getByRole("button", { name: "Invest", exact: true });
-  assert.equal(await page.getByTestId("portfolio-cash").textContent(), "1,351.62 Kč");
+  assert.equal(await page.getByTestId("portfolio-cash").textContent(), "1\u00a0351,62\u00a0Kč");
   const aapl = page.getByTestId("holding-AAPL");
   await aapl.waitFor();
   assert.equal(await page.getByRole("heading", { name: "Your portfolio is ready", exact: true }).count(), 0, "onboarding disappears after the first investment");
@@ -289,7 +289,7 @@ try {
   const firstInvested = minorFromCzk(await page.getByTestId("portfolio-invested").textContent());
   const firstTotal = minorFromCzk(await page.getByTestId("portfolio-value").textContent());
   assert.equal(firstCash + firstInvested, firstTotal, "portfolio value equals available cash plus invested value");
-  assert.match(await page.getByTestId("portfolio-gain-loss").textContent(), /0 Kč\s*·\s*0\.00%/, "the initial holding does not fabricate investment performance");
+  assert.match(await page.getByTestId("portfolio-gain-loss").textContent(), /0\sKč\s*·\s*0\.00%/, "the initial holding does not fabricate investment performance");
 
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -433,7 +433,7 @@ try {
   await dialog.getByRole("button", { name: "Reset portfolio", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Portfolio reset" }).waitFor();
   await page.getByTestId("holding-AAPL").waitFor({ state: "detached" });
-  await page.getByTestId("portfolio-cash").filter({ hasText: "2,000 Kč" }).waitFor();
+  await page.getByTestId("portfolio-cash").filter({ hasText: /2\s000\sKč/ }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Portfolio options", exact: true }).count(), 0, "reset returns to the guided empty state");
   const investAfterReset = page.getByRole("button", { name: "Invest", exact: true });
   await page.waitForFunction((element) => document.activeElement === element, await investAfterReset.elementHandle());

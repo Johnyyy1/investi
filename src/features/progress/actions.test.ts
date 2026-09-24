@@ -15,8 +15,8 @@ describe("shared persisted lesson actions", () => {
       portfolioLabUnlocked: false,
       unlockCapitalAwardedMinor: 0n,
       lessonXp: 60,
-      practiceCapitalAwardedMinor: BigInt(200_000),
-      earnedPracticeCapitalMinor: BigInt(1_200_000),
+      practiceCapitalAwardedMinor: BigInt(0),
+      earnedPracticeCapitalMinor: BigInt(0),
       gamification: { totalXp: 360, streak: 4, todayCompleted: 1, dailyTarget: 2, timeZone: "Europe/Prague" },
       nextHref: "/learn/next",
       nextTitle: "Next lesson",
@@ -29,13 +29,13 @@ describe("shared persisted lesson actions", () => {
     expect(mocks.count).toHaveBeenCalledWith("session-owner", moduleId);
     expect(mocks.revalidate).toHaveBeenCalledWith("/learn", "layout");
   });
-  it("serializes separate XP and Practice Capital rewards", async () => {
+  it("serializes XP-only lesson rewards separately from unlock capital", async () => {
     const result = await completeLessonAction("foundations-stocks");
     expect(result).toMatchObject({
       ok: true,
       reward: {
-        practiceCapitalAwardedMinor: "200000",
-        earnedPracticeCapitalMinor: "1200000",
+        practiceCapitalAwardedMinor: "0",
+        earnedPracticeCapitalMinor: "0",
         xpAwarded: 60,
         totalXp: 360,
         unlockCapitalAwardedMinor: "0",
@@ -57,15 +57,15 @@ describe("shared persisted lesson actions", () => {
     expect(mocks.start).not.toHaveBeenCalled(); expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.complete).not.toHaveBeenCalled();
   });
   it("bounds the Foundations cursor on the server and saves only to the session owner", async () => {
-    for (const position of [-1, 9, 1.5, Infinity]) expect(await saveLessonPositionAction("foundations-why-invest", position)).toMatchObject({ ok: false });
+    for (const position of [-1, 7, 1.5, Infinity]) expect(await saveLessonPositionAction("foundations-why-invest", position)).toMatchObject({ ok: false });
     expect(mocks.save).not.toHaveBeenCalled();
-    expect(await saveLessonPositionAction("foundations-why-invest", 8)).toEqual({ ok: true });
-    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-why-invest", lastPosition: 8, status: "in_progress" }, undefined);
+    expect(await saveLessonPositionAction("foundations-why-invest", 6)).toEqual({ ok: true });
+    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-why-invest", lastPosition: 6, status: "in_progress" }, undefined);
   });
   it("accepts every valid portfolio step and rejects a cursor past the final step", async () => {
-    expect(await saveLessonPositionAction("foundations-portfolio", 11)).toEqual({ ok: true });
-    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-portfolio", lastPosition: 11, status: "in_progress" }, undefined);
-    expect(await saveLessonPositionAction("foundations-portfolio", 12)).toMatchObject({ ok: false });
+    expect(await saveLessonPositionAction("foundations-portfolio", 7)).toEqual({ ok: true });
+    expect(mocks.save).toHaveBeenCalledWith("session-owner", { lessonId: "foundations-portfolio", lastPosition: 7, status: "in_progress" }, undefined);
+    expect(await saveLessonPositionAction("foundations-portfolio", 8)).toMatchObject({ ok: false });
   });
   it("rejects anonymous writes", async () => {
     mocks.user.mockResolvedValue(null);

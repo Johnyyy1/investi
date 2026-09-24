@@ -15,13 +15,13 @@ const screenshotDir = process.env.PROGRESSION_SCREENSHOT_DIR ?? "/tmp/investi-pr
 await mkdir(screenshotDir, { recursive: true });
 const ids = [];
 const required = [
-  { id: "foundations-why-invest", slug: "why-invest", finalPosition: 8 },
-  { id: "foundations-stocks", slug: "stocks", finalPosition: 9 },
-  { id: "foundations-etfs-indexes", slug: "etfs-and-indexes", finalPosition: 9 },
-  { id: "foundations-bonds-cash", slug: "bonds-and-cash", finalPosition: 9 },
-  { id: "foundations-markets", slug: "how-markets-work", finalPosition: 9 },
-  { id: "foundations-risk-reward", slug: "risk-vs-reward", finalPosition: 9 },
-  { id: "foundations-portfolio", slug: "your-first-portfolio", finalPosition: 11 },
+  { id: "foundations-why-invest", slug: "why-invest", finalPosition: 6 },
+  { id: "foundations-stocks", slug: "stocks", finalPosition: 6 },
+  { id: "foundations-etfs-indexes", slug: "etfs-and-indexes", finalPosition: 6 },
+  { id: "foundations-bonds-cash", slug: "bonds-and-cash", finalPosition: 6 },
+  { id: "foundations-markets", slug: "how-markets-work", finalPosition: 7 },
+  { id: "foundations-risk-reward", slug: "risk-vs-reward", finalPosition: 6 },
+  { id: "foundations-portfolio", slug: "your-first-portfolio", finalPosition: 7 },
 ];
 
 async function signUp(label) {
@@ -68,23 +68,23 @@ try {
   await page.getByTestId("total-xp").filter({ hasText: "0 XP" }).waitFor();
   await page.screenshot({ path: `${screenshotDir}/progress-zero-1440.png`, fullPage: true });
   await page.goto(`${baseURL}/lab`);
-  await page.getByText(/Locked · Complete Investing Foundations · 0 \/ 420 XP/).waitFor();
-  const labNav = page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: /Lab/ });
+  await page.getByText(/Zamčeno · dokonči Základy investování · 0 \/ 420 XP/).waitFor();
+  const labNav = page.getByRole("navigation", { name: "Hlavní navigace" }).getByRole("link", { name: /Lab/ });
   assert.equal(await labNav.getAttribute("href"), "/lab", "locked Lab navigation remains clickable");
   await labNav.focus();
   await labNav.press("Enter");
-  await page.getByRole("link", { name: "View unlock requirements" }).click();
+  await page.getByRole("link", { name: "Zobrazit podmínky odemčení" }).click();
   await page.getByRole("heading", { name: "Portfolio Lab", exact: true }).waitFor();
   assert.equal(await page.getByText("0 / 420 XP").count(), 1);
-  assert.equal(await page.getByText("0 / 7 lessons").count(), 1);
+  assert.equal(await page.getByText("0 / 7 lekcí").count(), 1);
   assert.equal(await page.getByRole("button", { name: /Invest/ }).count(), 0);
   assert.equal(await page.getByRole("heading", { name: "Holdings" }).count(), 0);
   await layout(page, "locked-portfolio");
 
   await seedFinalCursor(id, required[0].id, required[0].finalPosition);
   await page.goto(`${baseURL}/learn/investing-foundations/why-invest`);
-  await page.getByRole("button", { name: "Mark lesson complete" }).click();
-  await page.getByRole("heading", { name: "Lesson complete" }).waitFor();
+  await page.getByRole("button", { name: "Dokončit lekci" }).click();
+  await page.getByRole("heading", { name: "Lekce dokončena" }).waitFor();
   await page.getByText("+60 XP").waitFor();
   await page.screenshot({ path: `${screenshotDir}/lesson-xp-1440.png`, fullPage: true });
   await page.goto(`${baseURL}/progress`);
@@ -96,8 +96,8 @@ try {
     const lesson = required[index];
     await seedFinalCursor(id, lesson.id, lesson.finalPosition);
     await page.goto(`${baseURL}/learn/investing-foundations/${lesson.slug}`);
-    await page.getByRole("button", { name: "Mark lesson complete" }).click();
-    await page.getByRole("heading", { name: "Lesson complete" }).waitFor();
+    await page.getByRole("button", { name: "Dokončit lekci" }).click();
+    await page.getByRole("heading", { name: "Lekce dokončena" }).waitFor();
     await page.getByText("+60 XP").waitFor();
     await page.goto(`${baseURL}/progress`);
     await page.getByTestId("total-xp").filter({ hasText: `${(index + 1) * 60} XP` }).waitFor();
@@ -111,23 +111,23 @@ try {
 
   await seedFinalCursor(id, required.at(-1).id, required.at(-1).finalPosition);
   await page.goto(`${baseURL}/learn/investing-foundations/your-first-portfolio`);
-  await page.getByRole("button", { name: "Mark lesson complete" }).click();
-  await page.getByRole("heading", { name: "Lesson complete" }).waitFor();
+  await page.getByRole("button", { name: "Dokončit lekci" }).click();
+  await page.getByRole("heading", { name: "Lekce dokončena" }).waitFor();
   await page.getByText("+60 XP").waitFor();
-  await page.getByText("Portfolio Lab unlocked · +5,000 Kč Practice Capital").waitFor();
+  await page.getByText(/Portfolio Lab odemčen · \+5\s000\sKč Practice Capital/).waitFor();
   await page.screenshot({ path: `${screenshotDir}/lesson-unlock-1440.png`, fullPage: true });
   await page.reload();
-  assert.equal(await page.getByText("Portfolio Lab unlocked", { exact: false }).count(), 0, "unlock feedback is not replayed on reload");
+  assert.equal(await page.getByText("Portfolio Lab odemčen", { exact: false }).count(), 0, "unlock feedback is not replayed on reload");
   assert.equal(Number((await sql`select coalesce(sum(xp), 0)::int as xp from lesson_award where user_id = ${id}`)[0].xp), 420, "reload does not duplicate XP");
   assert.equal((await grants(id)).length, 1, "reload does not duplicate entitlement");
   await page.goto(`${baseURL}/progress`);
   await page.getByTestId("total-xp").filter({ hasText: "420 XP" }).waitFor();
-  await page.getByTestId("total-practice-capital").filter({ hasText: "19,000 Kč" }).waitFor();
+  await page.getByTestId("total-practice-capital").filter({ hasText: /5\s000\sKč/ }).waitFor();
   await layout(page, "progress-unlocked");
   await page.goto(`${baseURL}/lab/portfolio`);
-  await page.getByTestId("portfolio-cash").filter({ hasText: "19,000 Kč" }).waitFor();
+  await page.getByTestId("portfolio-cash").filter({ hasText: /5\s000\sKč/ }).waitFor();
   await page.reload();
-  await page.getByTestId("portfolio-cash").filter({ hasText: "19,000 Kč" }).waitFor();
+  await page.getByTestId("portfolio-cash").filter({ hasText: /5\s000\sKč/ }).waitFor();
   assert.equal((await grants(id)).length, 1, "refresh does not duplicate unlock grant");
   assert.equal((await grants(id))[0].practice_capital_minor, "500000");
   await page.screenshot({ path: `${screenshotDir}/portfolio-unlocked-1440.png`, fullPage: true });

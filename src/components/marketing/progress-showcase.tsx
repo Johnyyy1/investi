@@ -2,13 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import styles from "./marketing.module.css";
-import { LESSON_PRACTICE_CAPITAL_MINOR } from "@/features/rewards/practice-capital";
+import { PORTFOLIO_LAB_UNLOCK_CAPITAL_MINOR, PORTFOLIO_LAB_UNLOCK_ID, progressionUnlocks } from "@/features/progression/unlocks";
 import { formatPracticeCapitalMinor } from "@/features/rewards/presentation";
 
-const completedLessons = 6;
+const portfolioLabUnlock = progressionUnlocks[PORTFOLIO_LAB_UNLOCK_ID];
+const completedLessons = portfolioLabUnlock.prerequisiteLessonIds.length;
 const availableLessons = 10;
-const examplePracticeCapital = formatPracticeCapitalMinor(LESSON_PRACTICE_CAPITAL_MINOR * BigInt(completedLessons));
-const lessonPracticeCapital = formatPracticeCapitalMinor(LESSON_PRACTICE_CAPITAL_MINOR);
+const examplePracticeCapital = formatPracticeCapitalMinor(PORTFOLIO_LAB_UNLOCK_CAPITAL_MINOR);
 const exampleStreak = 4;
 
 export function ProgressShowcase() {
@@ -17,7 +17,7 @@ export function ProgressShowcase() {
       <div className={styles.progressCopy}>
         <p className={styles.progressEyebrow}>PROGRESS</p>
         <h2 id="progress-showcase-title">Keep the streak.<span>See yourself grow.</span></h2>
-        <p className={styles.progressDescription}>Small lessons add up. Keep your streak, earn virtual Practice Capital and see your investing knowledge grow over time.</p>
+        <p className={styles.progressDescription}>Small lessons add up. Keep your streak, earn XP, unlock Portfolio Lab and see your investing knowledge grow over time.</p>
         <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.progressCta}`}>Start learning <ArrowRight aria-hidden="true" /></Link>
       </div>
 
@@ -47,7 +47,7 @@ export function ProgressShowcase() {
           <progress className={styles.progressBar} max={availableLessons} value={completedLessons} aria-label={`${completedLessons} of ${availableLessons} lessons completed`}>{completedLessons} of {availableLessons} lessons completed</progress>
           <div className={styles.progressReward}>
             <span className={styles.rewardDot} aria-hidden="true" />
-            <span><small>First completion reward</small><strong>+{lessonPracticeCapital} per lesson</strong></span>
+            <span><small>Foundations milestone</small><strong>{portfolioLabUnlock.xpRequired} XP · Portfolio Lab unlocked</strong></span>
           </div>
         </div>
 

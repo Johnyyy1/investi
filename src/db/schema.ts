@@ -168,7 +168,7 @@ export const lessonAward = pgTable("lesson_award", {
   primaryKey({ columns: [table.userId, table.lessonId] }),
   index("lesson_award_user_date_idx").on(table.userId, table.learningDate),
   check("lesson_award_xp_check", sql`${table.xp} = 60`),
-  check("lesson_award_practice_capital_positive_check", sql`${table.practiceCapitalMinor} > 0`),
+  check("lesson_award_practice_capital_nonnegative_check", sql`${table.practiceCapitalMinor} >= 0`),
   check("lesson_award_reward_policy_version_positive_check", sql`${table.rewardPolicyVersion} > 0`),
 ]);
 

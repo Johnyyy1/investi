@@ -8,7 +8,7 @@ it("creates a consistent populated lesson history and real reward ledger", () =>
   const now = new Date("2026-09-09T00:01:00Z");
   const seed = demoSeed(now);
   expect(getGamification(seed.awards, now, "UTC", 20)).toMatchObject({ totalXp: 360, streak: 4, todayCompleted: 1, dailyTarget: 2 });
-  expect(getPracticeCapitalSummary(seed.awards)).toEqual({ earnedPracticeCapitalMinor: BigInt(1_200_000) });
+  expect(getPracticeCapitalSummary(seed.awards)).toEqual({ earnedPracticeCapitalMinor: BigInt(0) });
   expect(seed.awards.every((award) => award.practiceCapitalMinor === LESSON_PRACTICE_CAPITAL_MINOR && award.rewardPolicyVersion === REWARD_POLICY_VERSION)).toBe(true);
   expect(seed.progress.filter((row) => row.status === "completed").map((row) => row.lessonId)).toEqual(seed.awards.map((row) => row.lessonId));
   expect(seed.awards.every((award) => award.awardedAt <= now)).toBe(true);
@@ -25,6 +25,6 @@ describe("isolated deterministic seed values", () => {
     a.awards[0].practiceCapitalMinor = BigInt(999);
     expect(b.progress[0].lastPosition).not.toBe(99);
     expect(b.awards[0].xp).toBe(60);
-    expect(b.awards[0].practiceCapitalMinor).toBe(BigInt(200_000));
+    expect(b.awards[0].practiceCapitalMinor).toBe(BigInt(0));
   });
 });

@@ -1,246 +1,237 @@
-// Real local auth, server actions, and PostgreSQL; cleans up only this run's disposable account.
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import postgres from "postgres";
 import { chromium } from "playwright";
+import { finishOnboarding } from "./onboarding-helper.mjs";
 
 const baseURL = process.env.FOUNDATIONS_TEST_URL ?? "http://localhost:3000";
+const screenshotDir = process.env.FOUNDATIONS_SCREENSHOT_DIR ?? "/tmp/investi-foundations-phase-6a2";
 const local = (host) => ["localhost", "127.0.0.1", "[::1]"].includes(host);
-assert.ok(local(new URL(baseURL).hostname) && local(new URL(process.env.DATABASE_URL).hostname), "Requires local app and database");
+assert.ok(process.env.DATABASE_URL, "DATABASE_URL is required");
+assert.ok(local(new URL(baseURL).hostname) && local(new URL(process.env.DATABASE_URL).hostname), "Requires a local app and database");
+
 const sql = postgres(process.env.DATABASE_URL, { prepare: false });
-const email = `foundations-${randomUUID()}@example.com`;
+const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "chrome" });
+const email = `foundations-6a2-${randomUUID()}@example.com`;
 const password = randomUUID();
-const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
-const screenshotDir = "/tmp/investi-foundations-qa";
-await mkdir(screenshotDir, { recursive: true });
 let userId;
+await mkdir(screenshotDir, { recursive: true });
+
+async function answerChoice(page, label) {
+  await page.getByLabel(label, { exact: true }).click();
+  await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).click();
+  await page.getByRole("heading", { name: "Správně", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Pokračovat", exact: true }).click();
+}
+
+async function answerNumber(page, value) {
+  await page.getByLabel("Tvoje odpověď", { exact: true }).fill(String(value));
+  await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).click();
+  await page.getByRole("heading", { name: "Správně", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Pokračovat", exact: true }).click();
+}
+
+async function continueTo(page, heading) {
+  await page.getByRole("button", { name: "Pokračovat", exact: true }).click();
+  await page.getByRole("heading", { name: heading, exact: true }).waitFor();
+}
+
+async function completeLesson(page, expectedXp) {
+  await page.getByRole("button", { name: "Dokončit lekci", exact: true }).click();
+  await page.getByRole("heading", { name: "Lekce dokončena", exact: true }).waitFor();
+  await page.getByText("+60 XP", { exact: true }).waitFor();
+  const [{ xp }] = await sql`select coalesce(sum(xp), 0)::int as xp from lesson_award where user_id = ${userId}`;
+  assert.equal(xp, expectedXp);
+  const [{ capital }] = await sql`select coalesce(sum(practice_capital_minor), 0)::bigint::text as capital from lesson_award where user_id = ${userId}`;
+  assert.equal(capital, "0", "v2 lesson receipts add no Practice Capital");
+}
+
+async function nextLesson(page, heading) {
+  await page.getByRole("button", { name: "Další lekce", exact: true }).click();
+  await page.getByRole("heading", { name: heading, exact: true }).waitFor();
+}
+
+async function assertResponsive(page, label, screenshotAt = []) {
+  for (const width of [1440, 1024, 768, 390, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const overflow = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: innerWidth }));
+    assert.ok(overflow.document <= overflow.viewport, `${label} overflows at ${width}px: ${JSON.stringify(overflow)}`);
+    if (screenshotAt.includes(width)) await page.screenshot({ path: `${screenshotDir}/${label}-${width}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
+
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: "Europe/Prague" });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const errors = [];
-  let expectedNetworkFailure = false;
-  page.on("pageerror", (error) => { if (!expectedNetworkFailure) errors.push(error.message); });
-  page.on("console", (message) => { if (["warning", "error"].includes(message.type()) && !expectedNetworkFailure && !message.text().startsWith("You have Reduced Motion enabled on your device.")) errors.push(message.text()); });
-  const heading = (name) => page.getByRole("heading", { name, exact: true }).waitFor();
-  const button = (name) => page.getByRole("button", { name, exact: true });
-  const row = async (lesson) => (await sql`select * from lesson_progress where user_id = ${userId} and lesson_id = ${lesson}`)[0];
-  const profile = async () => (await sql`select * from learning_profile where user_id = ${userId}`)[0];
-  async function layouts(label, screenshots = false) {
-    for (const width of [320, 375, 390, 768, 1024, 1440]) {
-      await page.setViewportSize({ width, height: 820 });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: overflow at ${width}`);
-      assert.equal(await page.locator("h1").count(), 1, `${label}: one h1`);
-      const cta = page.locator("section .sticky").last();
-      if (await cta.count()) {
-        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-        const box = await cta.boundingBox();
-        assert.ok(box.y >= 0 && box.y + box.height <= 821, `${label}: reachable actions at ${width}`);
-      }
-      if (screenshots && [320, 390, 1440].includes(width)) await page.screenshot({ path: `${screenshotDir}/${label}-${width}.png`, fullPage: true });
-    }
-  }
-  async function textScale(label) {
-    await page.setViewportSize({ width: 1024, height: 900 });
-    await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: overflow at 200% text`);
-    assert.equal(await page.locator("h1").count(), 1, `${label}: one h1 at 200% text`);
-    await page.screenshot({ path: `${screenshotDir}/${label}-text-200.png`, fullPage: true });
-    await page.evaluate(() => { document.documentElement.style.removeProperty("font-size"); });
-  }
-  async function check(index, correct = true) {
-    const radios = page.getByRole("radio");
-    await radios.first().press("Space");
-    for (let i = 0; i < index; i++) await radios.nth(i).press("ArrowDown");
-    await radios.nth(index).press("Tab");
-    assert.equal(await button("Check answer").evaluate((el) => el === document.activeElement), true);
-    await button("Check answer").press("Enter");
-    await heading(correct ? "That’s right" : "Let’s work through it");
-    assert.equal(await button("Continue").evaluate((el) => el === document.activeElement), true, "Feedback hands focus to Continue");
-  }
-  async function next(title) {
-    await button("Continue").click(); await heading(title);
-    assert.equal(await page.locator("#step-title").evaluate((el) => el === document.activeElement), true, "Continue focuses next step heading");
-  }
-  async function failThenRetry(action, id) {
-    const url = page.url();
-    const before = await row(id);
-    expectedNetworkFailure = true;
-    await page.route(url, (route) => route.request().method() === "POST" ? route.abort() : route.continue());
-    await button(action).click(); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
-    await page.waitForFunction((name) => document.activeElement?.textContent === name, action);
-    assert.deepEqual(await row(id), before, "Failed writes preserve saved progress");
-    await page.unroute(url);
-    expectedNetworkFailure = false;
-  }
-  const modules = await sql`select slug, position from learning_module where slug in ('returns', 'investing-foundations') order by position`;
-  assert.deepEqual(modules.map((module) => module.slug), ["investing-foundations", "returns"]);
-  assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations'`)[0].count), 8);
-  assert.equal(Number((await sql`select count(*) from lesson where module_id = 'module-investing-foundations' and is_published`)[0].count), 7);
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => { if (["warning", "error"].includes(message.type()) && !message.text().startsWith("You have Reduced Motion enabled")) errors.push(message.text()); });
 
   await page.goto(`${baseURL}/sign-up`);
-  await page.getByLabel("Name", { exact: true }).fill("Foundations QA");
+  await page.getByLabel("Name", { exact: true }).fill("Foundations learner");
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await button("Create account").click(); await page.waitForURL("**/onboarding");
+  await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await finishOnboarding(page);
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
-  await button("Start learning").click(); await page.waitForURL("**/learn/investing-foundations/why-invest");
-  await page.goto(`${baseURL}/learn`);
-  assert.equal((await profile()).recommended_start, "investing-foundations");
-  const onboardingCompleted = (await profile()).onboarding_completed_at.toISOString();
-  // Simulate a completed profile from before Foundations existed; read-time recomputation is non-destructive.
-  await sql`update learning_profile set recommended_start = 'returns' where user_id = ${userId}`;
-  await page.reload(); await heading("Continue learning");
-  assert.equal(await page.locator('section[aria-labelledby="continue-heading"] a').getAttribute("href"), "/learn/investing-foundations/why-invest");
-  assert.equal((await profile()).recommended_start, "returns");
-  assert.equal((await profile()).onboarding_completed_at.toISOString(), onboardingCompleted);
-  await layouts("home", true);
-  await textScale("home");
-  assert.deepEqual(await page.getByTestId("journey-modules").getByRole("heading", { level: 3 }).allTextContents(), ["Investing Foundations", "Returns & Compounding"]);
-  assert.equal(await page.getByRole("list", { name: "Investing Foundations lesson progress" }).getByRole("listitem").count(), 8);
-  assert.equal(await page.locator('[aria-current="step"]').filter({ hasText: "Why invest?" }).count(), 1, "Journey identifies the next lesson without relying on color");
-  await layouts("learn", true);
-  await page.locator('a[href="/learn/investing-foundations"]').click(); await heading("Investing Foundations");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "0 of 7 available lessons complete");
-  const pathItems = page.getByRole("list", { name: "Module learning path" }).getByRole("listitem");
-  assert.equal(await pathItems.count(), 8);
-  for (let i = 7; i < 8; i++) assert.equal(await pathItems.nth(i).getByRole("button").count(), 0);
-  await layouts("module", true);
-  await pathItems.first().getByRole("button").click();
-  await heading("Same money, different purchasing power");
-  assert.equal(await page.getByRole("navigation", { name: /^(Main|Mobile) navigation$/ }).count(), 0);
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await layouts("opening", true); await check(1); await layouts("feedback", true);
-  await failThenRetry("Continue", "foundations-why-invest");
-  await next("Two tools for different needs");
-  await page.reload(); await heading("Two tools for different needs");
-  assert.equal((await row("foundations-why-invest")).last_position, 1);
-  for (const title of ["Think in baskets, not just euros", "Where could growth come from?", "Time gives growth room to build", "Risk enters the picture", "Change the assumptions"]) { await next(title); await layouts(title.replaceAll(/[^a-zA-Z]/g, "-")); }
-  await page.getByText("€16,288.95", { exact: true }).waitFor();
-  for (const [label, invalid, valid] of [["Starting value", "0", "10000"], ["Hypothetical annual rate", "-101", "5"], ["Time in years", "1.5", "10"]]) {
-    await page.getByLabel(label, { exact: true }).fill(invalid); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
-    assert.equal(await page.getByLabel(label, { exact: true }).getAttribute("aria-invalid"), "true");
-    await page.getByLabel(label, { exact: true }).fill(valid);
-  }
-  await page.getByLabel("Time in years").fill("20"); await page.getByText("€26,532.98", { exact: true }).waitFor();
-  await page.getByLabel("Hypothetical annual rate").fill("-10"); await page.getByLabel("Time in years").fill("2"); await page.getByText("€8,100.00", { exact: true }).waitFor();
-  await page.getByText("See values year by year", { exact: true }).press("Enter"); await layouts("growth-expanded", true);
-  await next("Match the tool to the idea"); await check(0, false); await next("A reason to understand both");
-  assert.equal((await row("foundations-why-invest")).status, "in_progress");
-  await failThenRetry("Mark lesson complete", "foundations-why-invest");
-  await button("Mark lesson complete").click(); await heading("Lesson complete");
-  assert.equal((await row("foundations-why-invest")).status, "completed");
-  await layouts("completion", true);
-  await textScale("completion");
-  await button("Next lesson").click(); await heading("Imagine a business split into pieces");
-  await check(1); await next("How much of the business?"); await page.getByText("0.01%", { exact: true }).waitFor();
-  for (const [label, invalid, valid] of [["Total shares", "0", "1000000"], ["Owned shares", "-1", "100"], ["Owned shares", "1000001", "100"]]) {
-    await page.getByLabel(label, { exact: true }).fill(invalid); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
-    await page.getByLabel(label, { exact: true }).fill(valid);
-  }
-  await page.getByLabel("Owned shares", { exact: true }).fill("100000"); await page.getByText("10%", { exact: true }).waitFor(); await layouts("ownership", true);
-  await textScale("ownership");
-  await next("A price is attached to each piece"); await next("Put a value on all the shares"); await page.getByText("€50,000,000.00", { exact: true }).waitFor();
-  await page.getByLabel("Share price", { exact: true }).fill("-1"); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
-  await page.getByLabel("Share price", { exact: true }).fill("25"); await page.getByText("€25,000,000.00", { exact: true }).waitFor(); await layouts("market-cap", true);
-  await next("Why can the price move?"); await next("Owners may receive dividends"); await next("Practice the ownership fraction");
-  await page.getByLabel("Your answer", { exact: true }).fill("0.01"); await button("Check answer").click(); await heading("That’s right");
-  await next("Separate company size from share price"); await check(2); await next("Ownership is not daily control"); await next("Connect the three numbers");
-  await button("Mark lesson complete").click(); await heading("Lesson complete");
-  await button("Next lesson").click(); await heading("Hundreds of companies, one purchase?");
-  await check(1); await next("Why spread exposure?"); await next("An index is a measuring tool"); await layouts("index-etf-visual", true);
-  await next("Which can you buy?"); await check(1); await next("A fund can follow different strategies"); await check(1); await next("A basket still carries risk"); await check(1); await next("Keep the distinction clear"); await check(0);
-  await next("Look inside the fund"); await layouts("fund-fees", true); await next("Try explaining it to someone else"); await next("One distinction opens the next door");
-  await button("Mark lesson complete").click(); await heading("Lesson complete");
-  await button("Next lesson").click(); await heading("Owning and lending are different roles");
-  await check(0); await next("Cash keeps money ready"); await check(0); await next("Every loan has two sides"); await next("A bond packages a loan"); await check(1); await next("Three terms describe the promise");
-  await page.getByLabel("Your answer", { exact: true }).fill("50"); await button("Check answer").click(); await heading("That’s right"); await next("Follow the promised cash flows");
-  await page.getByText("€1,250.00", { exact: true }).waitFor();
-  for (const [label, invalid, valid] of [["Principal", "0", "1000"], ["Annual coupon rate", "-1", "5"], ["Years to maturity", "1.5", "5"]]) {
-    await page.getByLabel(label, { exact: true }).fill(invalid); await page.locator("main").getByRole("alert").filter({ hasText: /.+/ }).waitFor();
-    await page.getByLabel(label, { exact: true }).fill(valid);
-  }
-  await page.getByLabel("Annual coupon rate", { exact: true }).fill("3"); await page.getByText("€1,150.00", { exact: true }).waitFor(); await layouts("bond-cashflows", true);
-  await next("A bond can trade at a new price"); await check(0); await next("A promise is not the same as certainty"); await check(1); await next("Choose the relationship, then the purpose");
-  await button("Bond").click(); await page.getByText("A loan to an issuer", { exact: true }).waitFor(); await layouts("asset-comparison", true); await next("Three mental models to keep");
-  await button("Mark lesson complete").click(); await heading("Lesson complete");
-  await button("Next lesson").click(); await heading("A market needs a meeting point");
-  await check(1); await next("Bid and ask name each side"); await check(1); await next("Choose what you want the order to express");
-  await button("Sell now").click(); await page.getByText("You meet the bid", { exact: true }).waitFor(); await layouts("market-quote", true); await next("The gap is the spread");
-  await page.reload(); await heading("The gap is the spread"); assert.equal((await row("foundations-markets")).last_position, 3);
-  await check(1); await next("Execution and price constraints differ"); await check(1); await next("Most everyday trades are between investors"); await check(1); await next("Prices are discovered through trades"); await check(0);
-  await next("Liquidity is ease, not safety"); await button("Thinly traded obscure security").click(); await page.getByText("Fewer active participants", { exact: false }).waitFor(); await layouts("liquidity", true); await next("Many forces can move a price"); await check(1); await next("Markets match views, not certainties");
-  await button("Mark lesson complete").click(); await heading("Lesson complete");
-  await button("Next lesson").click(); await heading("Different outcomes can be equally possible");
-  await check(1); await next("Expected is not realized"); await check(0); await next("More potential reward can mean more uncertainty"); await check(1); await next("Averages can hide the range");
-  await button("Investment B").click(); await page.getByText("-20%", { exact: true }).waitFor(); await layouts("risk-scenarios", true); await next("Drawdown describes a fall from a peak");
-  await page.getByLabel("Current value", { exact: true }).fill("8000"); await page.getByText("20%", { exact: true }).first().waitFor(); await layouts("drawdown", true); await page.getByLabel("Your answer", { exact: true }).fill("20"); await button("Check answer").click(); await heading("That’s right"); await next("A loss needs a larger recovery");
-  await next("Risk takes more than one form"); await check(0); await next("Spreading exposure can reduce one dependency"); await button("Portfolio B · many investments").click(); await page.getByText("broad market risk remains", { exact: false }).waitFor(); await layouts("diversification", true); await check(1); await next("The timing of a need matters");
-  await button("Intended for decades later").click(); await page.getByText("longer horizon", { exact: false }).waitFor(); await layouts("time-horizon", true); await check(0); await next("Risk is a question of outcomes and circumstances");
-  await button("Mark lesson complete").click(); await heading("Lesson complete");
-  await button("Next lesson").click(); await heading("A collection shaped by its parts");
-  await check(1); await next("One outcome can dominate"); await check(0); await next("See what spreading exposure can change");
-  await page.getByText("-10%", { exact: true }).waitFor(); await button("All four fall together").click();
-  await page.getByText("-20%", { exact: true }).first().waitFor(); assert.equal(await page.getByText("-20%", { exact: true }).count(), 2); await layouts("diversification-impact", true);
-  await next("Allocation gives each part a share"); await next("Build, predict, and observe");
-  await page.getByText("+5.4%", { exact: true }).waitFor();
-  await page.getByLabel("Stocks allocation", { exact: true }).fill("70"); await page.getByText("Reduce the allocation by 10%.", { exact: true }).waitFor();
-  assert.equal(await page.getByText("Hypothetical one-period portfolio return", { exact: true }).count(), 0);
-  await page.getByLabel("Stocks allocation", { exact: true }).fill("-1"); await page.getByText("Stocks allocation must be from 0% to 100%.", { exact: true }).waitFor();
-  await button("60 / 30 / 10 example").click(); await page.getByText("Ready · allocation equals 100%.", { exact: true }).waitFor();
-  await page.getByLabel("Stocks allocation slider", { exact: true }).focus(); await page.getByLabel("Stocks allocation slider", { exact: true }).press("ArrowRight");
-  assert.notEqual(await page.getByLabel("Stocks allocation slider", { exact: true }).evaluate((el) => getComputedStyle(el).outlineStyle), "none", "Portfolio slider has a visible keyboard focus indicator");
-  await page.getByText("Reduce the allocation by 1%.", { exact: true }).waitFor();
-  await button("100% stocks").click(); await page.getByText("+8%", { exact: true }).waitFor();
-  await button("60 / 30 / 10 example").click(); await button("Stocks fall −10%").click(); await page.getByText("−5.4%", { exact: true }).waitFor();
-  await page.getByLabel("Stocks hypothetical return", { exact: true }).fill("-101"); await page.getByText("Stocks return cannot be below −100%.", { exact: true }).waitFor();
-  await page.getByLabel("Stocks hypothetical return", { exact: true }).fill("-10"); await layouts("portfolio-builder", true);
-  await page.reload(); await heading("Build, predict, and observe"); assert.equal((await row("foundations-portfolio")).last_position, 4);
-  await page.getByText("+5.4%", { exact: true }).waitFor(); await next("Each asset can play more than one role");
-  await button("Bond").click(); await page.getByText("Credit, interest-rate, inflation, and liquidity risks may matter", { exact: true }).waitFor(); await layouts("portfolio-asset-roles", true);
-  await next("Weights shape the one-period result"); await layouts("portfolio-weighted-return", true); await page.getByLabel("Your answer", { exact: true }).fill("5"); await button("Check answer").click(); await heading("That’s right");
-  await next("Diversification reduces some dependencies"); await check(1); await next("Match uncertainty to the time available");
-  await button("Money not expected for 20 years").click(); await page.getByText("Longer horizon", { exact: true }).waitFor(); await layouts("portfolio-horizon", true); await check(0);
-  await next("Emotional comfort is not financial capacity"); await button("Financial need").click(); await button("Consider both").click(); await page.getByText("Tolerance is not enough", { exact: true }).waitFor(); await layouts("portfolio-risk-capacity", true); await check(1);
-  await next("Every portfolio is a set of trade-offs"); await check(1); await next("The mix is the decision");
-  await failThenRetry("Mark lesson complete", "foundations-portfolio"); await button("Mark lesson complete").click(); await heading("Lesson complete");
-  await page.getByRole("link", { name: "View module", exact: true }).click(); await heading("Investing Foundations");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "7 of 7 available lessons complete");
-  assert.equal(await page.getByRole("button", { name: "Review lesson", exact: true }).count(), 7);
-  await page.goto(`${baseURL}/progress`); await heading("Look how far you’ve come.");
-  assert.match(await page.getByTestId("available-progress").textContent(), /7 of 10/); await layouts("progress", true);
-  await page.getByLabel("Account menu").click(); await button("Sign out").click(); await page.waitForURL("**/sign-in");
-  await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password);
-  await button("Sign in").click(); await page.waitForURL("**/learn");
-  assert.equal(await page.getByRole("link", { name: "Start learning", exact: true }).getAttribute("href"), "/learn/returns/what-is-a-return");
-  const completed = await row("foundations-why-invest");
-  await page.goto(`${baseURL}/learn/investing-foundations/why-invest`); await heading("Same money, different purchasing power");
-  await page.getByText("Already completed. Reviewing will not change your saved completion.").waitFor();
-  await check(1); await next("Two tools for different needs");
-  assert.deepEqual(await row("foundations-why-invest"), completed, "Review preserves completion, timestamp and cursor");
-  const marketCompleted = await row("foundations-markets");
-  await page.goto(`${baseURL}/learn/investing-foundations/how-markets-work`); await heading("A market needs a meeting point"); await check(1); await next("Bid and ask name each side");
-  assert.deepEqual(await row("foundations-markets"), marketCompleted, "Market review preserves completion, timestamp and cursor");
-  const riskCompleted = await row("foundations-risk-reward");
-  await page.goto(`${baseURL}/learn/investing-foundations/risk-vs-reward`); await heading("Different outcomes can be equally possible"); await check(1); await next("Expected is not realized");
-  assert.deepEqual(await row("foundations-risk-reward"), riskCompleted, "Risk review preserves completion, timestamp and cursor");
-  const portfolioCompleted = await row("foundations-portfolio");
-  await page.goto(`${baseURL}/learn/investing-foundations/your-first-portfolio`); await heading("A collection shaped by its parts"); await check(1); await next("One outcome can dominate");
-  assert.deepEqual(await row("foundations-portfolio"), portfolioCompleted, "Portfolio review preserves completion, timestamp and cursor");
-  // Same disposable learner simulates a pre-Foundations account with active Returns progress.
-  await sql`delete from lesson_award where user_id = ${userId}`;
-  await sql`delete from lesson_progress where user_id = ${userId}`;
-  await page.goto(`${baseURL}/learn/returns/simple-returns`); await heading("One period at a time"); await next("Use the previous price");
-  await page.goto(`${baseURL}/dashboard`); await heading("Continue learning");
-  assert.equal(await page.locator('section[aria-labelledby="continue-heading"] a').getAttribute("href"), "/learn/returns/simple-returns");
-  assert.equal((await profile()).onboarding_completed_at.toISOString(), onboardingCompleted);
-  assert.equal((await profile()).experience_level, "BEGINNER");
-  expectedNetworkFailure = true; // The intentionally unavailable route may log its expected 404.
-  await page.goto(`${baseURL}/learn/investing-foundations/foundations-checkpoint`);
-  await heading("This page isn’t available");
-  assert.deepEqual(errors, []);
-  console.log("PASS: beginner onboarding, legacy profile recomputation, all seven guided lessons, portfolio allocation/return/diversification/horizon/capacity interactions, save/completion retry, refresh, next lesson, sign-out/in, review, Returns continuity, real counts, six widths, keyboard, focus, reduced motion, no hydration/console errors. Screenshots:", screenshotDir);
+
+  await page.goto(`${baseURL}/learn/investing-foundations`);
+  await page.getByRole("heading", { name: "Základy investování", exact: true }).waitFor();
+  assert.equal(await page.getByTestId("module-progress").textContent(), "0 / 7 lekcí dokončeno");
+  await page.getByText("0 / 420 XP", { exact: true }).waitFor();
+  await page.getByText("Zamčeno · dokonči základy", { exact: true }).waitFor();
+  await assertResponsive(page, "01-foundations-overview", [1440]);
+
+  await page.getByRole("button", { name: "Začít lekci", exact: true }).first().click();
+  await page.getByRole("heading", { name: "Nejdřív vyber nástroj, až potom řeš výnos", exact: true }).waitFor();
+  await page.screenshot({ path: `${screenshotDir}/02-saving-vs-investing-1440.png`, fullPage: true });
+
+  // Keyboard-only wrong answer → explanation → retry → correct answer.
+  await page.getByLabel("Co nejvyšší dlouhodobý růst", { exact: true }).focus();
+  await page.getByLabel("Co nejvyšší dlouhodobý růst", { exact: true }).press("Space");
+  await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).focus();
+  await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).press("Enter");
+  await page.getByRole("heading", { name: "Zkus to ještě jednou", exact: true }).waitFor();
+  await page.screenshot({ path: `${screenshotDir}/06-incorrect-retry-state-1440.png`, fullPage: true });
+  await page.getByRole("button", { name: "Zkusit znovu", exact: true }).press("Enter");
+  await page.getByLabel("Snadný přístup a stabilita", { exact: true }).press("Space");
+  await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).press("Enter");
+  await page.getByRole("heading", { name: "Správně", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Pokračovat", exact: true }).press("Enter");
+  await page.getByRole("heading", { name: "Spoření a investování řeší jiné potřeby", exact: true }).waitFor();
+  await continueTo(page, "Porovnej dva časové horizonty");
+  await page.reload();
+  await page.getByRole("heading", { name: "Porovnej dva časové horizonty", exact: true }).waitFor();
+  assert.equal((await sql`select last_position from lesson_progress where user_id = ${userId} and lesson_id = 'foundations-why-invest'`)[0].last_position, 2);
+  await continueTo(page, "Kupní síla se může měnit");
+  await continueTo(page, "Ověření znalostí · krátký horizont");
+  await answerChoice(page, "Peníze na blízký výdaj, u kterých je důležitá likvidita a stabilita");
+  await page.getByRole("heading", { name: "Ověření znalostí · dlouhý horizont", exact: true }).waitFor();
+  await answerChoice(page, "Dává nejistému výsledku více času, ale zisk nezaručuje");
+  await page.getByRole("heading", { name: "Použij každý nástroj pro správný účel", exact: true }).waitFor();
+  await completeLesson(page, 60);
+  await page.screenshot({ path: `${screenshotDir}/07-lesson-complete-60xp-1440.png`, fullPage: true });
+
+  await nextLesson(page, "Začni vlastnictvím");
+  await answerChoice(page, "Vlastnický podíl ve firmě");
+  await answerNumber(page, 450);
+  await continueTo(page, "Tržní cena není vnitřní hodnota");
+  await continueTo(page, "Ověření znalostí · přepočet pozice");
+  await answerNumber(page, 360);
+  await answerChoice(page, "Jedna akcie se právě obchoduje za 75 Kč");
+  await page.getByRole("heading", { name: "Čti pozici jako počet × cena", exact: true }).waitFor();
+  await completeLesson(page, 120);
+
+  await nextLesson(page, "Ukazatel, nebo fond?");
+  await answerChoice(page, "Podíly ETF");
+  await continueTo(page, "Podívej se pod název fondu");
+  await page.screenshot({ path: `${screenshotDir}/03-etf-holdings-1440.png`, fullPage: true });
+  await continueTo(page, "Mnoho pozic může být stále koncentrovaných");
+  await answerChoice(page, "Ne, největší váhy mohou stále ovládat výsledek");
+  await answerChoice(page, "ETF může sledovat index, ale fond a ukazatel jsou dvě různé věci");
+  await answerChoice(page, "Má na výsledek ETF větší vliv než pozice s vahou 5 %");
+  await page.getByRole("heading", { name: "Zkoumej obsah, ne jen název", exact: true }).waitFor();
+  await completeLesson(page, 180);
+
+  await nextLesson(page, "Hotovost má v portfoliu svůj úkol");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: `${screenshotDir}/09-mobile-lesson-390.png`, fullPage: true });
+  await answerChoice(page, "Vysoká likvidita a malé kolísání nominální hodnoty");
+  await continueTo(page, "Dluhopis představuje půjčku");
+  await continueTo(page, "Proč se cena staršího dluhopisu mění");
+  await continueTo(page, "Ověření znalostí · vztah k emitentovi");
+  await answerChoice(page, "Půjčuješ emitentovi peníze");
+  await answerChoice(page, "Tržní cena staršího dluhopisu bude mít tendenci klesnout");
+  await page.getByRole("heading", { name: "Rozpoznej úkol každého aktiva", exact: true }).waitFor();
+  await completeLesson(page, 240);
+
+  await nextLesson(page, "Obchod potřebuje dvě strany");
+  await answerChoice(page, "Jiný účastník trhu ochotný prodat");
+  await continueTo(page, "Směr obchodu určuje cenu");
+  await answerChoice(page, "Ask · 100,20 Kč");
+  await answerNumber(page, 0.4);
+  await continueTo(page, "Ověření znalostí · okamžitý prodej");
+  await answerChoice(page, "Bid");
+  await answerChoice(page, "Limitní nákupní pokyn na 100 Kč");
+  await page.getByRole("heading", { name: "Věz, co kotace slibuje — a co ne", exact: true }).waitFor();
+  await completeLesson(page, 300);
+
+  await nextLesson(page, "Nejdřív odhadni, potom počítej");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await answerChoice(page, "96");
+  await continueTo(page, "Spočítej jedno období");
+  await answerNumber(page, 10);
+  await page.getByRole("heading", { name: "Násob přes měnící se základ", exact: true }).waitFor();
+  await page.screenshot({ path: `${screenshotDir}/04-returns-compounding-1440.png`, fullPage: true });
+  await continueTo(page, "Ověření znalostí · výpočet ztráty");
+  await page.screenshot({ path: `${screenshotDir}/06-mastery-state-1440.png`, fullPage: true });
+  await answerNumber(page, -20);
+  await answerNumber(page, 96);
+  await page.getByRole("heading", { name: "Přenášej nový základ dál", exact: true }).waitFor();
+  await completeLesson(page, 360);
+
+  await nextLesson(page, "Portfolio je celý soubor majetku");
+  await answerChoice(page, "Hotovost a aktuální hodnota všech pozic");
+  await page.getByRole("heading", { name: "Váhy popisují vliv", exact: true }).waitFor();
+  await page.screenshot({ path: `${screenshotDir}/05-portfolio-weights-1440.png`, fullPage: true });
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  const scaledOverflow = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: innerWidth }));
+  assert.ok(scaledOverflow.document <= scaledOverflow.viewport, `Portfolio weights overflow at 320px/200%: ${JSON.stringify(scaledOverflow)}`);
+  await page.screenshot({ path: `${screenshotDir}/10-portfolio-weights-320-text-200.png`, fullPage: true });
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await continueTo(page, "Spočítej jednu váhu");
+  await answerNumber(page, 40);
+  await answerNumber(page, 2);
+  await continueTo(page, "Ověření znalostí · váha akcie");
+  await answerNumber(page, 20);
+  await answerChoice(page, "Ne, stále záleží na vahách a společných rizicích");
+  await page.getByRole("heading", { name: "Teď umíš číst portfolio", exact: true }).waitFor();
+  await completeLesson(page, 420);
+  await page.getByText(/Portfolio Lab odemčen · \+5\s000\sKč Practice Capital/).waitFor();
+  await page.screenshot({ path: `${screenshotDir}/08-portfolio-lab-unlocked-1440.png`, fullPage: true });
+  assert.equal((await sql`select count(*)::int as count from progression_unlock where user_id = ${userId} and unlock_id = 'PORTFOLIO_LAB'`)[0].count, 1);
+  assert.equal((await sql`select practice_capital_minor from progression_unlock where user_id = ${userId} and unlock_id = 'PORTFOLIO_LAB'`)[0].practice_capital_minor, "500000");
+
+  await page.getByRole("button", { name: "Otevřít Portfolio Lab", exact: true }).click();
+  await page.getByTestId("portfolio-cash").filter({ hasText: /5\s000\sKč/ }).waitFor();
+  assert.equal(await page.getByRole("button", { name: /Invest/ }).count() > 0, true, "Unlocked portfolio has an Invest action");
+  await page.screenshot({ path: `${screenshotDir}/11-unlocked-portfolio-1440.png`, fullPage: true });
+
+  await page.goto(`${baseURL}/learn/investing-foundations`);
+  await page.getByText("7 / 7 lekcí dokončeno", { exact: true }).waitFor();
+  await page.getByText("420 / 420 XP", { exact: true }).waitFor();
+  await page.getByText("Odemčen", { exact: true }).waitFor();
+  await assertResponsive(page, "01-foundations-overview-complete", [390]);
+
+  // A completed learner sees the new lesson UI, while review leaves receipts untouched.
+  const beforeReview = (await sql`select coalesce(sum(xp), 0)::int as xp, count(*)::int as receipts from lesson_award where user_id = ${userId}`)[0];
+  await page.goto(`${baseURL}/learn/investing-foundations/why-invest`);
+  await page.getByText("Lekce už je dokončena. Opakování uložený postup nezmění.", { exact: true }).waitFor();
+  await answerChoice(page, "Snadný přístup a stabilita");
+  await continueTo(page, "Porovnej dva časové horizonty");
+  await continueTo(page, "Kupní síla se může měnit");
+  await continueTo(page, "Ověření znalostí · krátký horizont");
+  await answerChoice(page, "Peníze na blízký výdaj, u kterých je důležitá likvidita a stabilita");
+  await answerChoice(page, "Dává nejistému výsledku více času, ale zisk nezaručuje");
+  await page.getByRole("heading", { name: "Použij každý nástroj pro správný účel", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Dokončit opakování", exact: true }).click();
+  await page.getByRole("heading", { name: "Opakování dokončeno", exact: true }).waitFor();
+  await page.getByText("Opakováním si znalost upevníš. Další XP ani Practice Capital se nepřipisují.", { exact: true }).waitFor();
+  const afterReview = (await sql`select coalesce(sum(xp), 0)::int as xp, count(*)::int as receipts from lesson_award where user_id = ${userId}`)[0];
+  assert.deepEqual(afterReview, beforeReview, "Review does not duplicate XP or a lesson receipt");
+  assert.equal((await sql`select count(*)::int as count from progression_unlock where user_id = ${userId} and unlock_id = 'PORTFOLIO_LAB'`)[0].count, 1, "Review does not duplicate unlock");
+  assert.deepEqual(errors, [], `Unexpected browser errors: ${JSON.stringify(errors)}`);
+
+  console.log(`PASS: complete seven-lesson beginner journey, wrong-answer retry, reload, 420 XP, one-time 5,000 Kč unlock grant, usable Portfolio Lab, review compatibility, keyboard, mobile, responsive, and 200% text. Screenshots: ${screenshotDir}`);
+  await context.close();
 } finally {
-  await sql`delete from "user" where email = ${email}`;
-  await sql.end(); await browser.close();
+  if (userId) await sql`delete from "user" where id = ${userId}`;
+  await sql.end();
+  await browser.close();
 }

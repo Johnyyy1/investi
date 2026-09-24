@@ -8,8 +8,8 @@ export function LearningProgressBar({ value, total, label, tone = "primary" }: {
 }
 export function LessonProgress({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
   return <div className="flex items-center gap-3 sm:gap-4">
-    <Button onClick={onBack} aria-label="Back to Learn" variant="ghost" size="compact" className="shrink-0 px-2 sm:px-3"><ArrowLeft className="size-4" /><span className="hidden min-[375px]:inline">Back</span></Button>
-    <LearningProgressBar value={step} total={total} label="Lesson steps" />
+    <Button onClick={onBack} aria-label="Zpět na Učení" variant="ghost" size="compact" className="shrink-0 px-2 sm:px-3"><ArrowLeft className="size-4" /><span className="hidden min-[375px]:inline">Zpět</span></Button>
+    <LearningProgressBar value={step} total={total} label="Postup lekcí" />
     <span className="shrink-0 text-small font-semibold tabular-nums text-secondary">{step} / {total}</span>
   </div>;
 }

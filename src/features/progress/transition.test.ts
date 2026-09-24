@@ -13,10 +13,11 @@ describe("server-side completion eligibility", () => {
     expect(() => validateMove("foundations-why-invest", 0, 1)).toThrow();
     expect(() => validateMove("foundations-checkpoint", 0, 1)).toThrow();
   });
-  it("accepts a real attempt even when incorrect, and permits navigation back", () => {
+  it("requires a correct answer and permits navigation back", () => {
     const block = lessonSteps("foundations-why-invest")[0].blocks.find((b) => b.type === "multipleChoiceQuestion")!;
     if (block.type !== "multipleChoiceQuestion") throw new Error("Test expects a question");
-    expect(() => validateMove("foundations-why-invest", 0, 1, { answer: block.options[0].id })).not.toThrow();
+    expect(() => validateMove("foundations-why-invest", 0, 1, { answer: block.options[1].id })).toThrow();
+    expect(() => validateMove("foundations-why-invest", 0, 1, { answer: block.correctOptionId })).not.toThrow();
     expect(() => validateMove("foundations-why-invest", 5, 4)).not.toThrow();
     expect(() => validateMove("foundations-why-invest", 5, 5)).not.toThrow();
   });

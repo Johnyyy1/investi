@@ -5,11 +5,12 @@ import { FinanceInput } from "@/components/learning/finance-input";
 import { ConceptCard } from "@/components/learning/concept-card";
 import { MetricResult } from "@/components/learning/metric-result";
 import { compoundValue, FinancialInputError, parsePrice } from "@/features/finance/returns";
-import { bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, portfolioWeightedReturn, simpleBondCashflows } from "@/features/finance/foundations";
+import { bidAskSpread, drawdownFromPeak, marketCapitalization, ownershipPercentage, portfolioWeightedReturn, positionValue, simpleBondCashflows } from "@/features/finance/foundations";
 import { Calculator } from "lucide-react";
+import { formatCurrency, formatDecimal, formatPercentage } from "@/lib/formatters";
 
-const number = (value: number) => value.toLocaleString("en-IE", { maximumSignificantDigits: 8, notation: value !== 0 && (Math.abs(value) < 0.000001 || Math.abs(value) >= 1e15) ? "scientific" : "standard" });
-const euros = (value: number) => value.toLocaleString("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2 });
+const number = (value: number) => formatDecimal(value, { maximumSignificantDigits: 8, notation: value !== 0 && (Math.abs(value) < 0.000001 || Math.abs(value) >= 1e15) ? "scientific" : "standard" });
+const euros = (value: number) => formatCurrency(value, "EUR", { maximumFractionDigits: 2 });
 
 export function GrowthComparison() {
   const [starting, setStarting] = useState("10000");
@@ -67,14 +68,47 @@ export function ShareExplorer({ kind }: { kind: "ownership" | "market-cap" }) {
   </section>;
 }
 
+export function StockPositionExplorer() {
+  const [quantity, setQuantity] = useState("3");
+  const [price, setPrice] = useState("150");
+  const errorId = useId();
+  let value: number | undefined;
+  let error: string | undefined;
+  try {
+    value = positionValue(parsePrice(quantity, "Počet"), parsePrice(price, "Tržní cena"));
+  } catch { error = "Zadej platné číselné hodnoty."; }
+  const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
+  return <section aria-label="Výpočet hodnoty akciové pozice" className="min-w-0 space-y-6">
+    <div className="grid gap-5 sm:grid-cols-2"><FinanceInput {...invalid} label="Počet akcií" value={quantity} onValueChange={setQuantity} /><FinanceInput {...invalid} label="Tržní cena jedné akcie" prefix="Kč" value={price} onValueChange={setPrice} /></div>
+    {error ? <p id={errorId} role="alert" className="text-small text-danger-ink">{error}</p> : value !== undefined ? <div aria-live="polite" aria-atomic="true" className="border-y border-border py-6"><MetricResult label="Hodnota pozice" value={formatCurrency(value, "CZK", { maximumFractionDigits: 2 })} /><p className="mt-3 text-small text-secondary">{number(Number(quantity))} akcie × {formatCurrency(Number(price), "CZK", { maximumFractionDigits: 2 })} za akcii = {formatCurrency(value, "CZK", { maximumFractionDigits: 2 })}</p></div> : null}
+  </section>;
+}
+
 export function IndexEtfVisual() {
-  return <figure aria-label="An index defines a measurement; a tracking ETF holds investments; an investor owns ETF shares" className="space-y-3">
-    <ConceptCard title="Index · defines and measures">Company A · Company B · Company C · Company D · … A methodology selects and weights the group.</ConceptCard>
+  return <figure aria-label="Index určuje měřítko, ETF drží investice a investor vlastní podíly ETF" className="space-y-3">
+    <ConceptCard title="Index · určuje a měří">Firma A · Firma B · Firma C · Firma D · … Pravidla vybírají společnosti a určují jejich váhy.</ConceptCard>
     <p aria-hidden="true" className="text-center text-ql-title text-ql-secondary">↓</p>
-    <ConceptCard title="Index-tracking ETF · seeks to follow">The fund holds investments to seek the index’s performance. Costs and tracking differences can affect the result.</ConceptCard>
+    <ConceptCard title="ETF sledující index · snaží se ho napodobit">Fond drží investice tak, aby se přiblížil vývoji indexu. Výsledek ovlivňují náklady i odchylka sledování.</ConceptCard>
     <p aria-hidden="true" className="text-center text-ql-title text-ql-secondary">↓</p>
-    <ConceptCard title="Investor · owns ETF shares">You hold shares of the fund, gaining exposure to its investments.</ConceptCard>
-    <figcaption className="text-ql-small text-ql-secondary">Illustrative companies, not recommendations. This shows an index-tracking ETF; other ETFs follow different strategies.</figcaption>
+    <ConceptCard title="Investor · vlastní podíly ETF">Vlastníš podíly fondu, a tím získáváš expozici vůči jeho investicím.</ConceptCard>
+    <figcaption className="text-ql-small text-ql-secondary">Firmy jsou pouze ilustrační, nejde o doporučení. Příklad ukazuje ETF sledující index; jiná ETF používají jiné strategie.</figcaption>
+  </figure>;
+}
+
+const etfHoldings = [
+  { label: "Firma A", weight: 45, color: "bg-primary" },
+  { label: "Firma B", weight: 30, color: "bg-primary-hover" },
+  { label: "Firma C", weight: 15, color: "bg-success-ink" },
+  { label: "Ostatní", weight: 10, color: "bg-warning" },
+] as const;
+
+export function EtfHoldingsVisual() {
+  return <figure aria-labelledby="etf-holdings-caption" className="space-y-6">
+    <div role="img" aria-label="Váhy ETF: Firma A 45 %, Firma B 30 %, Firma C 15 %, ostatní 10 %" className="flex h-8 overflow-hidden rounded-pill bg-surface-muted">
+      {etfHoldings.map((holding) => <span key={holding.label} aria-hidden="true" className={`h-full ${holding.color}`} style={{ width: `${holding.weight}%` }} />)}
+    </div>
+    <ul className="grid gap-3 min-[420px]:grid-cols-2">{etfHoldings.map((holding) => <li key={holding.label} className="flex items-center justify-between gap-3 border-b border-border pb-2 text-small"><span className="flex items-center gap-2"><span aria-hidden="true" className={`size-3 rounded-full ${holding.color}`} />{holding.label}</span><strong className="tabular-nums">{holding.weight}%</strong></li>)}</ul>
+    <figcaption id="etf-holdings-caption" className="text-small text-secondary">Dvě největší pozice tvoří 75 % tohoto modelového ETF. „Mnoho pozic“ neznamená, že jsou váhy vyvážené.</figcaption>
   </figure>;
 }
 
@@ -110,39 +144,39 @@ export function BondCashflowExplorer() {
 }
 
 const assetDetails = {
-  cash: { name: "Cash", relationship: "Immediately available money", volatility: "Often nominally stable; inflation can reduce purchasing power", purpose: "Liquidity and short-term usefulness", payments: "An account may pay interest, depending on its terms" },
-  bond: { name: "Bond", relationship: "A loan to an issuer", volatility: "Credit, interest-rate, inflation, and liquidity risks may matter", purpose: "Contractual cash-flow structure and possible income", payments: "Interest and principal repayment are typically promised, not guaranteed" },
-  stock: { name: "Stock", relationship: "Ownership in a company", volatility: "Business and market uncertainty; prices may fluctuate substantially", purpose: "Potential business growth and possible income", payments: "Price changes and dividends, when declared" },
+  cash: { name: "Hotovost", relationship: "Okamžitě dostupné peníze", volatility: "Nominálně bývá stabilní; inflace může snížit kupní sílu", purpose: "Likvidita a využití v blízké době", payments: "Účet může podle podmínek přinášet úrok" },
+  bond: { name: "Dluhopis", relationship: "Půjčka emitentovi", volatility: "Záleží na kreditním, úrokovém, inflačním a likviditním riziku", purpose: "Smluvní peněžní toky a možný příjem", payments: "Úrok a vrácení jistiny jsou slíbené, ne zaručené" },
+  stock: { name: "Akcie", relationship: "Vlastnický podíl ve firmě", volatility: "Nejistota podnikání i trhu; cena může výrazně kolísat", purpose: "Možný růst firmy a případný příjem", payments: "Změna ceny a případně vyplacené dividendy" },
 } as const;
 
 export function AssetComparison() {
   const [asset, setAsset] = useState<keyof typeof assetDetails>("cash");
   const detail = assetDetails[asset];
-  return <section aria-label="Cash, bond, and stock comparison" className="space-y-5">
-    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Choose an asset to compare">
+  return <section aria-label="Porovnání hotovosti, dluhopisu a akcie" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Vyber aktivum k porovnání">
       {(Object.keys(assetDetails) as (keyof typeof assetDetails)[]).map((key) => <button key={key} type="button" onClick={() => setAsset(key)} aria-pressed={asset === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${asset === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{assetDetails[key].name}</button>)}
     </div>
     <div aria-live="polite" className="grid gap-4 border-y border-ql-border py-6 sm:grid-cols-2">
-      <MetricResult label="Relationship" value={detail.relationship} />
-      <MetricResult label="Behavior and risk" value={detail.volatility} />
-      <MetricResult label="Common purpose" value={detail.purpose} />
-      <MetricResult label="Potential payments / outcome" value={detail.payments} />
+      <MetricResult label="Vztah" value={detail.relationship} />
+      <MetricResult label="Chování a riziko" value={detail.volatility} />
+      <MetricResult label="Obvyklý účel" value={detail.purpose} />
+      <MetricResult label="Možné platby nebo výsledek" value={detail.payments} />
     </div>
   </section>;
 }
 
 const marketChoices = {
-  buy: { label: "Buy now", title: "You meet the ask", detail: "An immediate buyer typically interacts with the lowest current selling interest: the €100 ask. A market order prioritizes trying to execute, not a guaranteed exact price; the quote can change before execution." },
-  sell: { label: "Sell now", title: "You meet the bid", detail: "An immediate seller typically interacts with the highest current buying interest: the €99 bid. The displayed bid is useful intuition, not a promise that every share will execute at that exact price." },
-  limit: { label: "Wait / place limit", title: "You set a price constraint", detail: "A limit buy at €95 says you will buy only at €95 or better. It may not execute at all. This expresses a price condition rather than a priority to trade immediately." },
+  buy: { label: "Koupit hned", title: "Obchoduješ na ask", detail: "Okamžitý kupující se obvykle potká s nejnižší aktuální nabídkou prodávajících: ask 100,20 Kč. Tržní pokyn upřednostňuje provedení, přesnou cenu ale nezaručuje." },
+  sell: { label: "Prodat hned", title: "Obchoduješ na bid", detail: "Okamžitý prodávající se obvykle potká s nejvyšší aktuální poptávkou kupujících: bid 99,80 Kč. Zobrazený bid není slib, že se za tuto cenu provedou všechny kusy." },
+  limit: { label: "Nastavit limit", title: "Určuješ cenovou podmínku", detail: "Limitní nákup na 100 Kč říká, že koupíš jen za 100 Kč nebo levněji. Pokyn se nemusí provést vůbec." },
 } as const;
 
 export function MarketQuoteExplorer() {
   const [choice, setChoice] = useState<keyof typeof marketChoices>("buy");
   const selected = marketChoices[choice];
-  return <section aria-label="Bid and ask interaction" className="space-y-6">
-    <div className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-3"><MetricResult label="Bid · current buying interest" value="€99.00" /><MetricResult label="Ask · current selling interest" value="€100.00" /><MetricResult label="Bid-ask spread" value={`€${bidAskSpread(99, 100).toFixed(2)}`} /></div>
-    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Choose a market action">
+  return <section aria-label="Práce s cenami bid a ask" className="space-y-6">
+    <div className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-3"><MetricResult label="Bid · aktuální poptávka" value="99,80 Kč" /><MetricResult label="Ask · aktuální nabídka" value="100,20 Kč" /><MetricResult label="Spread bid–ask" value={formatCurrency(bidAskSpread(99.8, 100.2), "CZK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /></div>
+    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Vyber tržní pokyn">
       {(Object.keys(marketChoices) as (keyof typeof marketChoices)[]).map((key) => <button key={key} type="button" onClick={() => setChoice(key)} aria-pressed={choice === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${choice === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{marketChoices[key].label}</button>)}
     </div>
     <ConceptCard title={selected.title}>{selected.detail}</ConceptCard>
@@ -221,15 +255,15 @@ export function DiversificationPreview() {
 }
 
 const horizonExamples = {
-  soon: { name: "Needed next month", detail: "A loss shortly before the money is needed may leave little time to recover. This illustrates why the timing of a need belongs in a risk conversation." },
-  later: { name: "Intended for decades later", detail: "A longer horizon may allow more time for outcomes to unfold, but it does not guarantee a gain or make every investment suitable." },
+  soon: { name: "Peníze potřebuji za 3 měsíce", detail: "Ztráta krátce před plánovaným výdajem by nemusela mít čas se napravit. Pro tento blízký cíl jsou důležité hlavně likvidita a stabilita." },
+  later: { name: "Peníze nebudu potřebovat 15 let", detail: "Delší horizont dává více času nejistým výsledkům i složenému zhodnocení. Nezaručuje však zisk a nedělá každou investici vhodnou." },
 } as const;
 
 export function TimeHorizonExplorer() {
   const [example, setExample] = useState<keyof typeof horizonExamples>("soon");
   const selected = horizonExamples[example];
-  return <section aria-label="Time horizon explorer" className="space-y-5">
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose a time horizon">
+  return <section aria-label="Porovnání časových horizontů" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber časový horizont">
       {(Object.keys(horizonExamples) as (keyof typeof horizonExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{horizonExamples[key].name}</button>)}
     </div>
     <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>
@@ -237,8 +271,8 @@ export function TimeHorizonExplorer() {
 }
 
 const diversificationScenarios = {
-  company: { label: "Only Company A falls", returns: [-0.4, 0, 0, 0], detail: "Company A falls 40%; the other three hypothetical companies remain unchanged." },
-  broad: { label: "All four fall together", returns: [-0.2, -0.2, -0.2, -0.2], detail: "All four hypothetical companies fall 20% together." },
+  company: { label: "Klesne jen firma A", returns: [-0.4, 0, 0, 0], detail: "Firma A klesne o 40 %, ostatní tři modelové firmy se nezmění." },
+  broad: { label: "Klesnou všechny čtyři", returns: [-0.2, -0.2, -0.2, -0.2], detail: "Všechny čtyři modelové firmy klesnou společně o 20 %." },
 } as const;
 
 export function DiversificationImpact() {
@@ -246,16 +280,16 @@ export function DiversificationImpact() {
   const selected = diversificationScenarios[scenario];
   const concentrated = portfolioWeightedReturn([1, 0, 0, 0], selected.returns);
   const spread = portfolioWeightedReturn([0.25, 0.25, 0.25, 0.25], selected.returns);
-  return <section aria-label="Diversification impact illustration" className="space-y-6">
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose a hypothetical company-return scenario">
+  return <section aria-label="Vliv diverzifikace" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber modelový scénář výnosů">
       {(Object.keys(diversificationScenarios) as (keyof typeof diversificationScenarios)[]).map((key) => <button key={key} type="button" aria-pressed={scenario === key} onClick={() => setScenario(key)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${scenario === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{diversificationScenarios[key].label}</button>)}
     </div>
-    <p className="text-ql-small text-ql-secondary">{selected.detail} These are simplified one-period inputs, not forecasts.</p>
+    <p className="text-ql-small text-ql-secondary">{selected.detail} Jde o zjednodušený příklad za jedno období, ne o předpověď.</p>
     <div aria-live="polite" aria-atomic="true" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2">
-      <MetricResult label="Portfolio A · 100% Company A" value={signedPercent(concentrated * 100)} sentiment="negative" />
-      <MetricResult label="Portfolio B · 25% in each company" value={signedPercent(spread * 100)} sentiment="negative" />
+      <MetricResult label="Portfolio A · 100 % ve firmě A" value={formatPercentage(concentrated)} sentiment="negative" />
+      <MetricResult label="Portfolio B · 25 % v každé firmě" value={formatPercentage(spread)} sentiment="negative" />
     </div>
-    <ConceptCard title={scenario === "company" ? "One dependency has less influence" : "Diversification does not remove broad losses"}>{scenario === "company" ? "In Portfolio B, Company A’s −40% return has a −10% portfolio effect: 25% × −40%. More holdings are not automatically better diversified; the exposures must actually differ." : "When all four holdings fall together, both portfolios fall in this example. Real investments may move together too. This is not correlation analysis."}</ConceptCard>
+    <ConceptCard title={scenario === "company" ? "Jedna firma má menší vliv" : "Diverzifikace neodstraní plošný pokles"}>{scenario === "company" ? "V portfoliu B má pokles firmy A o 40 % dopad −10 %: 25 % × −40 %. Více pozic není automaticky lepší diverzifikace; jejich expozice se musí skutečně lišit." : "Když všechny čtyři pozice klesnou společně, v tomto příkladu klesnou obě portfolia. Také skutečné investice se mohou pohybovat spolu."}</ConceptCard>
   </section>;
 }
 

@@ -1,30 +1,32 @@
 import { describe, expect, it } from "vitest";
 import {
+  LEGACY_LESSON_PRACTICE_CAPITAL_MINOR,
+  LEGACY_REWARD_POLICY_VERSION,
   LESSON_PRACTICE_CAPITAL_MINOR,
   REWARD_POLICY_VERSION,
+  XP_ONLY_REWARD_POLICY_VERSION,
   getPracticeCapitalSummary,
 } from "./practice-capital";
 
 describe("Practice Capital reward policy", () => {
-  it("awards exactly 2,000.00 CZK in minor units under policy v1", () => {
-    expect(LESSON_PRACTICE_CAPITAL_MINOR).toBe(BigInt(200_000));
-    expect(REWARD_POLICY_VERSION).toBe(1);
+  it("awards XP-only lesson receipts under policy v2", () => {
+    expect(LESSON_PRACTICE_CAPITAL_MINOR).toBe(BigInt(0));
+    expect(REWARD_POLICY_VERSION).toBe(XP_ONLY_REWARD_POLICY_VERSION);
   });
 
-  it("derives an exact total from authoritative lesson receipts", () => {
+  it("preserves historical v1 capital while new v2 receipts add none", () => {
     const awards = [
-      { lessonId: "a", practiceCapitalMinor: BigInt(200_000), rewardPolicyVersion: 1 },
-      { lessonId: "b", practiceCapitalMinor: BigInt(200_000), rewardPolicyVersion: 1 },
-      { lessonId: "c", practiceCapitalMinor: BigInt(200_000), rewardPolicyVersion: 1 },
+      { lessonId: "a", practiceCapitalMinor: LEGACY_LESSON_PRACTICE_CAPITAL_MINOR, rewardPolicyVersion: LEGACY_REWARD_POLICY_VERSION },
+      { lessonId: "b", practiceCapitalMinor: BigInt(0), rewardPolicyVersion: XP_ONLY_REWARD_POLICY_VERSION },
     ];
 
-    expect(getPracticeCapitalSummary(awards)).toEqual({ earnedPracticeCapitalMinor: BigInt(600_000) });
+    expect(getPracticeCapitalSummary(awards, [BigInt(500_000)])).toEqual({ earnedPracticeCapitalMinor: BigInt(700_000) });
   });
 
   it("counts each lesson receipt once without deriving capital from XP", () => {
-    const receipt = { lessonId: "lesson-a", xp: 0, practiceCapitalMinor: BigInt(200_000), rewardPolicyVersion: 1 };
+    const receipt = { lessonId: "lesson-a", xp: 0, practiceCapitalMinor: LEGACY_LESSON_PRACTICE_CAPITAL_MINOR, rewardPolicyVersion: LEGACY_REWARD_POLICY_VERSION };
     const awards = [receipt, { ...receipt, xp: 999_999, practiceCapitalMinor: BigInt(999_999) }];
 
-    expect(getPracticeCapitalSummary(awards)).toEqual({ earnedPracticeCapitalMinor: BigInt(200_000) });
+    expect(getPracticeCapitalSummary(awards)).toEqual({ earnedPracticeCapitalMinor: LEGACY_LESSON_PRACTICE_CAPITAL_MINOR });
   });
 });

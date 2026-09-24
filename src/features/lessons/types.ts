@@ -8,12 +8,14 @@ export type LessonBlock =
   | (BaseBlock & { type: "formula"; expression: string; latex?: string; variables: { symbol: string; description: string }[] })
   | (BaseBlock & { type: "workedExample"; title: string; introduction?: string; steps: { label: string; value: string; emphasis?: boolean }[]; conclusion: string })
   | (BaseBlock & { type: "conceptCallout"; title: string; content: string })
-  | (BaseBlock & { type: "interactiveFigure"; figure: "return-calculator" | "price-series-explorer" | "compounding-explorer" | "recovery-explorer" | "growth-comparison" | "ownership-explorer" | "market-cap-explorer" | "index-etf-visual" | "bond-cashflow-explorer" | "asset-comparison" | "market-quote-explorer" | "liquidity-comparison" | "risk-scenario-explorer" | "drawdown-explorer" | "diversification-preview" | "time-horizon-explorer" | "portfolio-builder" | "diversification-impact" | "portfolio-horizon-scenario" | "risk-capacity-scenario"; title: string; description: string })
+  | (BaseBlock & { type: "interactiveFigure"; figure: "return-calculator" | "price-series-explorer" | "compounding-explorer" | "recovery-explorer" | "growth-comparison" | "ownership-explorer" | "market-cap-explorer" | "stock-position-explorer" | "index-etf-visual" | "etf-holdings-visual" | "bond-cashflow-explorer" | "asset-comparison" | "market-quote-explorer" | "liquidity-comparison" | "risk-scenario-explorer" | "drawdown-explorer" | "diversification-preview" | "time-horizon-explorer" | "portfolio-builder" | "diversification-impact" | "portfolio-horizon-scenario" | "risk-capacity-scenario"; title: string; description: string })
   | (BaseBlock & { type: "multipleChoiceQuestion"; prompt: string; options: { id: string; label: string }[]; correctOptionId: string; correctExplanation: string; incorrectExplanation: string })
   | (BaseBlock & { type: "numericQuestion"; prompt: string; answer: number; tolerance: number; unit: string; correctExplanation: string; incorrectExplanation: string })
   | (BaseBlock & { type: "multiNumericQuestion"; prompt: string; answers: { id: string; label: string; answer: number; tolerance: number; unit: string }[]; correctExplanation: string; incorrectExplanation: string })
   | (BaseBlock & { type: "explanation"; title: string; content: string })
   | (BaseBlock & { type: "takeaway"; title: string; content: string })
+  | (BaseBlock & { type: "labBridge"; title: string; content: string })
+  | (BaseBlock & { type: "lessonSummary"; title: string; content: string })
   | (BaseBlock & { type: "checkpoint"; label: string; content: string });
 
 export type AuthoredLesson = {

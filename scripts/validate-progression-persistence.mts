@@ -56,10 +56,11 @@ try {
   assert.equal(awardRows.reduce((sum, row) => sum + row.xp, 0), 480);
   assert.equal(unlockRows.length, 1);
   assert.equal(unlockRows[0].practiceCapitalMinor, 500_000n);
-  assert.equal((await loadPracticeCapitalSummary(learner)).earnedPracticeCapitalMinor, 2_100_000n);
+  assert.ok(awardRows.every((row) => row.practiceCapitalMinor === 0n && row.rewardPolicyVersion === 2), "new completions use XP-only policy v2");
+  assert.equal((await loadPracticeCapitalSummary(learner)).earnedPracticeCapitalMinor, 500_000n);
   const view = await loadPortfolioView(learner);
-  assert.equal(view.earnedPracticeCapitalMinor, "2100000");
-  assert.equal(view.availableCashMinor, "2100000");
+  assert.equal(view.earnedPracticeCapitalMinor, "500000");
+  assert.equal(view.availableCashMinor, "500000");
   assert.equal(view.investmentGainLossMinor, "0", "learning grants are contributions, not return");
 
   const legacy = await owner();
@@ -74,6 +75,14 @@ try {
   assert.equal((await loadPracticeCapitalSummary(legacy)).earnedPracticeCapitalMinor, 200_000n, "grandfathering adds no capital");
   assert.equal((await loadPortfolioView(legacy)).holdings[0].quantity, originalView.holdings[0].quantity, "grandfathering preserves holdings and trades");
   assert.equal((await db.select().from(lessonAward).where(eq(lessonAward.userId, legacy))).length, 1, "grandfathering does not fabricate XP");
+  await finalCursor(legacy, required[1]);
+  const mixed = await completeLesson(legacy, required[1]);
+  assert.equal(mixed.xpAwarded, 60);
+  assert.equal(mixed.practiceCapitalAwardedMinor, 0n, "subsequent completion follows v2");
+  const mixedRows = await db.select().from(lessonAward).where(eq(lessonAward.userId, legacy));
+  assert.equal(mixedRows.find((row) => row.lessonId === required[0])?.practiceCapitalMinor, 200_000n, "v1 receipt remains unchanged");
+  assert.equal(mixedRows.find((row) => row.lessonId === required[1])?.rewardPolicyVersion, 2, "new receipt records v2");
+  assert.equal((await loadPracticeCapitalSummary(legacy)).earnedPracticeCapitalMinor, 200_000n, "mixed v1/v2 capital preserves only historical amount");
 
   const backfill = await owner();
   await db.insert(lessonAward).values({ userId: backfill, lessonId: required[1], xp: 60, practiceCapitalMinor: 200_000n, rewardPolicyVersion: 1, learningDate: "2026-09-22", timeZone: "UTC", awardedAt: new Date() });

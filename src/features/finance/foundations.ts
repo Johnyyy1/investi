@@ -1,4 +1,4 @@
-import { FinancialInputError } from "./returns";
+import { cumulativeReturn, FinancialInputError } from "./returns";
 
 function finiteNonnegative(value: number, label: string) {
   if (!Number.isFinite(value) || value < 0) throw new FinancialInputError(`${label} must be a finite, nonnegative number.`);
@@ -21,6 +21,42 @@ export function marketCapitalization(sharePrice: number, sharesOutstanding: numb
   const result = sharePrice * sharesOutstanding;
   if (!Number.isFinite(result)) throw new FinancialInputError("The market value is too large. Use smaller inputs.");
   return result;
+}
+
+/** Educational display math. Persisted portfolio accounting uses exact decimal/minor-unit helpers. */
+export function positionValue(quantity: number, marketPrice: number) {
+  finiteNonnegative(quantity, "Quantity");
+  finiteNonnegative(marketPrice, "Market price");
+  const value = quantity * marketPrice;
+  if (!Number.isFinite(value)) throw new FinancialInputError("The position value is too large. Use smaller inputs.");
+  return value;
+}
+
+export function growthFactor(returnValue: number) {
+  if (!Number.isFinite(returnValue) || returnValue < -1) throw new FinancialInputError("Return must be finite and cannot be below -100%.");
+  return 1 + returnValue;
+}
+
+export function compoundReturn(returns: readonly number[]) {
+  return cumulativeReturn(returns);
+}
+
+export function portfolioWeight(position: number, portfolio: number) {
+  finiteNonnegative(position, "Position value");
+  positiveAmount(portfolio, "Portfolio value");
+  if (position > portfolio) throw new FinancialInputError("Position value cannot exceed portfolio value.");
+  return position / portfolio;
+}
+
+export function weightedContribution(weight: number, assetReturn: number) {
+  if (!Number.isFinite(weight) || weight < 0 || weight > 1) throw new FinancialInputError("Weight must be a finite number from 0 to 1.");
+  if (!Number.isFinite(assetReturn) || assetReturn < -1) throw new FinancialInputError("Asset return must be finite and cannot be below -100%.");
+  return weight * assetReturn;
+}
+
+export function immediateExecutionPrice(side: "buy" | "sell", bid: number, ask: number) {
+  bidAskSpread(bid, ask);
+  return side === "buy" ? ask : bid;
 }
 
 function positiveAmount(value: number, label: string) {

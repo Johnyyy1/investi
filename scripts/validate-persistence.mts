@@ -1,11 +1,12 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../src/db";
 import { learningProfile, lessonAward, lessonProgress, user } from "../src/db/schema";
 import { ensureDemoSeed } from "../src/features/demo/repository";
 import { completeLesson, saveLessonProgress } from "../src/features/progress/repository";
+import { lessonSteps } from "../src/features/progress/transition";
 import { quickStart } from "../src/features/onboarding/repository";
 import { initializeTimeZone } from "../src/features/gamification/repository";
 import { loadPracticeCapitalSummary } from "../src/features/rewards/repository";
@@ -26,8 +27,8 @@ try {
   await Promise.all([ensureDemoSeed(a, now), ensureDemoSeed(a, now), ensureDemoSeed(b, now)]);
   const getAwards = (id: string) => db.select().from(lessonAward).where(eq(lessonAward.userId, id));
   assert.equal((await getAwards(a)).length, 6);
-  assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, BigInt(1_200_000));
-  assert.ok((await getAwards(a)).every((award) => award.practiceCapitalMinor === BigInt(200_000) && award.rewardPolicyVersion === 1));
+  assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, BigInt(0));
+  assert.ok((await getAwards(a)).every((award) => award.practiceCapitalMinor === BigInt(0) && award.rewardPolicyVersion === 2));
   await assert.rejects(() => ensureDemoSeed(normal, now));
   assert.equal((await getAwards(normal)).length, 0);
   constraint = `${prefix}_failure`;
@@ -42,14 +43,14 @@ try {
   await assert.rejects(() => completeLesson(normal, "foundations-why-invest"));
   await assert.rejects(() => saveLessonProgress(normal, { lessonId: "foundations-why-invest", status: "in_progress", lastPosition: 8 }));
   await assert.rejects(() => saveLessonProgress(normal, { lessonId: "foundations-why-invest", status: "completed", lastPosition: 8 }));
-  await db.update(lessonProgress).set({ lastPosition: 9 }).where(eq(lessonProgress.userId, a));
+  await db.update(lessonProgress).set({ lastPosition: lessonSteps("foundations-risk-reward").length - 1 }).where(and(eq(lessonProgress.userId, a), eq(lessonProgress.lessonId, "foundations-risk-reward")));
   const [one, two] = await Promise.all([completeLesson(a, "foundations-risk-reward"), completeLesson(a, "foundations-risk-reward")]);
   assert.equal(one.xpAwarded + two.xpAwarded, 60);
-  assert.equal(one.practiceCapitalAwardedMinor + two.practiceCapitalAwardedMinor, BigInt(200_000));
-  assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, BigInt(1_400_000), "concurrent completion awards capital once");
+  assert.equal(one.practiceCapitalAwardedMinor + two.practiceCapitalAwardedMinor, BigInt(0));
+  assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, BigInt(0), "concurrent completion awards no lesson capital");
   assert.equal((await getAwards(a)).length, 7);
   assert.equal((await getAwards(b)).length, 6);
-  assert.equal((await loadPracticeCapitalSummary(b)).earnedPracticeCapitalMinor, BigInt(1_200_000), "demo identities derive isolated deterministic capital");
+  assert.equal((await loadPracticeCapitalSummary(b)).earnedPracticeCapitalMinor, BigInt(0), "new demo identities receive no lesson capital");
   const [completedBeforeReview] = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, a));
   const capitalBeforeReview = (await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor;
   const review = await completeLesson(a, completedBeforeReview.lessonId);
@@ -67,7 +68,7 @@ try {
   const [profile] = await db.select().from(learningProfile).where(eq(learningProfile.userId, normal));
   assert.deepEqual(profile.goals, []); assert.deepEqual(profile.interests, []);
   assert.equal(profile.timeZone, "Europe/Prague");
-  console.log("PASS: real DB atomic XP/Practice Capital receipts, review and concurrent idempotence, completedAt preservation, demo ownership/isolation, concurrent seed idempotence, seed rollback/retry, server progression validation, stale onboarding protection, pinned timezone.");
+  console.log("PASS: real DB atomic XP-only v2 receipts, review and concurrent idempotence, completedAt preservation, demo ownership/isolation, concurrent seed idempotence, seed rollback/retry, server progression validation, stale onboarding protection, pinned timezone.");
 } finally {
   if (constraint) await sql.unsafe(`ALTER TABLE lesson_award DROP CONSTRAINT IF EXISTS "${constraint}"`);
   for (const id of ids) await db.delete(user).where(eq(user.id, id));

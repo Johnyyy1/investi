@@ -1,3 +1,5 @@
+import { formatDecimal } from "@/lib/formatters";
+
 /**
  * Canonical decimal transport for exact minor-unit values crossing into a
  * Client Component or returning from a Server Action.
@@ -15,8 +17,8 @@ export function formatPracticeCapitalMinor(value: bigint | string) {
   const absolute = negative ? -minorUnits : minorUnits;
   const wholeKoruna = absolute / BigInt(100);
   const halere = absolute % BigInt(100);
-  const grouped = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(wholeKoruna);
-  const fraction = halere === BigInt(0) ? "" : `.${halere.toString().padStart(2, "0")}`;
+  const grouped = formatDecimal(wholeKoruna, { maximumFractionDigits: 0 });
+  const fraction = halere === BigInt(0) ? "" : `,${halere.toString().padStart(2, "0")}`;
 
-  return `${negative ? "−" : ""}${grouped}${fraction} Kč`;
+  return `${negative ? "−" : ""}${grouped}${fraction}\u00a0Kč`;
 }

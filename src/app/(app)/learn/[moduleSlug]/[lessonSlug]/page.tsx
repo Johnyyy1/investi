@@ -11,7 +11,7 @@ import { toLearningMomentum } from "@/features/progress/contracts";
 type LessonPageProps = { params: Promise<{ moduleSlug: string; lessonSlug: string }> };
 export async function generateMetadata({ params }: LessonPageProps) {
   const { moduleSlug, lessonSlug } = await params;
-  return { title: getAuthoredLesson(moduleSlug, lessonSlug)?.title ?? "Lesson unavailable" };
+  return { title: getAuthoredLesson(moduleSlug, lessonSlug)?.title ?? "Lekce není dostupná" };
 }
 export default async function LessonPage({ params }: LessonPageProps) {
   const { moduleSlug, lessonSlug } = await params;
