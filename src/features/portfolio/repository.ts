@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { lessonAward, portfolio, portfolioTrade, user } from "@/db/schema";
+import { lessonAward, portfolio, portfolioTrade, progressionUnlock, user } from "@/db/schema";
 import type { Currency } from "@/features/market-data/contracts";
 import { foldTrades, type LedgerTrade } from "./domain";
 import {
@@ -37,7 +37,9 @@ function asLedgerTrade(trade: TradeRow): LedgerTrade {
 async function entitlement(query: Pick<typeof db, "select">, userId: string) {
   const [result] = await query.select({ total: sql<string>`coalesce(sum(${lessonAward.practiceCapitalMinor}), 0)::text` })
     .from(lessonAward).where(eq(lessonAward.userId, userId));
-  return BigInt(result?.total ?? "0");
+  const [grant] = await query.select({ total: sql<string>`coalesce(sum(${progressionUnlock.practiceCapitalMinor}), 0)::text` })
+    .from(progressionUnlock).where(eq(progressionUnlock.userId, userId));
+  return BigInt(result?.total ?? "0") + BigInt(grant?.total ?? "0");
 }
 
 async function activePortfolio(query: Pick<typeof db, "select">, userId: string) {

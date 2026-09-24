@@ -11,6 +11,9 @@ describe("shared persisted lesson actions", () => {
     mocks.count.mockResolvedValue(2);
     mocks.complete.mockResolvedValue({
       xpAwarded: 60,
+      totalXp: 360,
+      portfolioLabUnlocked: false,
+      unlockCapitalAwardedMinor: 0n,
       lessonXp: 60,
       practiceCapitalAwardedMinor: BigInt(200_000),
       earnedPracticeCapitalMinor: BigInt(1_200_000),
@@ -26,19 +29,26 @@ describe("shared persisted lesson actions", () => {
     expect(mocks.count).toHaveBeenCalledWith("session-owner", moduleId);
     expect(mocks.revalidate).toHaveBeenCalledWith("/learn", "layout");
   });
-  it("serializes exact Practice Capital and excludes legacy XP from the client reward contract", async () => {
+  it("serializes separate XP and Practice Capital rewards", async () => {
     const result = await completeLessonAction("foundations-stocks");
     expect(result).toMatchObject({
       ok: true,
       reward: {
         practiceCapitalAwardedMinor: "200000",
         earnedPracticeCapitalMinor: "1200000",
+        xpAwarded: 60,
+        totalXp: 360,
+        unlockCapitalAwardedMinor: "0",
         learningMomentum: { streak: 4, todayCompleted: 1, dailyTarget: 2, timeZone: "Europe/Prague" },
       },
     });
     if (!("reward" in result) || !result.reward) throw new Error("Expected successful completion reward");
-    expect(result.reward).not.toHaveProperty("xpAwarded");
     expect(result.reward.learningMomentum).not.toHaveProperty("totalXp");
+  });
+  it("never accepts a client XP amount", async () => {
+    const result = await completeLessonAction("foundations-stocks");
+    expect(result).toMatchObject({ ok: true, reward: { xpAwarded: 60 } });
+    expect(mocks.complete).toHaveBeenCalledWith("session-owner", "foundations-stocks");
   });
   it.each(["foundations-checkpoint", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
     expect(await markLessonStartedAction(id)).toMatchObject({ ok: false });

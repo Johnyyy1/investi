@@ -30,6 +30,13 @@ try {
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   await page.goto(`${baseURL}/lab/portfolio`);
   await page.getByRole("heading", { name: "Portfolio Lab", exact: true }).waitFor();
+  assert.equal(await page.getByRole("link", { name: "Continue learning", exact: true }).getAttribute("href"), "/learn", "new learner sees unlock path");
+  // This suite exercises the existing zero-capital trade UI with an explicit
+  // entitlement fixture. The progression suite covers the real unlock grant.
+  await sql`insert into progression_unlock (user_id, unlock_id, practice_capital_minor, reason, unlocked_at)
+    values (${userId}, 'PORTFOLIO_LAB', 0, 'test_fixture', now())`;
+  await page.reload();
+  await page.getByText("Sample data", { exact: true }).waitFor();
   assert.equal(await page.getByText("Sample data", { exact: true }).count(), 1, "deterministic mode is labeled as sample data");
   await page.getByRole("heading", { name: "Build capital by learning", exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: /Invest/ }).count(), 0, "zero capital does not suggest investing is possible");

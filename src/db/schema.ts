@@ -172,6 +172,18 @@ export const lessonAward = pgTable("lesson_award", {
   check("lesson_award_reward_policy_version_positive_check", sql`${table.rewardPolicyVersion} > 0`),
 ]);
 
+/** Durable Lab entitlement and its one-time Practice Capital contribution. */
+export const progressionUnlock = pgTable("progression_unlock", {
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  unlockId: text("unlock_id").notNull(),
+  practiceCapitalMinor: bigint("practice_capital_minor", { mode: "bigint" }).notNull().default(sql`0`),
+  reason: text("reason").notNull(),
+  unlockedAt: timestamp("unlocked_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.unlockId] }),
+  check("progression_unlock_capital_nonnegative_check", sql`${table.practiceCapitalMinor} >= 0`),
+]);
+
 export const portfolioTradeSide = pgEnum("portfolio_trade_side", ["BUY", "SELL"]);
 
 /** One auditable sandbox generation. Closed generations and their trades are retained. */

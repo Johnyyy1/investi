@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, LogOut, Settings } from "lucide-react";
+import { ChevronDown, LockKeyhole, LogOut, Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { initializeTimeZoneAction } from "@/features/gamification/actions";
@@ -21,7 +21,7 @@ function activeNavigationId(pathname: string) {
   return "";
 }
 
-export function AppShell({ children, userName, isDemo = false, needsTimeZone = false }: { children: React.ReactNode; userName: string; isDemo?: boolean; needsTimeZone?: boolean }) {
+export function AppShell({ children, userName, isDemo = false, needsTimeZone = false, portfolioLabLocked = false }: { children: React.ReactNode; userName: string; isDemo?: boolean; needsTimeZone?: boolean; portfolioLabLocked?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -53,6 +53,7 @@ export function AppShell({ children, userName, isDemo = false, needsTimeZone = f
             return <Link key={id} href={href!} aria-current={active ? "page" : undefined} className={`relative flex min-h-12 items-center gap-2 rounded-control px-4 text-small transition-[background-color,color] duration-[var(--motion-micro)] ease-[var(--ease-standard)] ${active ? "bg-primary-soft font-bold text-primary-hover" : "font-semibold text-secondary hover:bg-surface-muted hover:text-foreground"}`}>
               <Icon className="size-[18px]" strokeWidth={active ? 2.4 : 2} aria-hidden="true" />
               {label}
+              {id === "lab" && portfolioLabLocked ? <LockKeyhole aria-label="Portfolio Lab locked" className="size-3.5 text-secondary" /> : null}
               {active ? <span aria-hidden="true" className="absolute inset-x-4 bottom-1 h-0.5 rounded-pill bg-primary" /> : null}
             </Link>;
           })}
@@ -79,6 +80,6 @@ export function AppShell({ children, userName, isDemo = false, needsTimeZone = f
       </div>
     </header>
     <div id="main-content" tabIndex={-1} className="min-h-[calc(100dvh-5rem)] pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
-    <MobileNav activeId={activeId} />
+    <MobileNav activeId={activeId} portfolioLabLocked={portfolioLabLocked} />
   </div>;
 }

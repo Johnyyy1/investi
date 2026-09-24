@@ -12,7 +12,7 @@ export type PracticeCapitalAward = {
 };
 
 /** Exact receipt-derived entitlement; there is deliberately no mutable balance counter. */
-export function getPracticeCapitalSummary(awards: readonly PracticeCapitalAward[]) {
+export function getPracticeCapitalSummary(awards: readonly PracticeCapitalAward[], unlockGrants: readonly bigint[] = []) {
   const unique = new Map<string, PracticeCapitalAward>();
   for (const award of awards) {
     if (!unique.has(award.lessonId)) unique.set(award.lessonId, award);
@@ -20,7 +20,7 @@ export function getPracticeCapitalSummary(awards: readonly PracticeCapitalAward[
   return {
     earnedPracticeCapitalMinor: [...unique.values()].reduce(
       (total, award) => total + award.practiceCapitalMinor,
-      BigInt(0),
+      unlockGrants.reduce((total, amount) => total + amount, BigInt(0)),
     ),
   };
 }

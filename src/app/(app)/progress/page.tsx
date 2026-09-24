@@ -8,13 +8,16 @@ import { moduleCatalog } from "@/features/learning/catalog";
 import { AppHeader } from "@/components/shell/app-header";
 import { PageFrame } from "@/components/shell/page-frame";
 import { formatPracticeCapitalMinor } from "@/features/rewards/presentation";
+import { loadPortfolioLabUnlock } from "@/features/progression/repository";
 
 export const metadata = { title: "Progress" };
 export default async function ProgressPage() {
   const summary = await loadLearner();
+  const unlock = summary.user ? await loadPortfolioLabUnlock(summary.user.id) : null;
   const formattedCapital = formatPracticeCapitalMinor(summary.practiceCapital.earnedPracticeCapitalMinor);
   return <PageFrame width="focused">
     <AppHeader title="Look how far you’ve come." />
+    {unlock && <section className="mt-8 border-y border-ql-border py-6" aria-labelledby="xp-title"><h2 id="xp-title" className="text-ql-small font-semibold text-ql-secondary">Learning XP</h2><p className="mt-1 text-ql-celebration font-bold text-ql-link tabular-nums" data-testid="total-xp">{unlock.totalXp} XP</p><div className="mt-5 flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-ql-title font-semibold">Portfolio Lab {unlock.unlocked ? "unlocked" : "unlock"}</h3><Link className="text-ql-small font-semibold text-ql-link underline" href="/lab/portfolio">{unlock.unlocked ? "Open Lab" : "View requirements"}</Link></div><p className="mt-2 text-ql-small text-ql-secondary">{unlock.totalXp} / {unlock.xpRequired} XP · Investing Foundations {unlock.completedPrerequisiteLessons} / {unlock.requiredPrerequisiteLessons} lessons</p><LearningProgressBar value={Math.min(unlock.totalXp, unlock.xpRequired)} total={unlock.xpRequired} label="XP toward Portfolio Lab unlock" /></section>}
     <section className="mt-8 min-w-0 rounded-surface border border-border bg-surface p-5 shadow-elevation-1 sm:p-6" aria-labelledby="practice-capital-title">
       <h2 id="practice-capital-title" className="text-ql-small font-semibold text-ql-secondary">Practice Capital earned</h2>
       <p className="mt-1 break-words text-ql-celebration font-bold text-ql-link tabular-nums" data-testid="total-practice-capital" aria-label={`Practice Capital earned: ${formattedCapital}`}>{formattedCapital}</p>
@@ -34,6 +37,6 @@ export default async function ProgressPage() {
       })}</ol> : <p className="mt-3 text-ql-body text-ql-secondary">Your first lesson is a good place to start.</p>}
     </section>
     <LearningLink className="mt-8 w-full sm:w-auto" href={summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`}>{summary.allComplete ? "Explore the Lab" : "Continue learning"}</LearningLink>
-    <details className="mt-8 text-ql-small text-ql-secondary"><summary className="flex min-h-12 cursor-pointer items-center text-ql-link">How progress works</summary><p>First completion earns 2,000 Kč Practice Capital. At least one new lesson on a calendar day counts toward your streak. Reviews do not earn extra capital. Your goal is {summary.gamification?.dailyTarget ?? 1} lessons a day, based on your saved daily minutes. Days follow {summary.gamification?.timeZone ?? "UTC"}.</p></details>
+    <details className="mt-8 text-ql-small text-ql-secondary"><summary className="flex min-h-12 cursor-pointer items-center text-ql-link">How progress works</summary><p>First completion earns 60 XP and 2,000 Kč Practice Capital. XP measures learning and is never spent. Complete Investing Foundations and earn 420 XP to unlock Portfolio Lab and a one-time 5,000 Kč Practice Capital grant. Reviews do not earn another reward. Your goal is {summary.gamification?.dailyTarget ?? 1} lessons a day, based on your saved daily minutes. Days follow {summary.gamification?.timeZone ?? "UTC"}.</p></details>
   </PageFrame>;
 }

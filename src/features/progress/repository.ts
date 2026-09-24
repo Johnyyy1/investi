@@ -1,12 +1,13 @@
 import "server-only";
 import { and, count, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { learningProfile, lesson, lessonAward, lessonProgress, user } from "@/db/schema";
+import { learningProfile, lesson, lessonAward, lessonProgress, progressionUnlock, user } from "@/db/schema";
 import { type SaveLessonProgress, saveLessonProgressSchema } from "./schemas";
 import { validateCompletion, validateMove } from "./transition";
 import { getGamification, learningDate, LESSON_XP } from "@/features/gamification/domain";
 import { getLearnerSummary } from "@/features/learning/learner-summary";
 import { getPracticeCapitalSummary, LESSON_PRACTICE_CAPITAL_MINOR, REWARD_POLICY_VERSION } from "@/features/rewards/practice-capital";
+import { ensurePortfolioLabUnlockInTransaction } from "@/features/progression/repository";
 
 export async function saveLessonProgress(userId: string, input: SaveLessonProgress, answers?: Record<string, string>) {
   const progress = saveLessonProgressSchema.parse(input);
@@ -58,12 +59,17 @@ export async function completeLesson(userId: string, lessonId: string) {
     }
     const awards = await tx.select().from(lessonAward).where(eq(lessonAward.userId, userId));
     const states = await tx.select().from(lessonProgress).where(eq(lessonProgress.userId, userId));
+    const unlock = await ensurePortfolioLabUnlockInTransaction(tx, userId);
+    const grants = await tx.select({ amount: progressionUnlock.practiceCapitalMinor }).from(progressionUnlock).where(eq(progressionUnlock.userId, userId));
     const summary = getLearnerSummary(states, profile?.recommendedStart ?? "investing-foundations");
     return {
       xpAwarded,
       lessonXp: awards.find((award) => award.lessonId === lessonId)?.xp ?? 0,
+      totalXp: awards.reduce((sum, award) => sum + award.xp, 0),
+      portfolioLabUnlocked: unlock.newlyUnlocked,
+      unlockCapitalAwardedMinor: unlock.capitalAwardedMinor,
       practiceCapitalAwardedMinor,
-      earnedPracticeCapitalMinor: getPracticeCapitalSummary(awards).earnedPracticeCapitalMinor,
+      earnedPracticeCapitalMinor: getPracticeCapitalSummary(awards, grants.map((grant) => grant.amount)).earnedPracticeCapitalMinor,
       gamification: getGamification(awards, now, timeZone, profile?.dailyGoalMinutes),
       nextHref: summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`,
       nextTitle: summary.allComplete ? "Try the Lab" : summary.next.title,

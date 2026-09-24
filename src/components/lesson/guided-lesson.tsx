@@ -12,7 +12,7 @@ import { isQuestion } from "@/features/lessons/question-evaluation";
 import type { AuthoredLesson } from "@/features/lessons/types";
 import { completeLessonAction, markLessonStartedAction, saveLessonPositionAction } from "@/features/progress/actions";
 import type { CompletionRewardPresentation, LearningMomentum } from "@/features/progress/contracts";
-import type { SerializedPracticeCapitalMinor } from "@/features/rewards/presentation";
+import { formatPracticeCapitalMinor, type SerializedPracticeCapitalMinor } from "@/features/rewards/presentation";
 import { LearningStats } from "@/components/gamification/learning-stats";
 import { GuidedBlock } from "./guided-block";
 import { GuidedQuestion } from "./guided-question";
@@ -97,7 +97,8 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
     </header>
     {error ? <Feedback role="alert" state="incorrect" className="mt-5 text-small text-danger-ink">{error}</Feedback> : null}
     {finished ? <div className="mt-7 overflow-hidden rounded-panel border border-primary/30 bg-surface shadow-elevation-1">
-      <CompletionScreen autoFocusAction title={review ? "Review complete" : "Lesson complete"} description={lesson.title} practiceCapitalAwardedMinor={reward && reward.practiceCapitalAwardedMinor !== "0" ? reward.practiceCapitalAwardedMinor : undefined} actionLabel={reward?.allComplete ? "Explore the Lab" : "Next lesson"} onContinue={() => { router.push(reward?.nextHref ?? nextHref); router.refresh(); }}>
+      <CompletionScreen autoFocusAction title={review ? "Review complete" : "Lesson complete"} description={lesson.title} xpAwarded={reward?.xpAwarded} practiceCapitalAwardedMinor={reward && reward.practiceCapitalAwardedMinor !== "0" ? reward.practiceCapitalAwardedMinor : undefined} actionLabel={reward?.allComplete ? "Explore the Lab" : "Next lesson"} onContinue={() => { router.push(reward?.nextHref ?? nextHref); router.refresh(); }}>
+        {reward?.portfolioLabUnlocked && <p className="mt-5 text-ql-body font-bold text-ql-link" role="status">Portfolio Lab unlocked · +{formatPracticeCapitalMinor(reward.unlockCapitalAwardedMinor)} Practice Capital</p>}
         {reward && reward.practiceCapitalAwardedMinor === "0" && <p className="mt-4 text-ql-small text-ql-secondary">No duplicate reward.</p>}
         {review && <p className="mt-4 text-ql-small text-ql-secondary">Review strengthens an idea. No duplicate reward.</p>}
         <div className="mt-7 rounded-surface border border-border bg-surface p-5 text-left"><LearningStats stats={reward?.learningMomentum ?? initialLearningMomentum} earnedPracticeCapitalMinor={reward?.earnedPracticeCapitalMinor ?? initialEarnedPracticeCapitalMinor} goal /></div>

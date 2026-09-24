@@ -7,7 +7,7 @@ import { LearningButton } from "./learning-button";
 import { useLearningDuration } from "./motion";
 import { formatPracticeCapitalMinor, type SerializedPracticeCapitalMinor } from "@/features/rewards/presentation";
 
-export function CompletionScreen({ title, description, practiceCapitalAwardedMinor, children, onContinue, autoFocusAction = false, actionLabel = "Continue learning" }: { title: string; description: string; practiceCapitalAwardedMinor?: SerializedPracticeCapitalMinor; children?: ReactNode; onContinue: () => void; autoFocusAction?: boolean; actionLabel?: string }) {
+export function CompletionScreen({ title, description, xpAwarded, practiceCapitalAwardedMinor, children, onContinue, autoFocusAction = false, actionLabel = "Continue learning" }: { title: string; description: string; xpAwarded?: number; practiceCapitalAwardedMinor?: SerializedPracticeCapitalMinor; children?: ReactNode; onContinue: () => void; autoFocusAction?: boolean; actionLabel?: string }) {
   const duration = useLearningDuration("reward");
   const formattedReward = practiceCapitalAwardedMinor === undefined ? undefined : formatPracticeCapitalMinor(practiceCapitalAwardedMinor);
   const descriptionId = useId();
@@ -22,6 +22,7 @@ export function CompletionScreen({ title, description, practiceCapitalAwardedMin
       <p className="mt-5 text-microcopy font-extrabold tracking-[0.08em] text-success-ink uppercase">Progress saved</p>
       <h2 className="mt-1 text-page-title font-bold tracking-[-0.025em]">{title}</h2>
       <p className="mt-3 text-body text-secondary">{description}</p>
+      {xpAwarded ? <p className="mt-4 text-emphasis font-bold text-ql-link" aria-label={`${xpAwarded} XP earned`}>+{xpAwarded} XP</p> : null}
       {formattedReward !== undefined ? <div className="mx-auto mt-5 max-w-full rounded-surface border border-warning bg-warning-soft px-5 py-3 text-warning-ink" aria-label={`${formattedReward} Practice Capital earned`}><p aria-hidden="true" className="break-words text-emphasis font-extrabold tabular-nums">+{formattedReward}</p><p aria-hidden="true" className="mt-0.5 text-ql-small font-bold">Practice Capital earned</p></div> : null}
     </motion.div>
     {children}

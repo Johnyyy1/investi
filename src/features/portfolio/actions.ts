@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isMarketDataError } from "@/features/market-data/errors";
 import { getCurrentUser } from "@/lib/session";
+import { requirePortfolioLabUnlock } from "@/features/progression/repository";
 import { PortfolioInputError } from "./decimal";
 import { portfolioMarketData } from "./environment";
 import { idempotencySchema, instrumentIdSchema, tradeInputSchema } from "./input";
@@ -26,6 +27,8 @@ function messageFor(error: unknown) {
 async function authenticatedUser() {
   const current = await getCurrentUser();
   if (!current) throw new PortfolioInputError("PortfolioUnavailable", "Your session has ended. Sign in again to use Portfolio Lab.");
+  try { await requirePortfolioLabUnlock(current.id); }
+  catch { throw new PortfolioInputError("PortfolioUnavailable", "Portfolio Lab is locked. Complete Investing Foundations to unlock it."); }
   return current;
 }
 

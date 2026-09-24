@@ -35,7 +35,12 @@ export async function completeLessonAction(lessonId: string) {
     revalidatePath("/learn", "layout");
     revalidatePath("/dashboard");
     revalidatePath("/progress");
+    revalidatePath("/lab", "layout");
     const presentationReward: CompletionRewardPresentation = {
+      xpAwarded: reward.xpAwarded,
+      totalXp: reward.totalXp,
+      portfolioLabUnlocked: reward.portfolioLabUnlocked,
+      unlockCapitalAwardedMinor: serializePracticeCapitalMinor(reward.unlockCapitalAwardedMinor),
       practiceCapitalAwardedMinor: serializePracticeCapitalMinor(reward.practiceCapitalAwardedMinor),
       earnedPracticeCapitalMinor: serializePracticeCapitalMinor(reward.earnedPracticeCapitalMinor),
       learningMomentum: toLearningMomentum(reward.gamification),
