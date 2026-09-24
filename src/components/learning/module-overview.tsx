@@ -15,8 +15,10 @@ export function ModuleOverview({ slug, items, completedLessons, portfolioUnlock 
   const learningModule = getModuleBySlug(slug)!;
   const lessons = getModuleLessons(slug);
   const available = lessons.filter((lesson) => lesson.status === "available");
-  const recommendedId = items.some((item) => item.state === "active") ? undefined : items.find((item) => item.state === "available")?.id;
-  const displayItems = items.map((item) => item.id === recommendedId ? { ...item, state: "recommended" as const } : item);
+  // The planned Foundations checkpoint remains registered for future authoring, but is not part of the seven-lesson learner path.
+  const learnerPath = slug === "investing-foundations" ? items.filter((item) => item.state !== "locked") : items;
+  const recommendedId = learnerPath.some((item) => item.state === "active") ? undefined : learnerPath.find((item) => item.state === "available")?.id;
+  const displayItems = learnerPath.map((item) => item.id === recommendedId ? { ...item, state: "recommended" as const } : item);
   return <PageFrame width="focused">
     <Link href="/learn" className="inline-flex min-h-12 items-center gap-2 rounded-button px-3 text-small font-bold text-primary-hover hover:bg-primary-soft"><ArrowLeft aria-hidden="true" className="size-4" />Zpět na Učení</Link>
     <div className="mt-4"><AppHeader title={learningModule.title} description={learningModule.description} /></div>

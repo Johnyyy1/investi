@@ -23,7 +23,7 @@ export function CompletionScreen({ title, description, xpAwarded, practiceCapita
       <h2 className="mt-1 text-page-title font-bold tracking-[-0.025em]">{title}</h2>
       <p className="mt-3 text-body text-secondary">{description}</p>
       {xpAwarded ? <p className="mt-4 text-emphasis font-bold text-ql-link" aria-label={`Získáno ${xpAwarded} XP`}>+{xpAwarded} XP</p> : null}
-      {formattedReward !== undefined ? <div className="mx-auto mt-5 max-w-full rounded-surface border border-warning bg-warning-soft px-5 py-3 text-warning-ink" aria-label={`Získaný Practice Capital: ${formattedReward}`}><p aria-hidden="true" className="break-words text-emphasis font-extrabold tabular-nums">+{formattedReward}</p><p aria-hidden="true" className="mt-0.5 text-ql-small font-bold">Získaný Practice Capital</p></div> : null}
+      {formattedReward !== undefined ? <div className="mx-auto mt-5 max-w-full rounded-surface border border-warning bg-warning-soft px-5 py-3 text-warning-ink" aria-label={`Získaný virtuální kapitál: ${formattedReward}`}><p aria-hidden="true" className="break-words text-emphasis font-extrabold tabular-nums">+{formattedReward}</p><p aria-hidden="true" className="mt-0.5 text-ql-small font-bold">Získaný virtuální kapitál</p></div> : null}
     </motion.div>
     {children}
     <LearningButton autoFocus={autoFocusAction} aria-describedby={descriptionId} className="mt-7 w-full" onClick={onContinue}>{actionLabel}</LearningButton>

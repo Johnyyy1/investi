@@ -20,8 +20,8 @@ export default async function ProgressPage() {
     <AppHeader title="Podívej se, jak daleko jsi došel." />
     {unlock && <section className="mt-8 border-y border-ql-border py-6" aria-labelledby="xp-title"><h2 id="xp-title" className="text-ql-small font-semibold text-ql-secondary">XP za učení</h2><p className="mt-1 text-ql-celebration font-bold text-ql-link tabular-nums" data-testid="total-xp">{unlock.totalXp} XP</p><div className="mt-5 flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-ql-title font-semibold">Portfolio Lab {unlock.unlocked ? "odemčen" : "čeká na odemčení"}</h3><Link className="text-ql-small font-semibold text-ql-link underline" href="/lab/portfolio">{unlock.unlocked ? "Otevřít Lab" : "Zobrazit podmínky"}</Link></div><p className="mt-2 text-ql-small text-ql-secondary">{unlock.totalXp} / {unlock.xpRequired} XP · Základy investování {unlock.completedPrerequisiteLessons} / {unlock.requiredPrerequisiteLessons} lekcí</p><LearningProgressBar value={Math.min(unlock.totalXp, unlock.xpRequired)} total={unlock.xpRequired} label="XP potřebné k odemčení Portfolio Labu" /></section>}
     <section className="mt-8 min-w-0 rounded-surface border border-border bg-surface p-5 shadow-elevation-1 sm:p-6" aria-labelledby="practice-capital-title">
-      <h2 id="practice-capital-title" className="text-ql-small font-semibold text-ql-secondary">Získaný Practice Capital</h2>
-      <p className="mt-1 break-words text-ql-celebration font-bold text-ql-link tabular-nums" data-testid="total-practice-capital" aria-label={`Získaný Practice Capital: ${formattedCapital}`}>{formattedCapital}</p>
+      <h2 id="practice-capital-title" className="text-ql-small font-semibold text-ql-secondary">Virtuální kapitál</h2>
+      <p className="mt-1 break-words text-ql-celebration font-bold text-ql-link tabular-nums" data-testid="total-practice-capital" aria-label={`Virtuální kapitál: ${formattedCapital}`}>{formattedCapital}</p>
       <p className="mt-3 max-w-xl text-ql-small text-ql-secondary">Virtuální kapitál pro vzdělávací použití v investi. Nejde o skutečné peníze, nelze ho vybrat a nepředstavuje investiční doporučení.</p>
     </section>
     <p className="mt-10 flex min-w-0 flex-wrap items-baseline gap-x-3 text-ql-celebration font-bold"><span>{summary.completed.length}</span><span className="min-w-0 break-words text-ql-title font-normal text-ql-secondary">dokončených lekcí</span></p>
@@ -38,6 +38,6 @@ export default async function ProgressPage() {
       })}</ol> : <p className="mt-3 text-ql-body text-ql-secondary">Začni první lekcí.</p>}
     </section>
     <LearningLink className="mt-8 w-full sm:w-auto" href={summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`}>{summary.allComplete ? "Prozkoumat Lab" : "Pokračovat v učení"}</LearningLink>
-    <details className="mt-8 text-ql-small text-ql-secondary"><summary className="flex min-h-12 cursor-pointer items-center text-ql-link">Jak funguje pokrok</summary><p>První dokončení lekce přidá 60 XP. XP měří učení a nelze je utratit. Dokončením všech sedmi lekcí Základů investování a získáním 420 XP odemkneš Portfolio Lab a jednorázově dostaneš 5 000 Kč Practice Capital. Opakování další odměnu nepřidává.</p></details>
+    <details className="mt-8 text-ql-small text-ql-secondary"><summary className="flex min-h-12 cursor-pointer items-center text-ql-link">Jak funguje pokrok</summary><p>První dokončení lekce přidá 60 XP. XP měří učení a nelze je utratit. Dokončením všech sedmi lekcí Základů investování a získáním 420 XP odemkneš Portfolio Lab a jednorázově dostaneš 5 000 Kč virtuálního kapitálu. Opakování další odměnu nepřidává.</p></details>
   </PageFrame>;
 }

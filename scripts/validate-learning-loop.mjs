@@ -127,7 +127,7 @@ async function startDemo(context) {
   assert.ok((await awards(owner.id)).every((award) => BigInt(award.practice_capital_minor) === 200_000n && award.reward_policy_version === 1));
   assert.equal((await rows(owner.id)).length, 7);
   await page.getByTestId("total-practice-capital").filter({ hasText: "12,000 Kč" }).waitFor();
-  assert.equal(await page.getByLabel("Practice Capital: 12,000 Kč").count(), 1, "Learn exposes an unambiguous capital label");
+  assert.equal(await page.getByLabel("Virtuální kapitál: 12,000 Kč").count(), 1, "Learn exposes an unambiguous capital label");
   assert.equal(await page.getByText(/\bXP\b/).count(), 0, "Learn does not expose XP");
   return { page, owner };
 }
@@ -183,7 +183,7 @@ try {
   assert.equal(await total(ownerA.id), 420, "concurrent completions award XP once");
   assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "concurrent completions award Practice Capital once");
   assert.equal(
-    await page.getByLabel("2,000 Kč Practice Capital earned").count() + await concurrent.getByLabel("2,000 Kč Practice Capital earned").count(),
+    await page.getByLabel("Získaný virtuální kapitál: 2,000 Kč").count() + await concurrent.getByLabel("Získaný virtuální kapitál: 2,000 Kč").count(),
     1,
     "the authoritative first-completion result presents one Practice Capital reward",
   );
@@ -202,7 +202,7 @@ try {
   await heading(page, "Expected is not realized");
   await finishReview(page);
   await page.screenshot({ path: `${screenshotDir}/review-completion.png`, fullPage: true });
-  assert.equal(await page.getByLabel("2,000 Kč Practice Capital earned").count(), 0, "review completion presents no reward");
+  assert.equal(await page.getByLabel("Získaný virtuální kapitál: 2,000 Kč").count(), 0, "review completion presents no reward");
   assert.equal(await page.getByText("Review strengthens an idea. No duplicate reward.", { exact: true }).count(), 1, "review completion is neutral about rewards");
   assert.deepEqual(await awards(ownerA.id), savedAwards, "review awards nothing");
   assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "review awards no Practice Capital");
@@ -274,7 +274,7 @@ try {
   checks.push("Labs: persistent portfolio search/buy/sell/reload; responsive holdings; backtest; benchmark; full table; question; invalid amount/period; reduced motion; 200% text");
   await page.goto(`${baseURL}/progress`); await heading(page, "Look how far you’ve come."); await layouts(page, "progress");
   await page.getByTestId("total-practice-capital").filter({ hasText: "14,000 Kč" }).waitFor();
-  assert.equal(await page.getByLabel("Practice Capital earned: 14,000 Kč").count(), 1, "Progress exposes an unambiguous earned-capital label");
+  assert.equal(await page.getByLabel("Virtuální kapitál: 14,000 Kč").count(), 1, "Progress exposes an unambiguous earned-capital label");
   assert.equal(await page.getByText(/\bXP\b/).count(), 0, "Progress does not expose XP");
   assert.equal(await total(ownerA.id), 420, "Lab does not manufacture lesson XP");
   assert.equal(await practiceCapitalTotal(ownerA.id), 1_400_000n, "Lab does not manufacture Practice Capital");

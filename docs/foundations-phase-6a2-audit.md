@@ -23,3 +23,7 @@ This records the pre-change curriculum at baseline `ac9ff9b` and the Phase 6A.2 
 ## Final curriculum contract
 
 Each lesson now follows prediction/question → explanation → interaction/application → two mastery checks → Portfolio Lab bridge → summary. Incorrect answers explain the misconception and return the learner to an enabled retry state. The server accepts forward progress through a question only after a correct evaluated answer. Ephemeral attempts remain client-side; completion, XP, unlock, and Practice Capital remain server-authoritative and idempotent.
+
+## Migration verification
+
+On 2026-09-24, the configured Neon database reported all nine repository migrations, through `0008_overconfident_shape`. Migration `0008` only replaces the `lesson_award.practice_capital_minor` positive-value check with a nonnegative check; it contains no data statements, so it cannot change data rows. The live constraint reports `practice_capital_minor >= 0`, and the local fresh migration chain used for Phase 6A.2 validation is consistent through the same migration.

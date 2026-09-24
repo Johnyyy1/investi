@@ -88,21 +88,21 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
   const question = step.blocks.find(isQuestion);
   const hasPrevious = position > 0;
   const onPrevious = () => void move(position - 1);
-  return <main className="mx-auto min-h-screen w-full max-w-4xl px-4 py-5 min-[375px]:px-5 sm:px-8 sm:py-8 lg:py-10">
-    <header className="rounded-surface border border-border bg-surface px-4 py-4 shadow-elevation-1 sm:px-6 sm:py-5">
+  return <main className="mx-auto min-h-screen w-full max-w-4xl px-3 py-4 min-[375px]:px-5 sm:px-8 sm:py-8 lg:py-10">
+    <header className="rounded-surface border border-border bg-surface px-3 py-4 shadow-elevation-1 min-[375px]:px-4 sm:px-6 sm:py-5">
       <LessonProgress step={finished ? steps.length + 1 : position + 1} total={steps.length + 1} onBack={() => router.push("/learn")} />
       <div className="mt-4 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-microcopy font-extrabold tracking-[0.06em] text-primary-hover uppercase"><span>{learningModule.title}</span><span aria-hidden="true">·</span><span>Lekce {lesson.position}</span>{review ? <><span aria-hidden="true">·</span><span className="inline-flex items-center gap-1 text-success-ink"><CheckCircle2 aria-hidden="true" className="size-4" />Opakování</span></> : null}</div>
-        <h1 className="mt-1 break-words text-card-title font-bold sm:text-[1.4rem]">{lesson.title}</h1>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-microcopy font-extrabold tracking-[0.06em] text-primary-hover uppercase max-[359px]:gap-x-1"><span>{learningModule.title}</span><span aria-hidden="true">·</span><span>Lekce {lesson.position}</span>{review ? <><span aria-hidden="true">·</span><span className="inline-flex items-center gap-1 text-success-ink"><CheckCircle2 aria-hidden="true" className="size-4" />Opakování</span></> : null}</div>
+        <h1 lang="cs" className="mt-1 break-normal [overflow-wrap:normal] text-card-title font-bold sm:text-[1.4rem]">{lesson.title}</h1>
         {review ? <p className="mt-1 text-small text-secondary">Lekce už je dokončena. Opakování uložený postup nezmění.</p> : null}
       </div>
     </header>
     {error ? <Feedback role="alert" state="incorrect" className="mt-5 text-small text-danger-ink">{error}</Feedback> : null}
     {finished ? <div className="mt-7 overflow-hidden rounded-panel border border-primary/30 bg-surface shadow-elevation-1">
       <CompletionScreen autoFocusAction title={review ? "Opakování dokončeno" : "Lekce dokončena"} description={lesson.title} xpAwarded={reward?.xpAwarded} practiceCapitalAwardedMinor={reward && reward.practiceCapitalAwardedMinor !== "0" ? reward.practiceCapitalAwardedMinor : undefined} actionLabel={reward?.portfolioLabUnlocked ? "Otevřít Portfolio Lab" : reward?.allComplete ? "Prozkoumat Lab" : "Další lekce"} onContinue={() => { router.push(reward?.portfolioLabUnlocked ? "/lab/portfolio" : reward?.nextHref ?? nextHref); router.refresh(); }}>
-        {reward?.portfolioLabUnlocked && <p className="mt-5 text-ql-body font-bold text-ql-link" role="status">Portfolio Lab odemčen · +{formatPracticeCapitalMinor(reward.unlockCapitalAwardedMinor)} Practice Capital</p>}
-        {reward && reward.xpAwarded > 0 && !reward.portfolioLabUnlocked && <p className="mt-4 text-ql-small text-secondary">Practice Capital získáš po dokončení základů a odemčení Portfolio Labu.</p>}
-        {review && <p className="mt-4 text-ql-small text-ql-secondary">Opakováním si znalost upevníš. Další XP ani Practice Capital se nepřipisují.</p>}
+        {reward?.portfolioLabUnlocked && <p className="mt-5 text-ql-body font-bold text-ql-link" role="status">Portfolio Lab odemčen · +{formatPracticeCapitalMinor(reward.unlockCapitalAwardedMinor)} virtuálního kapitálu</p>}
+        {reward && reward.xpAwarded > 0 && !reward.portfolioLabUnlocked && <p className="mt-4 text-ql-small text-secondary">Virtuální kapitál získáš po dokončení základů a odemčení Portfolio Labu.</p>}
+        {review && <p className="mt-4 text-ql-small text-ql-secondary">Opakováním si znalost upevníš. Další XP ani virtuální kapitál se nepřipisují.</p>}
         <div className="mt-7 rounded-surface border border-border bg-surface p-5 text-left"><LearningStats stats={reward?.learningMomentum ?? initialLearningMomentum} earnedPracticeCapitalMinor={reward?.earnedPracticeCapitalMinor ?? initialEarnedPracticeCapitalMinor} goal /></div>
         {reward && !reward.allComplete && !reward.portfolioLabUnlocked && <p className="mt-6 text-ql-small text-ql-secondary">Další na řadě: {reward.nextTitle}</p>}
       </CompletionScreen>
@@ -111,7 +111,7 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
       <article key={position} className="mt-7 min-w-0" aria-labelledby="step-title">
         <div>
           <p className="text-microcopy font-extrabold tracking-[0.08em] text-primary-hover uppercase">{step.kind === "mastery" ? `Ověření znalostí · ${masteryPosition} z ${masterySteps.length}` : `Krok ${position + 1}`}</p>
-          <h2 ref={headingRef} id="step-title" tabIndex={-1} className="mt-1 scroll-mt-8 break-words text-section-title font-bold tracking-[-0.02em]">{step.title}</h2>
+          <h2 ref={headingRef} id="step-title" tabIndex={-1} lang="cs" className="mt-1 scroll-mt-8 break-normal [overflow-wrap:normal] text-section-title font-bold tracking-[-0.02em]">{step.title}</h2>
         </div>
         <div className="mt-6 space-y-6">
           {step.blocks.filter((block) => !isQuestion(block)).map((block) => <GuidedBlock key={block.id} block={block} />)}
