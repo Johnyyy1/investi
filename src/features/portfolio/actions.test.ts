@@ -29,7 +29,7 @@ describe("Portfolio Lab server authorization", () => {
       sellPortfolioAction(input),
       resetPortfolioAction({ clientIdempotencyKey: crypto.randomUUID() }),
     ]);
-    for (const result of results) expect(result).toMatchObject({ ok: false, message: "Portfolio Lab is locked. Complete Investing Foundations to unlock it." });
+    for (const result of results) expect(result).toMatchObject({ ok: false, message: "Portfolio Lab je zamčený. Dokonči Základy investování a odemkni ho." });
     expect(mocks.requireUnlock).toHaveBeenCalledTimes(5);
     expect(mocks.search).not.toHaveBeenCalled();
     expect(mocks.preview).not.toHaveBeenCalled();

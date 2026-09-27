@@ -16,13 +16,13 @@ export function PreferencesEditor({ initialAnswers }: { initialAnswers: Preferen
     startTransition(async () => {
       try {
         const result = await updatePreferencesAction(answers);
-        setMessage({ ok: result.ok, text: result.ok ? "Your learning preferences have been saved." : result.message });
-      } catch { setMessage({ ok: false, text: "We couldn’t connect. Your changes are still here. Please try again." }); }
+        setMessage({ ok: result.ok, text: result.ok ? "Tvoje předvolby učení jsou uložené." : result.message });
+      } catch { setMessage({ ok: false, text: "Připojení se nepodařilo. Změny tu zůstaly, zkus to znovu." }); }
     });
   }
   return <form action={save} className="mt-10 space-y-10">
     {[1, 2, 3, 4].map((step) => <section key={step}><h2 className="mb-3 text-ql-title font-semibold">{questionTitles[step]}</h2><PreferencesQuestion step={step} answers={answers} onChange={(next) => { setAnswers(next); setMessage(undefined); }} disabled={pending} /></section>)}
-    <p className="text-ql-small text-ql-secondary">Daily minutes set a simple lesson goal: 5–10 minutes is one lesson; 15–20 is two. Goals and interests are optional.</p>
-    <div>{message && <p className={`mb-4 text-ql-small ${message.ok ? "text-ql-success-ink" : "text-ql-danger-ink"}`} role={message.ok ? "status" : "alert"}>{message.text}</p>}<LearningButton type="submit" loading={pending} disabled={!parsed.success} className="w-full sm:w-auto">{pending ? "Saving…" : "Save preferences"}</LearningButton></div>
+    <p className="text-ql-small text-ql-secondary">Denní čas nastavuje jednoduchý cíl: 5–10 minut je jedna lekce, 15–20 jsou dvě. Cíle i zájmy jsou volitelné.</p>
+    <div>{message && <p className={`mb-4 text-ql-small ${message.ok ? "text-ql-success-ink" : "text-ql-danger-ink"}`} role={message.ok ? "status" : "alert"}>{message.text}</p>}<LearningButton type="submit" loading={pending} disabled={!parsed.success} className="w-full sm:w-auto">{pending ? "Ukládám…" : "Uložit předvolby"}</LearningButton></div>
   </form>;
 }

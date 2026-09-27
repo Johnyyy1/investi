@@ -8,7 +8,7 @@ export function FormulaBlock({ formula, variables = [], explanation }: {
   try {
     html = katex.renderToString(formula, { displayMode: true, output: "htmlAndMathml", throwOnError: true, trust: false, strict: "error" });
   } catch {
-    return <figure className="rounded-ql-lg border border-ql-border bg-ql-surface p-6"><p role="status" className="text-ql-small text-ql-danger-ink">This formula could not be displayed.</p><code className="break-all text-ql-small">{formula}</code></figure>;
+    return <figure className="rounded-ql-lg border border-ql-border bg-ql-surface p-6"><p role="status" className="text-ql-small text-ql-danger-ink">Tento vzorec se nepodařilo zobrazit.</p><code className="break-all text-ql-small">{formula}</code></figure>;
   }
   return <figure className="rounded-ql-lg border border-ql-border bg-ql-surface p-4 min-[375px]:p-5 sm:p-6">
     <div className="py-2 text-center" dangerouslySetInnerHTML={{ __html: html }} />

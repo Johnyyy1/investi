@@ -5,12 +5,12 @@ import { returnsLessons } from "./returns/manifest";
 describe("authored lesson registry", () => {
   it("registers the first Returns lesson against the published manifest", () => {
     const lesson = getAuthoredLesson("returns", "what-is-a-return");
-    expect(lesson).toMatchObject({ id: returnsLessons[0].id, title: "What is a return?" });
+    expect(lesson).toMatchObject({ id: returnsLessons[0].id, title: "Co je výnos?" });
   });
 
   it("registers the three published Returns lessons while later lessons stay unavailable", () => {
-    expect(getAuthoredLesson("returns", "simple-returns")).toMatchObject({ title: "Simple returns" });
-    expect(getAuthoredLesson("returns", "compounding-and-cumulative-returns")).toMatchObject({ title: "Compounding & cumulative returns" });
+    expect(getAuthoredLesson("returns", "simple-returns")).toMatchObject({ title: "Jednoduché výnosy" });
+    expect(getAuthoredLesson("returns", "compounding-and-cumulative-returns")).toMatchObject({ title: "Složené a kumulativní výnosy" });
     expect(getAuthoredLesson("returns", "log-returns")).toBeUndefined();
   });
 });

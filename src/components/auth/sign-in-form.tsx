@@ -15,15 +15,15 @@ export function SignInForm() {
     setIsSubmitting(true); setErrorMessage(undefined);
     try {
     const { error } = await authClient.signIn.email({ email: String(formData.get("email") ?? ""), password: String(formData.get("password") ?? ""), callbackURL: "/learn" });
-    if (error) { setErrorMessage(getAuthErrorMessage(error, "We could not sign you in. Please try again.")); setIsSubmitting(false); return; }
+    if (error) { setErrorMessage(getAuthErrorMessage(error, "Přihlášení se nepodařilo. Zkus to znovu.")); setIsSubmitting(false); return; }
     router.replace("/learn"); router.refresh();
-    } catch { setErrorMessage("We could not connect. Please try again."); }
+    } catch { setErrorMessage("Připojení se nepodařilo. Zkus to znovu."); }
     finally { setIsSubmitting(false); }
   }
   return <form action={onSubmit} className="mt-9 space-y-5">
-    <TextInput label="Email" type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
-    <TextInput label="Password" type="password" name="password" autoComplete="current-password" required />
+    <TextInput label="E-mail" type="email" name="email" autoComplete="email" placeholder="ty@example.com" required />
+    <TextInput label="Heslo" type="password" name="password" autoComplete="current-password" required />
     {errorMessage ? <p className="text-ql-small text-ql-danger-ink" role="alert">{errorMessage}</p> : null}
-    <LearningButton className="w-full" type="submit" loading={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in"}</LearningButton>
+    <LearningButton className="w-full" type="submit" loading={isSubmitting}>{isSubmitting ? "Přihlašuji…" : "Přihlásit se"}</LearningButton>
   </form>;
 }

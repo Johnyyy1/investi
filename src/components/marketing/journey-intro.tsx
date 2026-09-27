@@ -4,22 +4,22 @@ import styles from "./marketing.module.css";
 
 const steps = [
   {
-    title: "Learn",
-    description: "Interactive, bite-sized lessons that make investing click.",
+    title: "Uč se",
+    description: "Krátké interaktivní lekce, díky kterým investování dává smysl.",
     href: "/learn",
     icon: BookOpen,
     className: styles.learnPanel,
   },
   {
-    title: "Build",
-    description: "Try ideas in a risk-free portfolio and see how allocation choices behave.",
+    title: "Sestavuj",
+    description: "Vyzkoušej nápady v bezrizikovém portfoliu a sleduj dopad rozložení.",
     href: "/lab/portfolio",
     icon: BarChart3,
     className: styles.buildPanel,
   },
   {
-    title: "Backtest",
-    description: "Test your strategy against the past to see what works.",
+    title: "Backtestuj",
+    description: "Otestuj strategii na minulosti a zjisti, jak by se chovala.",
     href: "/lab/backtesting",
     icon: ChartSpline,
     className: styles.backtestPanel,
@@ -33,10 +33,10 @@ export function JourneyIntro() {
       <span className={`${styles.journeyGlow} ${styles.journeyGlowTwo}`} aria-hidden="true" />
       <div className={`${styles.container} ${styles.journeyLayout}`}>
         <div className={styles.journeyCopy}>
-          <p className={styles.eyebrow}>A CLEARER PATH FORWARD</p>
-          <h2 id="journey-title">Learn. Build. Backtest.</h2>
-          <p className={styles.journeyDescription}>Go from curious to confident with a learning experience designed for real life.</p>
-          <Link href="/learn" prefetch={false} className={styles.journeyCta}>Explore the experience <ArrowRight aria-hidden="true" /></Link>
+          <p className={styles.eyebrow}>JASNĚJŠÍ CESTA VPŘED</p>
+          <h2 id="journey-title">Uč se. Sestavuj. Backtestuj.</h2>
+          <p className={styles.journeyDescription}>Od zvědavosti k jistotě díky učení navrženému pro skutečný život.</p>
+          <Link href="/learn" prefetch={false} className={styles.journeyCta}>Prozkoumat cestu <ArrowRight aria-hidden="true" /></Link>
         </div>
         <div className={styles.journeyCardsScene}>
           <div className={styles.journeyPanels}>
@@ -46,7 +46,7 @@ export function JourneyIntro() {
                   <span className={styles.panelIcon}><Icon aria-hidden="true" /></span>
                   <h3>{title}</h3>
                   <p>{description}</p>
-                  <Link href={href} prefetch={false} className={styles.panelArrow} aria-label={`Explore ${title}`}><ArrowRight aria-hidden="true" /></Link>
+                  <Link href={href} prefetch={false} className={styles.panelArrow} aria-label={`Prozkoumat: ${title}`}><ArrowRight aria-hidden="true" /></Link>
                 </article>
               </div>
             </div>)}

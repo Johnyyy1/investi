@@ -6,27 +6,27 @@ import { returnsLessons } from "./manifest";
 
 type Step = { title: string; kind?: "lesson" | "mastery"; blocks: readonly string[] };
 const introductionSteps: Step[] = [
-  { title: "What does a return measure?", blocks: ["meaning", "price-change"] },
-  { title: "Put the change in context", blocks: ["formula-one", "formula-two"] },
-  { title: "Follow a worked example", blocks: ["example-100", "positive-negative"] },
-  { title: "Compare percentage changes", blocks: ["comparing", "compare-assets"] },
-  { title: "Make a prediction", blocks: ["prediction"] },
-  { title: "Try the return calculator", blocks: ["calculate"] },
-  { title: "Calculate a return", blocks: ["numeric"] },
-  { title: "Check your understanding", blocks: ["why-percent"] },
-  { title: "Bring it together", blocks: ["check", "takeaway", "checkpoint"] },
+  { title: "Co měří výnos?", blocks: ["meaning", "price-change"] },
+  { title: "Uveď změnu do kontextu", blocks: ["formula-one", "formula-two"] },
+  { title: "Projdi si příklad", blocks: ["example-100", "positive-negative"] },
+  { title: "Porovnej procentní změny", blocks: ["comparing", "compare-assets"] },
+  { title: "Předpověz výsledek", blocks: ["prediction"] },
+  { title: "Vyzkoušej kalkulačku výnosu", blocks: ["calculate"] },
+  { title: "Vypočítej výnos", blocks: ["numeric"] },
+  { title: "Ověř si porozumění", blocks: ["why-percent"] },
+  { title: "Shrň si to", blocks: ["check", "takeaway", "checkpoint"] },
 ];
 const simpleSteps: Step[] = [
-  { title: "One period at a time", blocks: ["periods", "period-intro"] },
-  { title: "Use the previous price", blocks: ["period-formula-one", "period-formula-two"] },
-  { title: "Follow the changing denominator", blocks: ["period-example"] },
-  { title: "Explore a price series", blocks: ["series", "series-figure"] },
-  { title: "Calculate a gain", blocks: ["first-calculation"] },
-  { title: "Calculate a loss", blocks: ["negative-return"] },
-  { title: "Decimals and percentages", blocks: ["representation", "decimal-callout", "decimal-practice"] },
-  { title: "Compare two investments", blocks: ["comparison"] },
-  { title: "Reason through two periods", blocks: ["practice", "two-periods"] },
-  { title: "Bring it together", blocks: ["raw-differences", "takeaway", "checkpoint"] },
+  { title: "Jedno období po druhém", blocks: ["periods", "period-intro"] },
+  { title: "Použij předchozí cenu", blocks: ["period-formula-one", "period-formula-two"] },
+  { title: "Sleduj měnící se jmenovatel", blocks: ["period-example"] },
+  { title: "Prozkoumej časovou řadu ceny", blocks: ["series", "series-figure"] },
+  { title: "Vypočítej zisk", blocks: ["first-calculation"] },
+  { title: "Vypočítej ztrátu", blocks: ["negative-return"] },
+  { title: "Desetinná čísla a procenta", blocks: ["representation", "decimal-callout", "decimal-practice"] },
+  { title: "Porovnej dvě investice", blocks: ["comparison"] },
+  { title: "Promysli dvě období", blocks: ["practice", "two-periods"] },
+  { title: "Shrň si to", blocks: ["raw-differences", "takeaway", "checkpoint"] },
 ];
 export function getStepDefinitions(lessonId: string): readonly Step[] {
   if (lessonId === returnsLessons[0].id) return introductionSteps;

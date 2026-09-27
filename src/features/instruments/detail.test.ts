@@ -30,7 +30,7 @@ describe("instrument detail loading", () => {
     const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
     expect(detail.quote?.price).toBe(114);
     expect(detail.points).toEqual([]);
-    expect(detail.historyMessage).toMatch(/not available/);
+    expect(detail.historyMessage).toMatch(/není dostupná/);
   });
   it("keeps the expanded AAPL weekday series explicitly synthetic", async () => {
     const service = createDeterministicMarketDataService();
@@ -46,7 +46,7 @@ describe("instrument detail loading", () => {
     vi.spyOn(service, "getQuote").mockRejectedValue(new MarketDataError("QuoteUnavailable", "upstream failure"));
     const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
     expect(detail.quote).toBeNull();
-    expect(detail.quoteMessage).toMatch(/unavailable/);
+    expect(detail.quoteMessage).toMatch(/není dostupná/);
     expect(detail.points.length).toBe(260);
   });
   it("keeps the chart and quote when all company metrics fail", async () => {
@@ -54,7 +54,7 @@ describe("instrument detail loading", () => {
     vi.spyOn(service, "getEquityFundamentals").mockRejectedValue(new MarketDataError("ProviderConfiguration", "restricted"));
     const detail = await loadInstrumentDetail(service, "US-XNAS:AAPL", "1Y", now);
     expect(detail.fundamentals).toBeNull();
-    expect(detail.fundamentalsMessage).toMatch(/unavailable/);
+    expect(detail.fundamentalsMessage).toMatch(/nejsou dostupné/);
     expect(detail.quote?.price).toBe(114);
     expect(detail.points.length).toBe(260);
   });
@@ -63,18 +63,18 @@ describe("instrument detail loading", () => {
     vi.spyOn(service, "getEtfAnalytics").mockRejectedValue(new MarketDataError("ProviderConfiguration", "restricted"));
     const detail = await loadInstrumentDetail(service, "IE-XETR:VWCE", "1Y", now);
     expect(detail.etfAnalytics).toBeNull();
-    expect(detail.etfAnalyticsMessage).toMatch(/unavailable/);
+    expect(detail.etfAnalyticsMessage).toMatch(/není dostupné/);
     expect(detail.quote?.price).toBe(124);
     expect(detail.points.length).toBe(10);
   });
   it("handles an empty requested range without manufacturing dates", async () => {
     const detail = await loadInstrumentDetail(createDeterministicMarketDataService(), "US-XNAS:AAPL", "1M", new Date("2026-09-21T00:00:00.000Z"));
     expect(detail.points).toEqual([]);
-    expect(detail.historyMessage).toMatch(/not available/);
+    expect(detail.historyMessage).toMatch(/není dostupná/);
   });
   it("keeps a missing instrument distinct from a missing quote", async () => {
     const detail = await loadInstrumentDetail(createDeterministicMarketDataService(), "FMP:NASDAQ:AAPL", "1Y", now);
     expect(detail.instrument).toBeNull();
-    expect(detail.metadataMessage).toMatch(/not available/);
+    expect(detail.metadataMessage).toMatch(/není.*k dispozici/);
   });
 });

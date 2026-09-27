@@ -30,10 +30,10 @@ async function signUp(label) {
   await page.emulateMedia({ reducedMotion: "reduce" });
   const email = `progression-browser-${randomUUID()}@example.com`;
   await page.goto(`${baseURL}/sign-up`);
-  await page.getByLabel("Name", { exact: true }).fill(label);
-  await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(randomUUID());
-  await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await page.getByLabel("Jméno", { exact: true }).fill(label);
+  await page.getByLabel("E-mail", { exact: true }).fill(email);
+  await page.getByLabel("Heslo", { exact: true }).fill(randomUUID());
+  await page.getByRole("button", { name: "Vytvořit účet", exact: true }).click();
   await finishOnboarding(page);
   const [{ id }] = await sql`select id from "user" where email = ${email}`;
   ids.push(id);
@@ -77,8 +77,8 @@ try {
   await page.getByRole("heading", { name: "Portfolio Lab", exact: true }).waitFor();
   assert.equal(await page.getByText("0 / 420 XP").count(), 1);
   assert.equal(await page.getByText("0 / 7 lekcí").count(), 1);
-  assert.equal(await page.getByRole("button", { name: /Invest/ }).count(), 0);
-  assert.equal(await page.getByRole("heading", { name: "Holdings" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: /Investovat/ }).count(), 0);
+  assert.equal(await page.getByRole("heading", { name: "Pozice" }).count(), 0);
   await layout(page, "locked-portfolio");
 
   await seedFinalCursor(id, required[0].id, required[0].finalPosition);

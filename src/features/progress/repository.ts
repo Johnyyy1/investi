@@ -72,7 +72,7 @@ export async function completeLesson(userId: string, lessonId: string) {
       earnedPracticeCapitalMinor: getPracticeCapitalSummary(awards, grants.map((grant) => grant.amount)).earnedPracticeCapitalMinor,
       gamification: getGamification(awards, now, timeZone, profile?.dailyGoalMinutes),
       nextHref: summary.allComplete ? "/lab" : `/learn/${summary.next.moduleSlug}/${summary.next.slug}`,
-      nextTitle: summary.allComplete ? "Try the Lab" : summary.next.title,
+      nextTitle: summary.allComplete ? "Prozkoumat Lab" : summary.next.title,
       allComplete: summary.allComplete,
     };
   });

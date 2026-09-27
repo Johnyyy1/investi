@@ -14,7 +14,7 @@ const lessonIdSchema = z.string().refine((id) => availableLessons.some((lesson) 
 export async function markLessonStartedAction(lessonId: string) {
   try {
     const user = await getCurrentUser();
-    if (!user) return { ok: false, message: "Your session has ended. Sign in again to save progress." };
+    if (!user) return { ok: false, message: "Relace skončila. Přihlas se znovu a ulož postup." };
     await markLessonInProgress(user.id, lessonIdSchema.parse(lessonId));
     revalidatePath("/learn", "layout");
     revalidatePath("/dashboard");
@@ -22,14 +22,14 @@ export async function markLessonStartedAction(lessonId: string) {
     revalidatePath("/lab/portfolio");
     return { ok: true };
   } catch {
-    return { ok: false, message: "Progress could not be saved. Your work is still available on this page." };
+    return { ok: false, message: "Postup se nepodařilo uložit. Tvoje práce je na této stránce stále dostupná." };
   }
 }
 
 export async function completeLessonAction(lessonId: string) {
   try {
     const user = await getCurrentUser();
-    if (!user) return { ok: false, message: "Your session has ended. Sign in again to complete this lesson." };
+    if (!user) return { ok: false, message: "Relace skončila. Přihlas se znovu a dokonči lekci." };
     const reward = await completeLesson(user.id, lessonIdSchema.parse(lessonId));
     const completedLessons = await getModuleProgress(user.id, availableLessons.find((lesson) => lesson.id === lessonId)!.moduleId);
     revalidatePath("/learn", "layout");
@@ -50,7 +50,7 @@ export async function completeLessonAction(lessonId: string) {
     };
     return { ok: true, completedLessons, reward: presentationReward };
   } catch {
-    return { ok: false, message: "Completion could not be saved. Please try again." };
+    return { ok: false, message: "Dokončení se nepodařilo uložit. Zkus to znovu." };
   }
 }
 
@@ -58,7 +58,7 @@ export async function completeLessonAction(lessonId: string) {
 export async function saveLessonPositionAction(lessonId: string, position: number, answers?: Record<string, string>) {
   try {
     const user = await getCurrentUser();
-    if (!user) return { ok: false, message: "Your session has ended. Sign in again to save progress." };
+    if (!user) return { ok: false, message: "Relace skončila. Přihlas se znovu a ulož postup." };
     const id = lessonIdSchema.parse(lessonId);
     const lastPosition = z.number().int().min(0).max(getStepDefinitions(id).length - 1).parse(position);
     const attempt = answers === undefined ? undefined : z.record(z.string().max(100), z.string().max(100)).refine((value) => Object.keys(value).length <= 10).parse(answers);
@@ -68,6 +68,6 @@ export async function saveLessonPositionAction(lessonId: string, position: numbe
     revalidatePath("/progress");
     return { ok: true };
   } catch {
-    return { ok: false, message: "Your place could not be saved. Please try again." };
+    return { ok: false, message: "Tvé místo se nepodařilo uložit. Zkus to znovu." };
   }
 }

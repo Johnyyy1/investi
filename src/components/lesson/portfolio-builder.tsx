@@ -79,8 +79,8 @@ export function PortfolioBuilder() {
 
   return <section aria-label="Portfolio Builder" className="min-w-0 space-y-8">
     <div>
-      <h3 className="text-ql-title font-semibold">Portfolio Builder</h3>
-      <p className="mt-2 text-ql-body text-ql-secondary">Set how much of this hypothetical portfolio belongs to each asset category. This is an educational sandbox, not a suggested allocation.</p>
+      <h3 className="text-ql-title font-semibold">Sestavení portfolia</h3>
+      <p className="mt-2 text-ql-body text-ql-secondary">Nastav, jakou část tohoto hypotetického portfolia tvoří jednotlivé kategorie aktiv. Jde o vzdělávací sandbox, ne o doporučené rozložení.</p>
     </div>
 
     <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Load an allocation example">
@@ -127,7 +127,7 @@ export function PortfolioBuilder() {
       <div className="grid gap-5 sm:grid-cols-3">
         {assets.map((asset) => <FinanceInput key={asset.id} label={`${asset.label} hypothetical return`} mode="percentage" value={returns[asset.id]} onValueChange={(value) => setReturn(asset.id, value)} error={returnErrors[asset.id]} />)}
       </div>
-      {Object.keys(returnErrors).length ? <p id={returnErrorId} role="alert" className="text-ql-small text-ql-danger-ink">Use finite returns; a one-period return cannot be below −100%.</p> : portfolioReturn === undefined ? <ConceptCard title="Finish the allocation first">The weighted-return result appears only when every allocation is valid and the total equals exactly 100%.</ConceptCard> : <div aria-live="polite" aria-atomic="true" className="space-y-4 border-y border-ql-border py-6">
+      {Object.keys(returnErrors).length ? <p id={returnErrorId} role="alert" className="text-ql-small text-ql-danger-ink">Použij konečné výnosy; výnos za jedno období nemůže být nižší než −100 %.</p> : portfolioReturn === undefined ? <ConceptCard title="Nejprve dokonči rozložení">Vážený výnos se zobrazí, až budou všechna rozložení platná a jejich součet bude přesně 100 %.</ConceptCard> : <div aria-live="polite" aria-atomic="true" className="space-y-4 border-y border-ql-border py-6">
         <MetricResult label="Hypothetical one-period portfolio return" value={formatPercent(portfolioReturn, 4)} sentiment={portfolioReturn > 0 ? "positive" : portfolioReturn < 0 ? "negative" : "neutral"} />
         <p className="break-words text-ql-small text-ql-secondary">{assets.map((asset, index) => `${parsed.percentages[index]}% × ${formatPercent(parsedReturns[index]!, 4)}`).join(" + ")} = {formatPercent(portfolioReturn, 4)}</p>
       </div>}

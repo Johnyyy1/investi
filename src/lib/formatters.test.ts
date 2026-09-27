@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCurrency, formatDate, formatPercentage } from "./formatters";
+import { czechPlural, formatCount, formatCurrency, formatDate, formatPercentage } from "./formatters";
 
 describe("Czech-first presentation formatters", () => {
   it("formats CZK with Czech grouping and meaningful decimals", () => {
@@ -10,5 +10,13 @@ describe("Czech-first presentation formatters", () => {
   it("formats percentages and dates for cs-CZ", () => {
     expect(formatPercentage(0.1246)).toBe("12,46\u00a0%");
     expect(formatDate("2026-09-24T00:00:00.000Z", { timeZone: "UTC" })).toBe("24. 9. 2026");
+  });
+
+  it.each([[0, "lekcí"], [1, "lekce"], [2, "lekce"], [4, "lekce"], [5, "lekcí"], [11, "lekcí"], [21, "lekce"], [22, "lekce"], [25, "lekcí"]])("uses the correct Czech plural for %i", (value, expected) => {
+    expect(czechPlural(value, ["lekce", "lekce", "lekcí"])).toBe(expected);
+  });
+
+  it("formats a count through the pluralization helper", () => {
+    expect(formatCount(5, ["pozice", "pozice", "pozic"])).toBe("5 pozic");
   });
 });

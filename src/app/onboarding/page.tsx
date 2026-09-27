@@ -4,7 +4,7 @@ import { getLearningProfile } from "@/features/onboarding/repository";
 import { draftSchema, emptyDraft } from "@/features/onboarding/domain";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 
-export const metadata = { title: "Your learning path" };
+export const metadata = { title: "Tvoje cesta učením" };
 export default async function OnboardingPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");

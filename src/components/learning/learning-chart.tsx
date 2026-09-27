@@ -14,7 +14,7 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
   sentiment?: keyof typeof learningChartStyle.colors; formatValue?: (value: number) => string;
 }) {
   if (!data.length) return <figure className="rounded-ql-lg border border-ql-border bg-ql-surface p-6"><figcaption className="text-ql-title font-semibold">{title}</figcaption><p className="mt-4 text-ql-small text-ql-secondary" role="status">No data to display yet.</p></figure>;
-  if (data.some((point) => !Number.isFinite(point.value))) return <p role="status" className="text-ql-small text-ql-danger-ink">This chart needs finite numeric values.</p>;
+  if (data.some((point) => !Number.isFinite(point.value))) return <p role="status" className="text-ql-small text-ql-danger-ink">Tento graf potřebuje konečné číselné hodnoty.</p>;
   return <figure className="min-w-0 rounded-ql-lg border border-ql-border bg-ql-surface p-6">
     <figcaption><h3 className="text-ql-title font-semibold">{title}</h3><p className="mt-1 text-ql-small text-ql-secondary">{description}</p></figcaption>
     <div className="mt-4 h-64 min-w-0 max-w-full overflow-hidden">
@@ -28,7 +28,7 @@ export function LearningChart({ data, title, description, valueLabel = "Value", 
         </LineChart>
       </ResponsiveContainer>
     </div>
-    <details className="mt-3 text-ql-small"><summary className="cursor-pointer text-ql-link">View data table</summary>
+    <details className="mt-3 text-ql-small"><summary className="cursor-pointer text-ql-link">Zobrazit tabulku dat</summary>
       <table className="mt-3 w-full text-left"><caption className="sr-only">{title} data</caption><thead><tr><th scope="col" className="py-2 font-semibold">Period</th><th scope="col" className="py-2 text-right font-semibold">{valueLabel}</th></tr></thead><tbody>{data.map((point, index) => <tr key={index} className="border-t border-ql-border"><th scope="row" className="py-2 font-normal">{point.label}</th><td className="py-2 text-right tabular-nums">{formatValue(point.value)}</td></tr>)}</tbody></table>
     </details>
   </figure>;

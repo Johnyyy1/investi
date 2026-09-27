@@ -20,23 +20,23 @@ export function GrowthComparison() {
   let result: { rows: { year: number; cash: number; hypothetical: number }[]; final: number } | undefined;
   let error: string | undefined;
   try {
-    const start = parsePrice(starting, "Starting value");
-    const annual = parsePrice(rate, "Annual rate");
-    const years = parsePrice(time, "Time");
-    if (start <= 0 || start > 1e9) throw new FinancialInputError("Starting value must be greater than zero and at most 1,000,000,000.");
-    if (annual < -100 || annual > 100) throw new FinancialInputError("Use a rate between −100% and 100% for this illustration.");
-    if (!Number.isInteger(years) || years < 1 || years > 50) throw new FinancialInputError("Use a whole number of years from 1 to 50.");
+    const start = parsePrice(starting, "Počáteční hodnota");
+    const annual = parsePrice(rate, "Roční sazba");
+    const years = parsePrice(time, "Čas");
+    if (start <= 0 || start > 1e9) throw new FinancialInputError("Počáteční hodnota musí být větší než nula a nejvýše 1 000 000 000.");
+    if (annual < -100 || annual > 100) throw new FinancialInputError("Pro tuto ilustraci použij sazbu od −100 % do 100 %.");
+    if (!Number.isInteger(years) || years < 1 || years > 50) throw new FinancialInputError("Použij celé číslo let od 1 do 50.");
     const rows = Array.from({ length: years + 1 }, (_, year) => ({ year, cash: start, hypothetical: compoundValue(start, Array(year).fill(annual / 100)) }));
     result = { rows, final: rows[years].hypothetical };
-  } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
+  } catch (cause) { error = cause instanceof Error ? cause.message : "Zadej platné hodnoty."; }
   const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
-  return <section aria-label="Growth comparison" className="space-y-6 min-w-0">
-    <ConceptCard title="Mathematical illustration">The 5% default is hypothetical, not a forecast or a guaranteed investment return. Actual returns vary and can be negative. Scenario A assumes 0% growth; cash accounts may pay interest. Both scenarios omit inflation, fees, taxes, and additional contributions.</ConceptCard>
-    <div className="grid gap-5 sm:grid-cols-3"><FinanceInput {...invalid} label="Starting value" prefix="€" value={starting} onValueChange={setStarting} /><FinanceInput {...invalid} label="Hypothetical annual rate" mode="percentage" value={rate} onValueChange={setRate} /><FinanceInput {...invalid} label="Time in years" value={time} onValueChange={setTime} /></div>
+  return <section aria-label="Porovnání růstu" className="space-y-6 min-w-0">
+    <ConceptCard title="Matematická ilustrace">Výchozích 5 % je hypotetických, nejde o prognózu ani zaručený investiční výnos. Skutečné výnosy se liší a mohou být záporné. Scénář A předpokládá růst 0 %; hotovostní účty mohou přinášet úrok. Oba scénáře pomíjejí inflaci, poplatky, daně a další vklady.</ConceptCard>
+    <div className="grid gap-5 sm:grid-cols-3"><FinanceInput {...invalid} label="Počáteční hodnota" prefix="€" value={starting} onValueChange={setStarting} /><FinanceInput {...invalid} label="Hypotetická roční sazba" mode="percentage" value={rate} onValueChange={setRate} /><FinanceInput {...invalid} label="Čas v letech" value={time} onValueChange={setTime} /></div>
     {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : result ? <>
-      <div aria-live="polite" aria-atomic="true" className="grid min-w-0 gap-6 border-y border-ql-border py-6 sm:grid-cols-2"><MetricResult label="Scenario A · 0% growth" value={euros(result.rows[0].cash)} /><MetricResult label="Scenario B · hypothetical" value={euros(result.final)} /></div>
-      <p className="text-ql-small text-ql-secondary">Each year’s rate applies to the previous year’s value. These are nominal euros: the table does not adjust purchasing power.</p>
-      <details><summary className="cursor-pointer py-3 text-ql-small text-ql-link">See values year by year</summary><ol className="space-y-3">{result.rows.map((row) => <li key={row.year} className="border-t border-ql-border pt-3 text-ql-small break-words"><p className="font-semibold">Year {row.year}</p><p>A · {euros(row.cash)}</p><p>B · {euros(row.hypothetical)}</p></li>)}</ol></details>
+      <div aria-live="polite" aria-atomic="true" className="grid min-w-0 gap-6 border-y border-ql-border py-6 sm:grid-cols-2"><MetricResult label="Scénář A · růst 0 %" value={euros(result.rows[0].cash)} /><MetricResult label="Scénář B · hypotetický" value={euros(result.final)} /></div>
+      <p className="text-ql-small text-ql-secondary">Roční sazba se každý rok použije na hodnotu z předchozího roku. Jde o nominální eura: tabulka neupravuje kupní sílu.</p>
+      <details><summary className="cursor-pointer py-3 text-ql-small text-ql-link">Zobrazit hodnoty po letech</summary><ol className="space-y-3">{result.rows.map((row) => <li key={row.year} className="border-t border-ql-border pt-3 text-ql-small break-words"><p className="font-semibold">Rok {row.year}</p><p>A · {euros(row.cash)}</p><p>B · {euros(row.hypothetical)}</p></li>)}</ol></details>
     </> : null}
   </section>;
 }
@@ -49,21 +49,21 @@ export function ShareExplorer({ kind }: { kind: "ownership" | "market-cap" }) {
   let result: { amount: number; total: number; value: number } | undefined;
   let error: string | undefined;
   try {
-    const shares = parsePrice(total, "Total shares");
-    const input = parsePrice(value, ownership ? "Owned shares" : "Share price");
+    const shares = parsePrice(total, "Celkový počet akcií");
+    const input = parsePrice(value, ownership ? "Vlastněné akcie" : "Cena akcie");
     result = { total: shares, value: input, amount: ownership ? ownershipPercentage(input, shares) : marketCapitalization(input, shares) };
-  } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
+  } catch (cause) { error = cause instanceof Error ? cause.message : "Zadej platné hodnoty."; }
   const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
-  return <section aria-label={ownership ? "Ownership explorer" : "Market cap explorer"} className="min-w-0 space-y-6">
+  return <section aria-label={ownership ? "Průzkumník vlastnictví" : "Průzkumník tržní kapitalizace"} className="min-w-0 space-y-6">
     <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-      {ownership ? <FinanceInput {...invalid} label="Owned shares" value={value} onValueChange={setValue} /> : <FinanceInput {...invalid} label="Share price" prefix="€" value={value} onValueChange={setValue} />}
+      {ownership ? <FinanceInput {...invalid} label="Vlastněné akcie" value={value} onValueChange={setValue} /> : <FinanceInput {...invalid} label="Cena akcie" prefix="€" value={value} onValueChange={setValue} />}
       <span aria-hidden="true" className="hidden min-h-12 items-center pb-1 text-section-title font-bold text-primary-hover sm:flex">{ownership ? "÷" : "×"}</span>
-      <FinanceInput {...invalid} label="Total shares" value={total} onValueChange={setTotal} />
+      <FinanceInput {...invalid} label="Celkový počet akcií" value={total} onValueChange={setTotal} />
     </div>
     {error ? <p id={errorId} role="alert" className="rounded-control border border-danger bg-danger-soft px-4 py-3 text-small text-danger-ink">{error}</p> : result ? <div aria-live="polite" aria-atomic="true" className="rounded-surface border border-primary/35 bg-primary-soft p-5 sm:p-6">
-      <div className="flex items-start gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-primary-hover"><Calculator className="size-5" /></span><MetricResult label={ownership ? "Your ownership" : "Market capitalization"} value={ownership ? `${number(result.amount)}%` : euros(result.amount)} /></div>
+      <div className="flex items-start gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-primary-hover"><Calculator className="size-5" /></span><MetricResult label={ownership ? "Tvůj vlastnický podíl" : "Tržní kapitalizace"} value={ownership ? `${number(result.amount)}%` : euros(result.amount)} /></div>
       <p className="mt-5 break-words rounded-control bg-surface px-4 py-3 text-small font-bold tabular-nums text-foreground">{ownership ? `${number(result.value)} owned ÷ ${number(result.total)} total × 100 = ${number(result.amount)}%` : `${euros(result.value)} × ${number(result.total)} shares = ${euros(result.amount)}`}</p>
-      <p className="mt-3 text-small text-secondary">{ownership ? "Assumes equal ownership per share. Changing the share price alone does not change your ownership fraction." : "The current market value of equity. It is not revenue, profit, cash, or enterprise value."}</p>
+      <p className="mt-3 text-small text-secondary">{ownership ? "Předpokládá stejný podíl na akcii. Samotná změna ceny akcie nemění tvůj vlastnický zlomek." : "Aktuální tržní hodnota vlastního kapitálu. Není to tržba, zisk, hotovost ani hodnota podniku."}</p>
     </div> : null}
   </section>;
 }
@@ -120,25 +120,25 @@ export function BondCashflowExplorer() {
   let result: ReturnType<typeof simpleBondCashflows> | undefined;
   let error: string | undefined;
   try {
-    const loan = parsePrice(principal, "Principal");
-    const rate = parsePrice(couponRate, "Annual coupon rate");
-    const term = parsePrice(years, "Years");
-    if (loan > 1e9) throw new FinancialInputError("Principal must be at most €1,000,000,000 for this illustration.");
-    if (rate > 100) throw new FinancialInputError("Use a coupon rate from 0% to 100%.");
-    if (!Number.isInteger(term) || term < 1 || term > 50) throw new FinancialInputError("Use a whole number of years from 1 to 50.");
+    const loan = parsePrice(principal, "Jistina");
+    const rate = parsePrice(couponRate, "Roční kupónová sazba");
+    const term = parsePrice(years, "Roky");
+    if (loan > 1e9) throw new FinancialInputError("Jistina může být pro tuto ilustraci nejvýše 1 000 000 000 €.");
+    if (rate > 100) throw new FinancialInputError("Použij kupónovou sazbu od 0 % do 100 %.");
+    if (!Number.isInteger(term) || term < 1 || term > 50) throw new FinancialInputError("Použij celé číslo let od 1 do 50.");
     result = simpleBondCashflows(loan, rate / 100, term);
-  } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
+  } catch (cause) { error = cause instanceof Error ? cause.message : "Zadej platné hodnoty."; }
   const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
-  return <section aria-label="Bond cash-flow illustration" className="space-y-6 min-w-0">
-    <div className="grid gap-5 sm:grid-cols-3"><FinanceInput {...invalid} label="Principal" prefix="€" value={principal} onValueChange={setPrincipal} /><FinanceInput {...invalid} label="Annual coupon rate" mode="percentage" value={couponRate} onValueChange={setCouponRate} /><FinanceInput {...invalid} label="Years to maturity" value={years} onValueChange={setYears} /></div>
+  return <section aria-label="Ilustrace peněžních toků dluhopisu" className="space-y-6 min-w-0">
+    <div className="grid gap-5 sm:grid-cols-3"><FinanceInput {...invalid} label="Jistina" prefix="€" value={principal} onValueChange={setPrincipal} /><FinanceInput {...invalid} label="Roční kupónová sazba" mode="percentage" value={couponRate} onValueChange={setCouponRate} /><FinanceInput {...invalid} label="Roky do splatnosti" value={years} onValueChange={setYears} /></div>
     {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : result ? <>
       <div aria-live="polite" aria-atomic="true" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2">
-        <MetricResult label="Annual coupon" value={euros(result.annualCoupon)} />
-        <MetricResult label={`Total coupons over ${years} years`} value={euros(result.totalCouponPayments)} />
-        <MetricResult label="Principal returned at maturity" value={euros(result.principalAtMaturity)} />
-        <MetricResult label="Total nominal cash received" value={euros(result.totalCashReceived)} />
+        <MetricResult label="Roční kupón" value={euros(result.annualCoupon)} />
+        <MetricResult label={`Celkem kupónů za ${years} let`} value={euros(result.totalCouponPayments)} />
+        <MetricResult label="Jistina vrácená při splatnosti" value={euros(result.principalAtMaturity)} />
+        <MetricResult label="Celkem přijatá nominální hotovost" value={euros(result.totalCashReceived)} />
       </div>
-      <ConceptCard title="A cash-flow illustration, with important assumptions">This assumes the issuer makes every promised payment, the coupon stays fixed, and you hold the bond to maturity. Taxes, reinvestment, inflation, the price paid for the bond, and any market-price changes are ignored. The total is not a 25% investment return or a yield calculation.</ConceptCard>
+      <ConceptCard title="Ilustrace peněžních toků a důležité předpoklady">Předpokládá se, že emitent provede všechny slíbené platby, kupón zůstane pevný a dluhopis budeš držet do splatnosti. Pomíjí se daně, reinvestice, inflace, zaplacená cena i změny tržní ceny. Celkem není 25% investiční výnos ani výpočet výnosu do splatnosti.</ConceptCard>
     </> : null}
   </section>;
 }
@@ -184,8 +184,8 @@ export function MarketQuoteExplorer() {
 }
 
 const riskScenarios = {
-  steady: { name: "Investment A", outcomes: [4, 5, 6], description: "Each equally likely outcome is close to 5%." },
-  wide: { name: "Investment B", outcomes: [-20, 5, 30], description: "Each equally likely outcome still averages 5%, but the possible range is much wider." },
+  steady: { name: "Investice A", outcomes: [4, 5, 6], description: "Každý stejně pravděpodobný výsledek je blízko 5 %." },
+  wide: { name: "Investice B", outcomes: [-20, 5, 30], description: "Průměr stejně pravděpodobných výsledků je stále 5 %, ale možné rozpětí je mnohem širší." },
 } as const;
 
 const signedPercent = (value: number) => `${value > 0 ? "+" : ""}${value}%`;
@@ -194,12 +194,12 @@ export function RiskScenarioExplorer() {
   const [scenario, setScenario] = useState<keyof typeof riskScenarios>("steady");
   const selected = riskScenarios[scenario];
   const average = selected.outcomes.reduce((sum, value) => sum + value, 0) / selected.outcomes.length;
-  return <section aria-label="Risk scenario explorer" className="space-y-6">
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose an investment scenario">
+  return <section aria-label="Průzkumník rizikových scénářů" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber investiční scénář">
       {(Object.keys(riskScenarios) as (keyof typeof riskScenarios)[]).map((key) => <button key={key} type="button" onClick={() => setScenario(key)} aria-pressed={scenario === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${scenario === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{riskScenarios[key].name}</button>)}
     </div>
-    <div aria-live="polite" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-3"><MetricResult label="Worst listed outcome" value={signedPercent(Math.min(...selected.outcomes))} sentiment="negative" /><MetricResult label="Best listed outcome" value={signedPercent(Math.max(...selected.outcomes))} sentiment="positive" /><MetricResult label="Simple average of listed outcomes" value={signedPercent(average)} /></div>
-    <ConceptCard title={selected.name}>{selected.description} This is a deliberately simple equal-probability illustration, not a forecast. A similar expected outcome can come with very different uncertainty and losses.</ConceptCard>
+    <div aria-live="polite" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-3"><MetricResult label="Nejhorší uvedený výsledek" value={signedPercent(Math.min(...selected.outcomes))} sentiment="negative" /><MetricResult label="Nejlepší uvedený výsledek" value={signedPercent(Math.max(...selected.outcomes))} sentiment="positive" /><MetricResult label="Jednoduchý průměr výsledků" value={signedPercent(average)} /></div>
+    <ConceptCard title={selected.name}>{selected.description} Jde o záměrně jednoduchou ilustraci se stejnou pravděpodobností, ne o prognózu. Podobný očekávaný výsledek může mít velmi odlišnou nejistotu a ztráty.</ConceptCard>
   </section>;
 }
 
@@ -210,28 +210,28 @@ export function DrawdownExplorer() {
   let drawdown: number | undefined;
   let error: string | undefined;
   try {
-    const peakValue = parsePrice(peak, "Peak value");
-    const currentValue = parsePrice(current, "Current value");
-    if (peakValue > 1e9 || currentValue > 1e9) throw new FinancialInputError("Use values at most €1,000,000,000 for this illustration.");
+    const peakValue = parsePrice(peak, "Vrcholová hodnota");
+    const currentValue = parsePrice(current, "Aktuální hodnota");
+    if (peakValue > 1e9 || currentValue > 1e9) throw new FinancialInputError("Pro tuto ilustraci použij hodnoty nejvýše 1 000 000 000 €.");
     drawdown = drawdownFromPeak(peakValue, currentValue);
-  } catch (cause) { error = cause instanceof Error ? cause.message : "Enter valid values."; }
+  } catch (cause) { error = cause instanceof Error ? cause.message : "Zadej platné hodnoty."; }
   const invalid = { "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined };
-  return <section aria-label="Drawdown explorer" className="space-y-6">
-    <div className="grid gap-5 sm:grid-cols-2"><FinanceInput {...invalid} label="Previous peak value" prefix="€" value={peak} onValueChange={setPeak} /><FinanceInput {...invalid} label="Current value" prefix="€" value={current} onValueChange={setCurrent} /></div>
-    {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : drawdown !== undefined ? <div aria-live="polite" aria-atomic="true" className="border-y border-ql-border py-6"><MetricResult label="Drawdown from the stated peak" value={`${(drawdown * 100).toLocaleString("en-IE", { maximumFractionDigits: 2 })}%`} /><p className="mt-3 text-ql-small text-ql-secondary">Drawdown is the decline from a previous peak. If the current value is at or above the stated peak, this illustration shows 0% drawdown from it.</p></div> : null}
+  return <section aria-label="Průzkumník drawdownu" className="space-y-6">
+    <div className="grid gap-5 sm:grid-cols-2"><FinanceInput {...invalid} label="Předchozí vrcholová hodnota" prefix="€" value={peak} onValueChange={setPeak} /><FinanceInput {...invalid} label="Aktuální hodnota" prefix="€" value={current} onValueChange={setCurrent} /></div>
+    {error ? <p id={errorId} role="alert" className="text-ql-small text-ql-danger-ink">{error}</p> : drawdown !== undefined ? <div aria-live="polite" aria-atomic="true" className="border-y border-ql-border py-6"><MetricResult label="Drawdown od uvedeného vrcholu" value={formatPercentage(drawdown)} /><p className="mt-3 text-ql-small text-ql-secondary">Drawdown je pokles od předchozího vrcholu. Pokud je aktuální hodnota na uvedeném vrcholu nebo nad ním, ilustrace ukáže drawdown 0 %.</p></div> : null}
   </section>;
 }
 
 const liquidityExamples = {
-  highlyTraded: { name: "Highly traded large-company stock", detail: "There are typically many active buyers and sellers. It may be easier to trade a modest amount near the prevailing market price, often with a tighter spread. The share can still lose value." },
-  thinlyTraded: { name: "Thinly traded obscure security", detail: "Fewer active participants can mean a wider spread or a larger price impact when trying to trade. It may be harder to sell quickly near the price you expected. Less liquidity does not tell you the investment’s future return." },
+  highlyTraded: { name: "Likvidní akcie velké společnosti", detail: "Obvykle existuje mnoho aktivních kupujících a prodávajících. Menší množství lze snáze obchodovat poblíž převládající tržní ceny, často s užším spreadem. Akcie přesto může ztratit hodnotu." },
+  thinlyTraded: { name: "Málo obchodovaný neznámý instrument", detail: "Méně aktivních účastníků může znamenat širší spread nebo větší dopad na cenu při obchodování. Může být těžší rychle prodat poblíž očekávané ceny. Nižší likvidita neříká, jaký bude budoucí výnos." },
 } as const;
 
 export function LiquidityComparison() {
   const [example, setExample] = useState<keyof typeof liquidityExamples>("highlyTraded");
   const selected = liquidityExamples[example];
   return <section aria-label="Liquidity comparison" className="space-y-5">
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose trading conditions to compare">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber podmínky obchodování k porovnání">
       {(Object.keys(liquidityExamples) as (keyof typeof liquidityExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{liquidityExamples[key].name}</button>)}
     </div>
     <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>
@@ -239,8 +239,8 @@ export function LiquidityComparison() {
 }
 
 const concentrationExamples = {
-  oneCompany: { name: "Portfolio A · one company", detail: "One company’s business problems can dominate the whole result. This has more company-specific concentration risk." },
-  spread: { name: "Portfolio B · many investments", detail: "A range of investments can reduce dependence on one company. They can still fall together, and broad market risk remains." },
+  oneCompany: { name: "Portfolio A · jedna společnost", detail: "Problémy jedné společnosti mohou ovládnout celý výsledek. Toto portfolio má vyšší koncentrační riziko specifické pro společnost." },
+  spread: { name: "Portfolio B · více investic", detail: "Řada investic může snížit závislost na jedné společnosti. Stále však mohou klesat společně a zůstává tržní riziko." },
 } as const;
 
 export function DiversificationPreview() {
@@ -294,33 +294,33 @@ export function DiversificationImpact() {
 }
 
 const portfolioHorizons = {
-  soon: { label: "Money needed in 6 months", timing: "Near-term need", capacity: "A loss may disrupt the planned use before there is time for circumstances to change." },
-  later: { label: "Money not expected for 20 years", timing: "Longer horizon", capacity: "More time may make fluctuations easier to withstand, but it does not guarantee recovery or profit." },
+  soon: { label: "Peníze potřebuji za 6 měsíců", timing: "Blízká potřeba", capacity: "Ztráta může narušit plánované použití dříve, než bude čas, aby se okolnosti změnily." },
+  later: { label: "Peníze nebudu potřebovat 20 let", timing: "Delší horizont", capacity: "Více času může usnadnit snášení kolísání, nezaručuje však zotavení ani zisk." },
 } as const;
 
 export function PortfolioHorizonScenario() {
   const [horizon, setHorizon] = useState<keyof typeof portfolioHorizons>("soon");
   const selected = portfolioHorizons[horizon];
-  return <section aria-label="Portfolio time-horizon scenario" className="space-y-6">
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose when the money is needed">
+  return <section aria-label="Scénář časového horizontu portfolia" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber, kdy budeš peníze potřebovat">
       {(Object.keys(portfolioHorizons) as (keyof typeof portfolioHorizons)[]).map((key) => <button key={key} type="button" aria-pressed={horizon === key} onClick={() => setHorizon(key)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${horizon === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{portfolioHorizons[key].label}</button>)}
     </div>
-    <div aria-live="polite" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2"><MetricResult label="Timing" value={selected.timing} /><MetricResult label="Why it matters" value={selected.capacity} /></div>
-    <p className="text-ql-small text-ql-secondary">This scenario shows why timing belongs in portfolio thinking. It does not prescribe an allocation.</p>
+    <div aria-live="polite" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2"><MetricResult label="Načasování" value={selected.timing} /><MetricResult label="Proč na něm záleží" value={selected.capacity} /></div>
+    <p className="text-ql-small text-ql-secondary">Tento scénář ukazuje, proč do úvah o portfoliu patří načasování. Nepředepisuje žádné rozložení.</p>
   </section>;
 }
 
 const riskContext = {
-  tolerance: { label: "Emotional response", title: "Risk tolerance", detail: "“I would not panic if my portfolio fell 30%.” This describes emotional willingness to experience loss and uncertainty." },
-  capacity: { label: "Financial need", title: "Risk capacity", detail: "“I need this money next year.” This can limit the financial ability to absorb a loss, even when the person feels calm about market swings." },
-  together: { label: "Consider both", title: "Tolerance is not enough", detail: "Portfolio decisions involve both willingness and financial ability to bear loss, alongside goals, liquidity, and time horizon. This lesson is not a suitability assessment." },
+  tolerance: { label: "Emoční reakce", title: "Tolerance k riziku", detail: "„Nepropadl bych panice, kdyby portfolio kleslo o 30 %.“ Popisuje ochotu emočně snášet ztrátu a nejistotu." },
+  capacity: { label: "Finanční potřeba", title: "Kapacita pro riziko", detail: "„Tyto peníze budu potřebovat příští rok.“ To může omezit finanční schopnost snést ztrátu, i když člověk tržní výkyvy vnímá klidně." },
+  together: { label: "Zvaž obojí", title: "Tolerance nestačí", detail: "Rozhodování o portfoliu zahrnuje ochotu i finanční schopnost snést ztrátu spolu s cíli, likviditou a časovým horizontem. Tato lekce neposuzuje vhodnost investice." },
 } as const;
 
 export function RiskCapacityScenario() {
   const [context, setContext] = useState<keyof typeof riskContext>("tolerance");
   const selected = riskContext[context];
-  return <section aria-label="Risk tolerance and capacity scenario" className="space-y-6">
-    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Explore the person's risk context">
+  return <section aria-label="Scénář tolerance a kapacity pro riziko" className="space-y-6">
+    <div className="grid gap-3 sm:grid-cols-3" role="group" aria-label="Prozkoumej kontext rizika této osoby">
       {(Object.keys(riskContext) as (keyof typeof riskContext)[]).map((key) => <button key={key} type="button" aria-pressed={context === key} onClick={() => setContext(key)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${context === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{riskContext[key].label}</button>)}
     </div>
     <ConceptCard title={selected.title}>{selected.detail}</ConceptCard>

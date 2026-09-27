@@ -101,12 +101,12 @@ export async function getOrCreateActivePortfolio(userId: string) {
   const existing = await activePortfolio(db, userId);
   if (existing) return existing;
   const [owner] = await db.select({ isAnonymous: user.isAnonymous }).from(user).where(eq(user.id, userId));
-  if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Your portfolio could not be opened.");
+  if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Portfolio se nepodařilo otevřít.");
   const seedObservations = owner.isAnonymous ? await demoObservations() : [];
 
   return db.transaction(async (tx) => {
     const [lockedOwner] = await tx.select({ isAnonymous: user.isAnonymous }).from(user).where(eq(user.id, userId)).for("update");
-    if (!lockedOwner) throw new PortfolioInputError("PortfolioUnavailable", "Your portfolio could not be opened.");
+    if (!lockedOwner) throw new PortfolioInputError("PortfolioUnavailable", "Portfolio se nepodařilo otevřít.");
     const current = await activePortfolio(tx, userId);
     if (current) return current;
     const openingCapitalMinor = await entitlement(tx, userId);
@@ -147,7 +147,7 @@ export async function executeTrade(userId: string, input: {
   );
   return db.transaction(async (tx) => {
     const [owner] = await tx.select({ id: user.id }).from(user).where(eq(user.id, userId)).for("update");
-    if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Your portfolio could not be found.");
+    if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Portfolio se nepodařilo najít.");
     let current = await activePortfolio(tx, userId);
     if (!current) {
       const openingCapitalMinor = await entitlement(tx, userId);
@@ -168,12 +168,12 @@ export async function executeTrade(userId: string, input: {
     ]);
     const folded = foldTrades(earned, trades.map(asLedgerTrade));
     if (input.side === "BUY" && observation.grossMinor > folded.cashMinor) {
-      throw new PortfolioInputError("InsufficientCash", "You do not have enough available Practice Capital for this trade.");
+      throw new PortfolioInputError("InsufficientCash", "Pro tento obchod nemáš dostatek dostupného Practice Capital.");
     }
     if (input.side === "SELL") {
       const holding = folded.holdings.find(({ instrumentId }) => instrumentId === input.instrumentId);
       if (!holding || observation.quantityUnits > holding.quantityUnits) {
-        throw new PortfolioInputError("Oversell", "You cannot sell more than the quantity you hold.");
+        throw new PortfolioInputError("Oversell", "Nelze prodat více, než kolik pozic držíš.");
       }
     }
     const values = tradeValues(current.id, observation, input.side, input.clientIdempotencyKey, new Date());
@@ -185,7 +185,7 @@ export async function executeTrade(userId: string, input: {
 export async function resetActivePortfolio(userId: string, clientIdempotencyKey: string) {
   return db.transaction(async (tx) => {
     const [owner] = await tx.select({ id: user.id }).from(user).where(eq(user.id, userId)).for("update");
-    if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Your portfolio could not be found.");
+    if (!owner) throw new PortfolioInputError("PortfolioUnavailable", "Portfolio se nepodařilo najít.");
     const [duplicate] = await tx.select().from(portfolio).where(and(
       eq(portfolio.userId, userId), eq(portfolio.resetIdempotencyKey, clientIdempotencyKey),
     ));

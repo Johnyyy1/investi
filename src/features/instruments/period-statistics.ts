@@ -1,6 +1,19 @@
 export type PriceObservation = { date: string; close: number };
 
-export function periodReturnLabel(range: string) { return `${range} price return`; }
+const periodLabels: Record<string, string> = {
+  "1M": "1 měsíc",
+  "3M": "3 měsíce",
+  "6M": "6 měsíců",
+  YTD: "od začátku roku",
+  "1Y": "1 rok",
+  "5Y": "5 let",
+  Max: "celé období",
+};
+
+export function periodReturnLabel(range: string) {
+  const period = periodLabels[range] ?? range;
+  return range === "YTD" ? `Cenový výnos ${period}` : `Cenový výnos za ${period}`;
+}
 
 export type PeriodStatistics = {
   start: PriceObservation;

@@ -16,14 +16,14 @@ export function DemoButton({ compact = false, className, buttonClassName }: { co
       const current = await authClient.getSession();
       if (!current.data) {
         const result = await authClient.signIn.anonymous();
-        if (result.error) throw new Error("Demo initialization failed");
+        if (result.error) throw new Error("Demo se nepodařilo připravit");
       }
       router.replace("/learn"); router.refresh();
-    } catch { setError("We couldn’t open the demo. Please try again."); setPending(false); }
+    } catch { setError("Demo se nepodařilo otevřít. Zkus to znovu."); setPending(false); }
   }
   return <div className={className ?? "mt-6 border-t border-ql-border pt-6"}>
-    <LearningButton variant="secondary" loading={pending} onClick={() => void explore()} className={buttonClassName ?? "w-full"}>{compact && !pending && <CirclePlay aria-hidden="true" />}{pending ? "Opening demo…" : "Explore demo"}{!compact && <ArrowRight aria-hidden="true" className="size-4" />}</LearningButton>
-    {!compact && <p className="mt-3 text-center text-ql-small text-ql-secondary">Jump in with a private practice profile.</p>}
+    <LearningButton variant="secondary" loading={pending} onClick={() => void explore()} className={buttonClassName ?? "w-full"}>{compact && !pending && <CirclePlay aria-hidden="true" />}{pending ? "Otevírám demo…" : "Vyzkoušet demo"}{!compact && <ArrowRight aria-hidden="true" className="size-4" />}</LearningButton>
+    {!compact && <p className="mt-3 text-center text-ql-small text-ql-secondary">Začni se soukromým cvičným profilem.</p>}
     {error && <p role="alert" className="mt-3 text-ql-small text-ql-danger-ink">{error}</p>}
   </div>;
 }

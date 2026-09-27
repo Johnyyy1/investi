@@ -28,7 +28,13 @@ describe("selected-period split-adjusted price statistics", () => {
   });
   it("exposes only price statistics with no total-return field", () => {
     expect(Object.keys(periodStatistics([point("2026-01-05", 100), point("2026-01-16", 114)]) ?? {})).toEqual(["start", "end", "change", "returnPercent", "low", "high", "observationCount"]);
-    expect(periodReturnLabel("1M")).toBe("1M price return");
+    expect(periodReturnLabel("1M")).toBe("Cenový výnos za 1 měsíc");
+    expect(periodReturnLabel("3M")).toBe("Cenový výnos za 3 měsíce");
+    expect(periodReturnLabel("6M")).toBe("Cenový výnos za 6 měsíců");
+    expect(periodReturnLabel("YTD")).toBe("Cenový výnos od začátku roku");
+    expect(periodReturnLabel("1Y")).toBe("Cenový výnos za 1 rok");
+    expect(periodReturnLabel("5Y")).toBe("Cenový výnos za 5 let");
+    expect(periodReturnLabel("Max")).toBe("Cenový výnos za celé období");
     expect(periodReturnLabel("1M")).not.toMatch(/total return/i);
   });
 });

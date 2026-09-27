@@ -22,23 +22,23 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(`${baseURL}/sign-up`);
-  await page.getByLabel("Name", { exact: true }).fill("Instrument Unavailable QA");
-  await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await page.getByLabel("Jméno", { exact: true }).fill("Instrument Unavailable QA");
+  await page.getByLabel("E-mail", { exact: true }).fill(email);
+  await page.getByLabel("Heslo", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Vytvořit účet", exact: true }).click();
   await finishOnboarding(page);
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
 
   await page.goto(`${baseURL}/lab/instruments/US-XNAS%3AAAPL`);
   await page.getByRole("heading", { name: "Apple Inc." }).waitFor();
-  assert.match(await page.locator("main").innerText(), /Stale observation/, "old quote is labeled stale rather than live");
-  assert.equal(await page.getByRole("img", { name: /daily split-adjusted closing price chart/ }).count(), 1, "historical chart remains visible when the quote is stale");
+  assert.match(await page.locator("main").innerText(), /Zastaralá cena/, "old quote is labeled stale rather than live");
+  assert.equal(await page.getByRole("img", { name: /denní graf závěrečných cen očištěných o splity/ }).count(), 1, "historical chart remains visible when the quote is stale");
   await page.screenshot({ path: `${screenshotDir}/stale-quote-history-available-1440.png`, fullPage: true });
 
   await page.goto(`${baseURL}/lab/instruments/US-XNAS%3AAAPL?range=1M`);
-  await page.getByRole("status").filter({ hasText: "Price history is not available for this range" }).waitFor();
-  assert.equal(await page.getByRole("img", { name: /daily closing price chart/ }).count(), 0, "an empty range never fabricates chart points");
-  assert.equal(await page.getByText("Zoom chart", { exact: true }).count(), 0, "unavailable history has no zoom controls");
+  await page.getByRole("status").filter({ hasText: "Vývoj ceny pro toto období není dostupný" }).waitFor();
+  assert.equal(await page.getByRole("img", { name: /denní graf závěrečných cen/ }).count(), 0, "an empty range never fabricates chart points");
+  assert.equal(await page.getByText("Přiblížit graf", { exact: true }).count(), 0, "unavailable history has no zoom controls");
   await page.screenshot({ path: `${screenshotDir}/history-unavailable-1440.png`, fullPage: true });
   await page.setViewportSize({ width: 320, height: 900 });
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
@@ -46,7 +46,7 @@ try {
   await page.screenshot({ path: `${screenshotDir}/history-unavailable-320-200-percent.png`, fullPage: true });
 
   await page.goto(`${baseURL}/lab/instruments/FMP%3ANASDAQ%3AA%25ZZ`);
-  await page.getByRole("heading", { name: "This page isn’t available" }).waitFor();
+  await page.getByRole("heading", { name: "Tato stránka není dostupná" }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Apple Inc." }).count(), 0, "malformed encoded provider identity never renders instrument data");
   assert.deepEqual(errors, [], "partial and invalid detail states have no browser errors");
   console.log("PASS: stale quote retains history, unavailable range has no fabricated chart, invalid route renders not-found, and 320px/200% text has no overflow. Screenshots:", screenshotDir);

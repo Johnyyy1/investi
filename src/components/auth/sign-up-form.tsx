@@ -21,17 +21,17 @@ export function SignUpForm() {
       password: String(formData.get("password") ?? ""),
       callbackURL: "/onboarding",
     });
-    if (error) { setErrorMessage(getAuthErrorMessage(error, "We could not create your account. Please try again.")); setIsSubmitting(false); return; }
+    if (error) { setErrorMessage(getAuthErrorMessage(error, "Účet se nepodařilo vytvořit. Zkus to znovu.")); setIsSubmitting(false); return; }
     router.replace("/onboarding"); router.refresh();
-    } catch { setErrorMessage("We could not connect. Please try again."); }
+    } catch { setErrorMessage("Připojení se nepodařilo. Zkus to znovu."); }
     finally { setIsSubmitting(false); }
   }
 
   return <form action={onSubmit} className="mt-9 space-y-5">
-    <TextInput label="Name" type="text" name="name" autoComplete="name" placeholder="Your name" required />
-    <TextInput label="Email" type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
-    <TextInput label="Password" type="password" name="password" autoComplete="new-password" minLength={8} required hint="Use at least 8 characters." />
+    <TextInput label="Jméno" type="text" name="name" autoComplete="name" placeholder="Tvoje jméno" required />
+    <TextInput label="E-mail" type="email" name="email" autoComplete="email" placeholder="ty@example.com" required />
+    <TextInput label="Heslo" type="password" name="password" autoComplete="new-password" minLength={8} required hint="Použij alespoň 8 znaků." />
     {errorMessage ? <p className="text-ql-small text-ql-danger-ink" role="alert">{errorMessage}</p> : null}
-    <LearningButton className="w-full" type="submit" loading={isSubmitting}>{isSubmitting ? "Creating account…" : "Create account"}</LearningButton>
+    <LearningButton className="w-full" type="submit" loading={isSubmitting}>{isSubmitting ? "Vytvářím účet…" : "Vytvořit účet"}</LearningButton>
   </form>;
 }

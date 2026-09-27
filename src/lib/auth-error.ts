@@ -7,15 +7,15 @@ export function getAuthErrorMessage(error: AuthError, fallback: string) {
   switch (error?.code) {
     case "USER_ALREADY_EXISTS":
     case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
-      return "An account already exists for this email. Sign in instead.";
+      return "Pro tento e-mail už účet existuje. Přihlas se.";
     case "USER_NOT_FOUND":
     case "INVALID_PASSWORD":
     case "INVALID_EMAIL_OR_PASSWORD":
-      return "Email or password is incorrect.";
+      return "E-mail nebo heslo není správně.";
     case "INVALID_EMAIL":
-      return "Enter a valid email address.";
+      return "Zadej platný e-mail.";
     case "PASSWORD_TOO_SHORT":
-      return "Use a password with at least 8 characters.";
+      return "Použij heslo dlouhé alespoň 8 znaků.";
     default:
       return error?.message ?? fallback;
   }

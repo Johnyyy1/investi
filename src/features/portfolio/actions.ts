@@ -14,21 +14,21 @@ import { loadInstrumentPreview, loadPortfolioView } from "./service";
 function messageFor(error: unknown) {
   if (error instanceof PortfolioInputError) return error.message;
   if (isMarketDataError(error)) {
-    if (error.code === "FxUnavailable") return "The required CZK exchange rate is unavailable. No trade was placed.";
-    if (error.code === "InstrumentNotFound" || error.code === "UnsupportedInstrument") return "That instrument is not available from the configured market-data source.";
-    if (error.code === "RateLimited") return "Market data is temporarily rate limited. Please try again shortly.";
-    if (error.code === "ProviderAuthentication" || error.code === "ProviderConfiguration") return "Market data is not configured correctly. No trade was placed.";
-    if (error.code === "InvalidSearchQuery") return "Enter at least two valid characters to search.";
-    return "The current market observation is unavailable. No trade was placed.";
+    if (error.code === "FxUnavailable") return "Potřebný kurz CZK není dostupný. Obchod nebyl proveden.";
+    if (error.code === "InstrumentNotFound" || error.code === "UnsupportedInstrument") return "Tento instrument není z nastaveného zdroje tržních dat dostupný.";
+    if (error.code === "RateLimited") return "Tržní data jsou dočasně omezená. Zkus to za chvíli znovu.";
+    if (error.code === "ProviderAuthentication" || error.code === "ProviderConfiguration") return "Tržní data nejsou správně nastavená. Obchod nebyl proveden.";
+    if (error.code === "InvalidSearchQuery") return "Zadej pro hledání alespoň dva platné znaky.";
+    return "Aktuální tržní pozorování není dostupné. Obchod nebyl proveden.";
   }
-  return "The portfolio could not be updated. Please try again.";
+  return "Portfolio se nepodařilo aktualizovat. Zkus to znovu.";
 }
 
 async function authenticatedUser() {
   const current = await getCurrentUser();
-  if (!current) throw new PortfolioInputError("PortfolioUnavailable", "Your session has ended. Sign in again to use Portfolio Lab.");
+  if (!current) throw new PortfolioInputError("PortfolioUnavailable", "Relace skončila. Přihlas se znovu, abys mohl(a) používat Portfolio Lab.");
   try { await requirePortfolioLabUnlock(current.id); }
-  catch { throw new PortfolioInputError("PortfolioUnavailable", "Portfolio Lab is locked. Complete Investing Foundations to unlock it."); }
+  catch { throw new PortfolioInputError("PortfolioUnavailable", "Portfolio Lab je zamčený. Dokonči Základy investování a odemkni ho."); }
   return current;
 }
 
@@ -36,7 +36,7 @@ export async function searchPortfolioInstrumentsAction(query: string) {
   try {
     await authenticatedUser();
     const parsed = z.string().trim().min(2).max(80).safeParse(query);
-    if (!parsed.success) return { ok: false as const, message: "Enter at least two valid characters to search.", results: [] };
+    if (!parsed.success) return { ok: false as const, message: "Zadej pro hledání alespoň dva platné znaky.", results: [] };
     const value = parsed.data;
     const results = await portfolioMarketData.service.searchInstruments(value);
     return { ok: true as const, results: results.filter(({ assetType }) => assetType !== "cash" && assetType !== "index") };
@@ -49,7 +49,7 @@ export async function loadInstrumentPreviewAction(instrumentId: string) {
   try {
     await authenticatedUser();
     const preview = await loadInstrumentPreview(instrumentIdSchema.parse(instrumentId));
-    if (!preview) return { ok: false as const, message: "This instrument cannot be traded in the educational portfolio." };
+    if (!preview) return { ok: false as const, message: "S tímto instrumentem nelze ve vzdělávacím portfoliu obchodovat." };
     return { ok: true as const, preview };
   } catch (error) {
     return { ok: false as const, message: messageFor(error) };

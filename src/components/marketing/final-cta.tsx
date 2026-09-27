@@ -9,12 +9,12 @@ export function FinalCta() {
     <div className={styles.container}>
       <div className={styles.finalCtaCard}>
         <div className={styles.finalCtaContent}>
-          <p className={styles.finalCtaEyebrow}>Final step</p>
-          <h2 id="final-cta-title">Ready to start learning by doing?</h2>
-          <p className={styles.finalCtaDescription}>Build real investing intuition through interactive lessons, portfolio experiments and backtests — one small step at a time.</p>
+          <p className={styles.finalCtaEyebrow}>Další krok</p>
+          <h2 id="final-cta-title">Jsi připravený učit se investovat praxí?</h2>
+          <p className={styles.finalCtaDescription}>Buduj skutečný cit pro investování pomocí interaktivních lekcí, portfolio experimentů a backtestů — krok za krokem.</p>
           <div className={styles.finalCtaActions}>
             <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.finalCtaButton}`}>
-              Start learning <ArrowRight aria-hidden="true" />
+              Začít se učit <ArrowRight aria-hidden="true" />
             </Link>
             <DemoButton compact className={styles.finalCtaDemo} buttonClassName={`${styles.button} ${styles.demoButton} ${styles.finalCtaButton}`} />
           </div>

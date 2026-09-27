@@ -24,10 +24,10 @@ export type InstrumentDetail = {
 };
 
 function safeMessage(error: unknown, subject: "instrument" | "quote" | "history") {
-  if (isMarketDataError(error) && error.code === "RateLimited") return "Market data is temporarily rate limited. Please try again shortly.";
-  if (subject === "instrument") return "This instrument is not available from the configured market-data source.";
-  if (subject === "quote") return "The current market price is unavailable.";
-  return "Price history is not available for this range.";
+  if (isMarketDataError(error) && error.code === "RateLimited") return "Tržní data jsou dočasně omezená. Zkus to za chvíli znovu.";
+  if (subject === "instrument") return "Tento instrument není z dostupného zdroje tržních dat k dispozici.";
+  if (subject === "quote") return "Aktuální tržní cena není dostupná.";
+  return "Cenová historie pro toto období není dostupná.";
 }
 
 export async function loadInstrumentDetail(service: MarketDataService, instrumentId: string, range: ChartRange, now: Date): Promise<InstrumentDetail> {
@@ -57,8 +57,8 @@ export async function loadInstrumentDetail(service: MarketDataService, instrumen
     endDate: request.endDate,
     historyPartial: series?.provenance.completeness === "partial",
     fundamentals: fundamentalsResult.status === "fulfilled" ? fundamentalsResult.value : null,
-    fundamentalsMessage: instrument.assetType === "equity" && fundamentalsResult.status === "rejected" ? "Company metrics are unavailable right now. Price history and investing remain available." : null,
+    fundamentalsMessage: instrument.assetType === "equity" && fundamentalsResult.status === "rejected" ? "Metriky společnosti teď nejsou dostupné. Cenová historie a investování zůstávají k dispozici." : null,
     etfAnalytics: etfResult.status === "fulfilled" ? etfResult.value : null,
-    etfAnalyticsMessage: instrument.assetType === "etf" && etfResult.status === "rejected" ? "Fund composition is unavailable right now. Price history and investing remain available." : null,
+    etfAnalyticsMessage: instrument.assetType === "etf" && etfResult.status === "rejected" ? "Složení fondu teď není dostupné. Cenová historie a investování zůstávají k dispozici." : null,
   };
 }

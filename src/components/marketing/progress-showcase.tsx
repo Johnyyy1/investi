@@ -15,39 +15,39 @@ export function ProgressShowcase() {
   return <section aria-labelledby="progress-showcase-title" className={styles.progressShowcase}>
     <div className={`${styles.container} ${styles.progressShowcaseLayout}`}>
       <div className={styles.progressCopy}>
-        <p className={styles.progressEyebrow}>PROGRESS</p>
-        <h2 id="progress-showcase-title">Keep the streak.<span>See yourself grow.</span></h2>
-        <p className={styles.progressDescription}>Small lessons add up. Keep your streak, earn XP, unlock Portfolio Lab and see your investing knowledge grow over time.</p>
-        <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.progressCta}`}>Start learning <ArrowRight aria-hidden="true" /></Link>
+        <p className={styles.progressEyebrow}>POKROK</p>
+        <h2 id="progress-showcase-title">Udrž si rytmus.<span>Sleduj, jak rosteš.</span></h2>
+        <p className={styles.progressDescription}>Krátké lekce se sčítají. Udrž si rytmus, získej XP, odemkni Portfolio Lab a sleduj, jak rostou tvé znalosti.</p>
+        <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.progressCta}`}>Začít se učit <ArrowRight aria-hidden="true" /></Link>
       </div>
 
       <div className={styles.progressScene} data-testid="progress-showcase-demo">
-        <p className={styles.progressPreviewLabel}>Illustrative progress preview</p>
+        <p className={styles.progressPreviewLabel}>Ilustrační náhled pokroku</p>
 
         <div className={styles.progressStats}>
           <div className={`${styles.progressStat} ${styles.streakStat}`}>
             <Image src="/brand/flame-icon.webp" width={92} height={92} sizes="72px" alt="" aria-hidden="true" className={styles.progressStatImage} />
-            <span><small>Current streak</small><strong>{exampleStreak} days</strong></span>
+            <span><small>Současný rytmus</small><strong>{exampleStreak} dny</strong></span>
           </div>
           <div className={`${styles.progressStat} ${styles.capitalStat}`}>
             <Image src="/brand/growing-coin.webp" width={92} height={92} sizes="72px" alt="" aria-hidden="true" className={styles.progressStatImage} />
-            <span><small>Practice Capital earned</small><strong>{examplePracticeCapital}</strong></span>
+            <span><small>Získaný Practice Capital</small><strong>{examplePracticeCapital}</strong></span>
           </div>
         </div>
 
         <div className={styles.progressSurface}>
           <div className={styles.progressSurfaceHeader}>
-            <span><small>Your progress</small><strong>Investing curriculum</strong></span>
+            <span><small>Tvůj pokrok</small><strong>Výukový plán investování</strong></span>
             <b>{Math.round((completedLessons / availableLessons) * 100)}%</b>
           </div>
           <div className={styles.progressLessonCount}>
-            <strong>{completedLessons} of {availableLessons} lessons completed</strong>
-            <span>Progress is saved as you learn</span>
+            <strong>{completedLessons} z {availableLessons} lekcí dokončeno</strong>
+            <span>Pokrok se průběžně ukládá</span>
           </div>
-          <progress className={styles.progressBar} max={availableLessons} value={completedLessons} aria-label={`${completedLessons} of ${availableLessons} lessons completed`}>{completedLessons} of {availableLessons} lessons completed</progress>
+          <progress className={styles.progressBar} max={availableLessons} value={completedLessons} aria-label={`${completedLessons} z ${availableLessons} lekcí dokončeno`}>{completedLessons} z {availableLessons} lekcí dokončeno</progress>
           <div className={styles.progressReward}>
             <span className={styles.rewardDot} aria-hidden="true" />
-            <span><small>Foundations milestone</small><strong>{portfolioLabUnlock.xpRequired} XP · Portfolio Lab unlocked</strong></span>
+            <span><small>Milník základů</small><strong>{portfolioLabUnlock.xpRequired} XP · Portfolio Lab odemčen</strong></span>
           </div>
         </div>
 

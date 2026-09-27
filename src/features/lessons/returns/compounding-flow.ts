@@ -5,16 +5,16 @@ export const compoundingRoute = `/learn/returns/${returnsLessons[2].slug}`;
 
 /** Presentation order only. Explanations, examples and answers stay in the authored lesson. */
 export const compoundingSteps = [
-  { title: "From one period to a sequence", blocks: ["why-addition-fails", "recap"] },
-  { title: "Make a prediction", blocks: ["prediction"] },
-  { title: "The starting value changes", blocks: ["twenty-example"] },
-  { title: "Think in growth factors", blocks: ["growth-factors", "growth-callout"] },
-  { title: "Multiply the growth factors", blocks: ["cumulative-formula", "value-formula"] },
-  { title: "Explore compounding", blocks: ["explore", "compounding-explorer", "two-gains"] },
-  { title: "Connect returns to prices", blocks: ["price-series", "price-series-example", "multi-period"] },
-  { title: "Recovering from a loss", blocks: ["asymmetry", "recovery-explorer", "loss-practice"] },
-  { title: "Check your understanding", blocks: ["concept"] },
-  { title: "Bring it together", blocks: ["takeaway", "checkpoint"] },
+  { title: "Od jednoho období k posloupnosti", blocks: ["why-addition-fails", "recap"] },
+  { title: "Předpověz výsledek", blocks: ["prediction"] },
+  { title: "Počáteční hodnota se mění", blocks: ["twenty-example"] },
+  { title: "Přemýšlej v růstových faktorech", blocks: ["growth-factors", "growth-callout"] },
+  { title: "Vynásob růstové faktory", blocks: ["cumulative-formula", "value-formula"] },
+  { title: "Prozkoumej složené zhodnocení", blocks: ["explore", "compounding-explorer", "two-gains"] },
+  { title: "Propoj výnosy s cenami", blocks: ["price-series", "price-series-example", "multi-period"] },
+  { title: "Zotavení po ztrátě", blocks: ["asymmetry", "recovery-explorer", "loss-practice"] },
+  { title: "Ověř si porozumění", blocks: ["concept"] },
+  { title: "Spoj si to dohromady", blocks: ["takeaway", "checkpoint"] },
 ] as const;
 
 export function getCompoundingSteps(lesson: AuthoredLesson) {

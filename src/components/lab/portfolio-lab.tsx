@@ -25,7 +25,7 @@ type Notice = { state: "completed" | "warning"; title: string; detail?: string }
 type SearchState = "idle" | "loading" | "results" | "empty" | "error";
 
 function percentFromBasisPoints(value: string | null, signed = true) {
-  if (value === null) return "Unavailable";
+  if (value === null) return "Nedostupné";
   const basisPoints = BigInt(value);
   const sign = basisPoints > 0n && signed ? "+" : basisPoints < 0n ? "−" : "";
   const absolute = basisPoints < 0n ? -basisPoints : basisPoints;
@@ -33,14 +33,14 @@ function percentFromBasisPoints(value: string | null, signed = true) {
 }
 
 function signedMoney(value: string | null) {
-  if (value === null) return "Unavailable";
+  if (value === null) return "Nedostupné";
   const amount = BigInt(value);
   return `${amount > 0n ? "+" : ""}${formatPracticeCapitalMinor(value)}`;
 }
 
 function quotePrice(value: string | null, currency: string | null) {
-  if (!value || !currency) return "Unavailable";
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 }).format(Number(value))} ${currency}`;
+  if (!value || !currency) return "Nedostupné";
+  return `${new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 8 }).format(Number(value))} ${currency}`;
 }
 
 function quantityLabel(value: string) {
@@ -48,7 +48,7 @@ function quantityLabel(value: string) {
 }
 
 function timestamp(value: string) {
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("cs-CZ", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 function assetTypeLabel(value: string | null) {
@@ -56,17 +56,17 @@ function assetTypeLabel(value: string | null) {
 }
 
 function unavailableLabel(reason: Holding["unavailableReason"]) {
-  if (reason === "fx") return "CZK exchange rate unavailable";
-  if (reason === "instrument") return "Unavailable from this data source";
-  if (reason === "rate-limit") return "Market data rate limited";
-  if (reason === "provider") return "Market-data provider unavailable";
-  return "Current quote unavailable";
+  if (reason === "fx") return "Kurz CZK není dostupný";
+  if (reason === "instrument") return "Tento zdroj data neposkytuje";
+  if (reason === "rate-limit") return "Limit pro tržní data byl vyčerpán";
+  if (reason === "provider") return "Poskytovatel tržních dat není dostupný";
+  return "Aktuální cena není dostupná";
 }
 
 function executionUnavailableLabel(marketState: "open" | "closed" | "unknown") {
   return marketState === "closed"
-    ? "Market is currently closed. New simulated investments require a current market observation."
-    : "This market observation is not fresh enough for immediate simulated execution.";
+    ? "Trh je nyní zavřený. Nové simulované investice vyžadují aktuální tržní cenu."
+    : "Tato tržní cena není dostatečně čerstvá pro okamžité simulované provedení.";
 }
 
 function restoreTriggerFocus(trigger: HTMLButtonElement | null, fallback: HTMLButtonElement | null) {
@@ -203,7 +203,7 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
       sellDialog.current?.close();
       setNotice({
         state: "completed",
-        title: "Investment sold",
+        title: "Prodej dokončen",
         detail: `${quantityLabel(completedQuantity)} ${symbol}${sellEstimate === null ? "" : ` · ${formatPracticeCapitalMinor(sellEstimate)}`}`,
       });
       setSellHolding(null);
@@ -230,7 +230,7 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
       resetDialog.current?.close();
       resetKey.current = null;
       setSellHolding(null);
-      setNotice({ state: "completed", title: "Portfolio reset", detail: "All earned Practice Capital is available again." });
+      setNotice({ state: "completed", title: "Portfolio resetováno", detail: "Veškerý získaný virtuální kapitál je opět k dispozici." });
     });
   }
 
@@ -239,15 +239,15 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="break-words text-page-title font-bold tracking-[-0.025em]">Portfolio Lab</h1>
-          {showSampleDataIndicator(portfolio.marketDataMode) ? <span className="rounded-pill border border-border bg-surface-muted px-2.5 py-1 text-microcopy font-semibold text-secondary">Sample data</span> : null}
+          {showSampleDataIndicator(portfolio.marketDataMode) ? <span className="rounded-pill border border-border bg-surface-muted px-2.5 py-1 text-microcopy font-semibold text-secondary">Ukázková data</span> : null}
         </div>
-        <p className="mt-2 max-w-2xl text-small text-secondary">Practice investing with educational capital. No real money is involved.</p>
+        <p className="mt-2 max-w-2xl text-small text-secondary">Investuj nanečisto se vzdělávacím kapitálem. Nejde o skutečné peníze.</p>
       </div>
       {(hasCapital || hasHoldings || portfolio.recentActivity.length > 0) ? <div className="flex w-full items-center gap-2 sm:w-auto">
-        {hasCapital ? <Button id="portfolio-primary-invest" ref={primaryInvestRef} onClick={openInvest} className="min-w-0 flex-1 sm:flex-none"><span aria-hidden="true">+</span> Invest</Button> : null}
+        {hasCapital ? <Button id="portfolio-primary-invest" ref={primaryInvestRef} onClick={openInvest} className="min-w-0 flex-1 sm:flex-none"><span aria-hidden="true">+</span> Investovat</Button> : null}
         {(hasHoldings || portfolio.recentActivity.length > 0) ? <div className="relative shrink-0">
-          <IconButton ref={optionsButtonRef} aria-label="Portfolio options" variant="ghost" aria-haspopup="menu" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") { setOptionsOpen(false); event.currentTarget.focus(); } }}><Ellipsis aria-hidden="true" className="size-5" /></IconButton>
-          {optionsOpen ? <div role="menu" aria-label="Portfolio options" className="absolute top-12 right-0 z-20 w-[min(13rem,calc(100vw-2rem))] rounded-control border border-border bg-surface p-1 shadow-elevation-2"><button type="button" role="menuitem" className="flex min-h-12 w-full items-center rounded-control px-4 text-left text-small font-semibold text-danger-ink hover:bg-danger-soft focus-visible:bg-danger-soft" onClick={openReset}>Reset portfolio</button></div> : null}
+          <IconButton ref={optionsButtonRef} aria-label="Možnosti portfolia" variant="ghost" aria-haspopup="menu" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") { setOptionsOpen(false); event.currentTarget.focus(); } }}><Ellipsis aria-hidden="true" className="size-5" /></IconButton>
+          {optionsOpen ? <div role="menu" aria-label="Možnosti portfolia" className="absolute top-12 right-0 z-20 w-[min(13rem,calc(100vw-2rem))] rounded-control border border-border bg-surface p-1 shadow-elevation-2"><button type="button" role="menuitem" className="flex min-h-12 w-full items-center rounded-control px-4 text-left text-small font-semibold text-danger-ink hover:bg-danger-soft focus-visible:bg-danger-soft" onClick={openReset}>Resetovat portfolio</button></div> : null}
         </div> : null}
       </div> : null}
     </header>
@@ -256,13 +256,13 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
       <PortfolioHero portfolio={portfolio} />
 
       {notice ? <Feedback state={notice.state} role={notice.state === "warning" ? "alert" : "status"} className="max-w-xl shadow-elevation-1">
-        <div className="flex items-start gap-3"><Check aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-success-ink" /><div className="min-w-0 flex-1 break-words"><p className="font-bold">{notice.title}</p>{notice.detail ? <p className="mt-0.5 text-small text-secondary">{notice.detail}</p> : null}</div><IconButton aria-label="Dismiss confirmation" variant="ghost" className="-my-2 -mr-2 size-11 min-h-0 p-0" onClick={() => setNotice(null)}><X aria-hidden="true" /></IconButton></div>
+        <div className="flex items-start gap-3"><Check aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-success-ink" /><div className="min-w-0 flex-1 break-words"><p className="font-bold">{notice.title}</p>{notice.detail ? <p className="mt-0.5 text-small text-secondary">{notice.detail}</p> : null}</div><IconButton aria-label="Zavřít potvrzení" variant="ghost" className="-my-2 -mr-2 size-11 min-h-0 p-0" onClick={() => setNotice(null)}><X aria-hidden="true" /></IconButton></div>
       </Feedback> : null}
 
-      {!portfolio.valuationComplete ? <Feedback state="warning" role="status">{portfolio.valuedHoldingsCount} of {portfolio.totalHoldingsCount} positions currently valued. Unavailable positions are not counted as zero, so the portfolio total is incomplete.</Feedback> : null}
+      {!portfolio.valuationComplete ? <Feedback state="warning" role="status">Oceněno je {portfolio.valuedHoldingsCount} z {portfolio.totalHoldingsCount} pozic. Nedostupné pozice se nepočítají jako nula, proto není celková hodnota portfolia úplná.</Feedback> : null}
 
       {!hasCapital ? <ZeroCapitalState /> : !hasHoldings ? <EmptyPortfolioState onInvest={openInvest} /> : <section aria-labelledby="holdings-heading" className="min-w-0 pt-1">
-        <h2 id="holdings-heading" className="break-words text-section-title font-bold">Holdings</h2>
+        <h2 id="holdings-heading" className="break-words text-section-title font-bold">Pozice</h2>
         <HoldingsList holdings={portfolio.holdings} openMenu={holdingMenu} onToggleMenu={(instrumentId) => setHoldingMenu((current) => current === instrumentId ? null : instrumentId)} onSell={openSell} />
       </section>}
 
@@ -273,8 +273,8 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
     <dialog ref={investDialog} aria-labelledby="invest-title" aria-describedby="invest-description" onClose={() => { resetInvestFlow(); restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current); requestAnimationFrame(() => restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current)); }} className="fixed inset-y-0 right-0 left-auto m-0 h-[100dvh] max-h-none w-full max-w-none overflow-y-auto border-0 border-l border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35 sm:max-w-[34rem] sm:rounded-l-panel">
       <div className="flex min-h-full flex-col">
         <div className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-4 border-b border-border bg-surface/95 px-[min(1.25rem,5vw)] py-5 backdrop-blur sm:px-7">
-          <div className="min-w-0 flex-1"><p className="whitespace-nowrap text-microcopy font-bold uppercase tracking-[0.12em] text-primary-hover">Discover</p><h2 id="invest-title" className="mt-1 break-words text-card-title font-bold">Invest Practice Capital</h2><p id="invest-description" className="sr-only">Search for an investment, then select an instrument to inspect its detail page.</p></div>
-          <IconButton aria-label="Close investment flow" variant="ghost" className="shrink-0" onClick={closeInvest}><X aria-hidden="true" /></IconButton>
+          <div className="min-w-0 flex-1"><p className="whitespace-nowrap text-microcopy font-bold uppercase tracking-[0.12em] text-primary-hover">Objevuj</p><h2 id="invest-title" className="mt-1 break-words text-card-title font-bold">Investuj Practice Capital</h2><p id="invest-description" className="sr-only">Vyhledej investici a vyber instrument, jehož informace si chceš prohlédnout.</p></div>
+          <IconButton aria-label="Zavřít výběr investice" variant="ghost" className="shrink-0" onClick={closeInvest}><X aria-hidden="true" /></IconButton>
         </div>
 
         <div className="flex-1 px-[min(1.25rem,5vw)] py-6 sm:px-7 sm:py-8">
@@ -286,74 +286,74 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
 
     <dialog ref={sellDialog} aria-labelledby="sell-heading" aria-describedby="sell-description" onClose={() => { setSellHolding(null); setSheetError(null); restoreTriggerFocus(sellReturnFocus.current, primaryInvestRef.current); requestAnimationFrame(() => restoreTriggerFocus(sellReturnFocus.current, primaryInvestRef.current)); }} onCancel={(event) => { if (mutationPending) event.preventDefault(); }} className="fixed inset-y-0 right-0 left-auto m-0 h-[100dvh] max-h-none w-full max-w-none overflow-y-auto border-0 border-l border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35 sm:max-w-[31rem] sm:rounded-l-panel">
       {sellHolding ? <div className="flex min-h-full flex-col">
-        <div className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-4 border-b border-border bg-surface/95 px-[min(1.25rem,5vw)] py-5 backdrop-blur sm:px-7"><div className="min-w-0 flex-1"><p className="text-microcopy font-bold uppercase tracking-[0.12em] text-secondary">Sell investment</p><h2 id="sell-heading" className="mt-1 break-words text-card-title font-bold">Sell {sellHolding.symbol}</h2><p id="sell-description" className="sr-only">Choose the quantity of {sellHolding.symbol} to sell and review the estimated proceeds.</p></div><IconButton aria-label="Close sell flow" variant="ghost" className="shrink-0" disabled={mutationPending} onClick={closeSell}><X aria-hidden="true" /></IconButton></div>
+        <div className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-4 border-b border-border bg-surface/95 px-[min(1.25rem,5vw)] py-5 backdrop-blur sm:px-7"><div className="min-w-0 flex-1"><p className="text-microcopy font-bold uppercase tracking-[0.12em] text-secondary">Prodej investice</p><h2 id="sell-heading" className="mt-1 break-words text-card-title font-bold">Prodat {sellHolding.symbol}</h2><p id="sell-description" className="sr-only">Zvol množství instrumentu {sellHolding.symbol} k prodeji a zkontroluj odhad výnosu.</p></div><IconButton aria-label="Zavřít prodej" variant="ghost" className="shrink-0" disabled={mutationPending} onClick={closeSell}><X aria-hidden="true" /></IconButton></div>
         <div className="flex-1 px-[min(1.25rem,5vw)] py-6 sm:px-7 sm:py-8">
           {sheetError ? <Feedback state="warning" role="alert" className="mb-5">{sheetError}</Feedback> : null}
-          <div className="rounded-surface bg-surface-muted p-[min(1.25rem,5vw)]"><p className="font-bold">{sellHolding.name}</p><dl className="mt-4 grid grid-cols-1 gap-4 text-small sm:grid-cols-2"><div><dt className="text-secondary">Held</dt><dd className="mt-1 font-bold tabular-nums">{quantityLabel(sellHolding.quantity)} shares</dd></div><div><dt className="text-secondary">Last market price</dt><dd className="mt-1 font-bold tabular-nums">{quotePrice(sellHolding.currentPrice, sellHolding.currentPriceCurrency)}</dd></div></dl></div>
+          <div className="rounded-surface bg-surface-muted p-[min(1.25rem,5vw)]"><p className="font-bold">{sellHolding.name}</p><dl className="mt-4 grid grid-cols-1 gap-4 text-small sm:grid-cols-2"><div><dt className="text-secondary">Držené množství</dt><dd className="mt-1 font-bold tabular-nums">{quantityLabel(sellHolding.quantity)} pozic</dd></div><div><dt className="text-secondary">Poslední tržní cena</dt><dd className="mt-1 font-bold tabular-nums">{quotePrice(sellHolding.currentPrice, sellHolding.currentPriceCurrency)}</dd></div></dl></div>
           {!sellHolding.usableForExecution && sellHolding.marketSessionState ? <Feedback state="warning" role="status" className="mt-5">{executionUnavailableLabel(sellHolding.marketSessionState)}</Feedback> : null}
-          <div className="mt-7"><label htmlFor="sell-quantity" className="text-small font-bold">Quantity to sell</label><Input id="sell-quantity" className="mt-2 tabular-nums" inputMode="decimal" value={quantity} onChange={(event) => { setQuantity(event.target.value); setSheetError(null); tradeKey.current = null; }} /></div>
-          <dl className="mt-7 border-y border-border py-5"><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2"><dt className="min-w-0 text-small text-secondary">Estimated proceeds</dt><dd className="min-w-0 break-words text-right text-card-title font-bold">{sellEstimate === null ? "—" : formatPracticeCapitalMinor(sellEstimate)}</dd></div></dl>
-          <p className="mt-5 text-small text-secondary">The displayed value is an estimate. The server obtains a fresh security reference price and a dated reference FX rate for the simulated sale.</p>
+          <div className="mt-7"><label htmlFor="sell-quantity" className="text-small font-bold">Množství k prodeji</label><Input id="sell-quantity" className="mt-2 tabular-nums" inputMode="decimal" value={quantity} onChange={(event) => { setQuantity(event.target.value); setSheetError(null); tradeKey.current = null; }} /></div>
+          <dl className="mt-7 border-y border-border py-5"><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2"><dt className="min-w-0 text-small text-secondary">Odhadovaný výnos</dt><dd className="min-w-0 break-words text-right text-card-title font-bold">{sellEstimate === null ? "—" : formatPracticeCapitalMinor(sellEstimate)}</dd></div></dl>
+          <p className="mt-5 text-small text-secondary">Zobrazená hodnota je odhad. Server pro simulovaný prodej získá čerstvou referenční cenu instrumentu a referenční kurz FX k danému datu.</p>
         </div>
-        <div className="sticky bottom-0 z-20 border-t border-border bg-surface/95 px-[min(1.25rem,5vw)] py-4 backdrop-blur sm:px-7"><Button className="w-full" loading={mutationPending} disabled={!sellHolding.usableForExecution || sellEstimate === null || parseQuantitySafe(quantity) <= 0n} onClick={runSell}>Sell {sellHolding.symbol}</Button></div>
+        <div className="sticky bottom-0 z-20 border-t border-border bg-surface/95 px-[min(1.25rem,5vw)] py-4 backdrop-blur sm:px-7"><Button className="w-full" loading={mutationPending} disabled={!sellHolding.usableForExecution || sellEstimate === null || parseQuantitySafe(quantity) <= 0n} onClick={runSell}>Prodat {sellHolding.symbol}</Button></div>
       </div> : null}
     </dialog>
 
     <dialog ref={resetDialog} aria-labelledby="reset-title" aria-describedby="reset-description" onClose={() => { setResetError(null); restoreTriggerFocus(resetReturnFocus.current, primaryInvestRef.current); requestAnimationFrame(() => restoreTriggerFocus(resetReturnFocus.current, primaryInvestRef.current)); }} onCancel={(event) => { if (mutationPending) event.preventDefault(); }} className="m-auto w-[min(32rem,92vw)] rounded-panel border border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35">
-      <div className="px-[min(1.5rem,6vw)] py-5 sm:px-[min(1.75rem,6vw)] sm:py-7"><h2 id="reset-title" className="text-card-title font-bold">Reset this portfolio?</h2><p id="reset-description" className="mt-3 text-body text-secondary">Your holdings will clear and all earned Practice Capital will become available again. Learning progress and old trades remain recorded.</p>{resetError ? <Feedback state="warning" role="alert" className="mt-5">{resetError}</Feedback> : null}<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button variant="secondary" disabled={mutationPending} onClick={() => resetDialog.current?.close()}>Keep portfolio</Button><Button variant="danger" loading={mutationPending} onClick={reset}>Reset portfolio</Button></div></div>
+      <div className="px-[min(1.5rem,6vw)] py-5 sm:px-[min(1.75rem,6vw)] sm:py-7"><h2 id="reset-title" className="text-card-title font-bold">Resetovat portfolio?</h2><p id="reset-description" className="mt-3 text-body text-secondary">Pozice se vymažou a veškerý získaný virtuální kapitál bude znovu dostupný. Postup v učení i dřívější obchody zůstanou zaznamenané.</p>{resetError ? <Feedback state="warning" role="alert" className="mt-5">{resetError}</Feedback> : null}<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button variant="secondary" disabled={mutationPending} onClick={() => resetDialog.current?.close()}>Ponechat portfolio</Button><Button variant="danger" loading={mutationPending} onClick={reset}>Resetovat portfolio</Button></div></div>
     </dialog>
   </>;
 }
 
 function ZeroCapitalState() {
-  return <section aria-labelledby="zero-capital-title" className="flex flex-wrap items-center justify-between gap-5 border-b border-border pb-7"><div><h2 id="zero-capital-title" className="text-card-title font-bold">Build capital by learning</h2><p className="mt-1 text-small text-secondary">Complete a lesson to fund your first investment.</p></div><ButtonLink href="/learn" className="w-full sm:w-auto">Continue learning</ButtonLink></section>;
+  return <section aria-labelledby="zero-capital-title" className="flex flex-wrap items-center justify-between gap-5 border-b border-border pb-7"><div><h2 id="zero-capital-title" className="text-card-title font-bold">Získej kapitál učením</h2><p className="mt-1 text-small text-secondary">Dokonči lekci a získej kapitál pro první investici.</p></div><ButtonLink href="/learn" className="w-full sm:w-auto">Pokračovat v učení</ButtonLink></section>;
 }
 
 function PortfolioHero({ portfolio }: { portfolio: PortfolioView }) {
   const gain = portfolio.investmentGainLossMinor === null ? null : BigInt(portfolio.investmentGainLossMinor);
   const state = gainLossState(portfolio.investmentGainLossMinor);
   const tone = state === "positive" ? "text-success-ink" : state === "negative" ? "text-danger-ink" : "text-secondary";
-  const gainState = gain === null ? "Incomplete investment gain/loss" : gain > 0n ? "Investment gain" : gain < 0n ? "Investment loss" : "No investment gain or loss";
+  const gainState = gain === null ? "Neúplný investiční zisk / ztráta" : gain > 0n ? "Investiční zisk" : gain < 0n ? "Investiční ztráta" : "Bez investičního zisku nebo ztráty";
   return <section aria-labelledby="portfolio-value-label" className="min-w-0 rounded-surface border border-border bg-surface px-5 py-6 shadow-elevation-1 sm:px-8 sm:py-8">
     <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-10">
       <div className="flex min-w-0 flex-col justify-between">
         <div>
-          <p id="portfolio-value-label" className="text-small font-semibold text-secondary">Portfolio value</p>
+          <p id="portfolio-value-label" className="text-small font-semibold text-secondary">Hodnota portfolia</p>
           <p className="mt-2 break-words text-[clamp(2.5rem,2rem+2vw,4.25rem)] leading-none font-extrabold tracking-[-0.04em] tabular-nums" data-testid="portfolio-value">{portfolio.portfolioTotalMinor === null ? "—" : formatPracticeCapitalMinor(portfolio.portfolioTotalMinor)}</p>
-          {portfolio.portfolioTotalMinor === null ? <p className="mt-2 text-small font-semibold text-warning-ink">Incomplete valuation</p> : null}
-          <p className={`mt-3 flex flex-wrap items-baseline gap-x-2 text-small tabular-nums ${tone}`} aria-label={`${gainState}: ${gain === null ? "Unavailable" : `${signedMoney(portfolio.investmentGainLossMinor)} and ${percentFromBasisPoints(portfolio.investmentGainLossBasisPoints)} all time`}`}><span className="font-bold" data-testid="portfolio-gain-loss">{gain === null ? "Unavailable" : <>{signedMoney(portfolio.investmentGainLossMinor)} <span aria-hidden="true">·</span> {percentFromBasisPoints(portfolio.investmentGainLossBasisPoints)}</>}</span>{gain === null ? null : <span>all time</span>}</p>
+          {portfolio.portfolioTotalMinor === null ? <p className="mt-2 text-small font-semibold text-warning-ink">Neúplné ocenění</p> : null}
+          <p className={`mt-3 flex flex-wrap items-baseline gap-x-2 text-small tabular-nums ${tone}`} aria-label={`${gainState}: ${gain === null ? "Nedostupné" : `${signedMoney(portfolio.investmentGainLossMinor)} a ${percentFromBasisPoints(portfolio.investmentGainLossBasisPoints)} za celou dobu`}`}><span className="font-bold" data-testid="portfolio-gain-loss">{gain === null ? "Nedostupné" : <>{signedMoney(portfolio.investmentGainLossMinor)} <span aria-hidden="true">·</span> {percentFromBasisPoints(portfolio.investmentGainLossBasisPoints)}</>}</span>{gain === null ? null : <span>za celou dobu</span>}</p>
         </div>
-        <dl className="mt-8 flex min-w-0 flex-wrap gap-x-5 gap-y-3 border-t border-border pt-4 text-small text-secondary"><div className="flex min-w-0 flex-wrap gap-x-1.5"><dd className="min-w-0 break-words font-bold text-foreground tabular-nums" data-testid="portfolio-cash">{formatPracticeCapitalMinor(portfolio.availableCashMinor)}</dd><dt>cash</dt></div><div className="flex min-w-0 flex-wrap gap-x-1.5"><dd className="min-w-0 break-words font-bold text-foreground tabular-nums" data-testid="portfolio-invested">{portfolio.holdingsMarketValueMinor === null ? "Incomplete" : formatPracticeCapitalMinor(portfolio.holdingsMarketValueMinor)}</dd><dt>invested</dt></div><div className="flex min-w-0 flex-wrap gap-x-1.5"><dd className="font-bold text-foreground tabular-nums">{portfolio.holdings.length}</dd><dt>{portfolio.holdings.length === 1 ? "holding" : "holdings"}</dt></div></dl>
+        <dl className="mt-8 flex min-w-0 flex-wrap gap-x-5 gap-y-3 border-t border-border pt-4 text-small text-secondary"><div className="flex min-w-0 flex-wrap gap-x-1.5"><dd className="min-w-0 break-words font-bold text-foreground tabular-nums" data-testid="portfolio-cash">{formatPracticeCapitalMinor(portfolio.availableCashMinor)}</dd><dt>hotovost</dt></div><div className="flex min-w-0 flex-wrap gap-x-1.5"><dd className="min-w-0 break-words font-bold text-foreground tabular-nums" data-testid="portfolio-invested">{portfolio.holdingsMarketValueMinor === null ? "Neúplné" : formatPracticeCapitalMinor(portfolio.holdingsMarketValueMinor)}</dd><dt>investováno</dt></div><div className="flex min-w-0 flex-wrap gap-x-1.5"><dd className="font-bold text-foreground tabular-nums">{portfolio.holdings.length}</dd><dt>{portfolio.holdings.length === 1 ? "pozice" : "pozic"}</dt></div></dl>
       </div>
-      <div className="flex min-w-0 flex-col border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-small font-semibold text-foreground">Performance</h2><div aria-label="Performance timeframes unavailable until history is available" className="flex flex-wrap gap-1 text-microcopy text-secondary">{["1M", "3M", "6M", "YTD", "1Y", "All"].map((range) => <span key={range} className="px-1.5 py-1">{range}</span>)}</div></div><div className="mt-3 flex min-h-28 flex-1 items-center justify-center border-b border-border/70 px-4 text-center sm:min-h-32"><p className="text-microcopy text-secondary">Performance history not available yet</p></div></div>
+      <div className="flex min-w-0 flex-col border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-small font-semibold text-foreground">Výkonnost</h2><div aria-label="Období výkonnosti nejsou dostupná, dokud není k dispozici historie" className="flex flex-wrap gap-1 text-microcopy text-secondary">{["1M", "3M", "6M", "YTD", "1Y", "Max"].map((range) => <span key={range} className="px-1.5 py-1">{range}</span>)}</div></div><div className="mt-3 flex min-h-28 flex-1 items-center justify-center border-b border-border/70 px-4 text-center sm:min-h-32"><p className="text-microcopy text-secondary">Historie výkonnosti zatím není dostupná</p></div></div>
     </div>
   </section>;
 }
 
 function EmptyPortfolioState({ onInvest }: { onInvest: (event: MouseEvent<HTMLButtonElement>) => void }) {
-  return <section aria-labelledby="empty-portfolio-title" className="flex flex-wrap items-center justify-between gap-5 border-b border-border pb-7"><div><h2 id="empty-portfolio-title" className="text-card-title font-bold">Your portfolio is ready</h2><p className="mt-1 text-small text-secondary">Make your first investment to see holdings here.</p></div><Button variant="secondary" className="w-full min-w-0 max-w-full whitespace-normal text-center sm:w-auto" onClick={onInvest}>Make your first investment</Button></section>;
+  return <section aria-labelledby="empty-portfolio-title" className="flex flex-wrap items-center justify-between gap-5 border-b border-border pb-7"><div><h2 id="empty-portfolio-title" className="text-card-title font-bold">Portfolio je připravené</h2><p className="mt-1 text-small text-secondary">Proveď první investici a pozice uvidíš tady.</p></div><Button variant="secondary" className="w-full min-w-0 max-w-full whitespace-normal text-center sm:w-auto" onClick={onInvest}>Provést první investici</Button></section>;
 }
 
 function SearchStep({ query, results, activeIndex, state, pending, sourceMode, searchRef, onQueryChange, onActiveIndexChange, onChoose }: { query: string; results: readonly InstrumentSearchResult[]; activeIndex: number; state: SearchState; pending: boolean; sourceMode: PortfolioView["marketDataMode"]; searchRef: RefObject<HTMLInputElement | null>; onQueryChange: (value: string) => void; onActiveIndexChange: (index: number) => void; onChoose: (instrumentId: string) => void }) {
-  return <section aria-labelledby="search-investments-title"><h3 id="search-investments-title" className="text-section-title font-bold">Find an investment</h3><p className="mt-2 text-body text-secondary">Search by company, fund, bond, or ticker symbol.</p><div className="relative mt-6"><label htmlFor="instrument-search" className="text-small font-bold">Search investments</label><div className="relative mt-2"><Search aria-hidden="true" className="pointer-events-none absolute top-3.5 left-4 size-5 text-secondary" /><Input ref={searchRef} id="instrument-search" role="combobox" aria-autocomplete="list" aria-expanded={results.length > 0} aria-controls="instrument-results" aria-activedescendant={activeIndex >= 0 ? `instrument-option-${activeIndex}` : undefined} aria-busy={pending || undefined} autoComplete="off" value={query} placeholder="Search stocks, ETFs, bonds…" className="pr-12 pl-12" onChange={(event) => onQueryChange(event.target.value)} onKeyDown={(event) => { if (!results.length) return; if (event.key === "ArrowDown") { event.preventDefault(); onActiveIndexChange((activeIndex + 1) % results.length); } if (event.key === "ArrowUp") { event.preventDefault(); onActiveIndexChange((activeIndex - 1 + results.length) % results.length); } if (event.key === "Enter" && activeIndex >= 0) { event.preventDefault(); onChoose(results[activeIndex].instrumentId); } if (event.key === "Escape") { event.stopPropagation(); onActiveIndexChange(-1); } }} />{pending ? <span className="absolute top-3.5 right-4 text-small text-secondary">…</span> : null}</div></div>{results.length > 0 ? <ul id="instrument-results" role="listbox" aria-label="Instrument search results" className="mt-3 divide-y divide-border overflow-hidden rounded-surface border border-border bg-surface shadow-elevation-1">{results.map((result, index) => { const exchange = result.exchangeMic ?? result.exchangeCode; return <li key={result.instrumentId} id={`instrument-option-${index}`} role="option" aria-selected={index === activeIndex} aria-label={`${result.symbol} ${result.name}, ${assetTypeLabel(result.assetType)}, ${exchange ?? "exchange unavailable"}, ${result.quoteCurrency}`} className="aria-selected:bg-primary-soft"><button type="button" tabIndex={-1} className="flex min-h-16 w-full flex-col items-start gap-2 px-4 py-3 text-left hover:bg-primary-soft sm:flex-row sm:items-center sm:justify-between" onMouseDown={(event) => event.preventDefault()} onClick={() => onChoose(result.instrumentId)}><span className="w-full min-w-0 sm:w-auto"><strong className="block">{result.symbol}</strong><span className="block truncate text-small text-secondary">{result.name}</span></span><span className="w-full shrink-0 text-left text-microcopy text-secondary sm:w-auto sm:text-right"><span className="block font-semibold">{assetTypeLabel(result.assetType)} · {result.quoteCurrency}</span><span className="block">{exchange ? `${exchange} · ` : ""}{portfolioDataSourceLabel(sourceMode)}</span></span></button></li>; })}</ul> : state === "empty" ? <p role="status" className="mt-5 text-small text-secondary">No investments found. Try another company name or symbol.</p> : state === "loading" ? <p role="status" className="mt-5 text-small text-secondary">Searching market data…</p> : state === "error" ? null : <div className="mt-8 border-t border-border pt-6"><p className="text-small font-bold">Try a search</p><p className="mt-1 text-small text-secondary">Enter at least two characters from a company name or ticker.</p></div>}</section>;
+  return <section aria-labelledby="search-investments-title"><h3 id="search-investments-title" className="text-section-title font-bold">Najdi investici</h3><p className="mt-2 text-body text-secondary">Hledej podle názvu společnosti, fondu, dluhopisu nebo tickeru.</p><div className="relative mt-6"><label htmlFor="instrument-search" className="text-small font-bold">Hledat investice</label><div className="relative mt-2"><Search aria-hidden="true" className="pointer-events-none absolute top-3.5 left-4 size-5 text-secondary" /><Input ref={searchRef} id="instrument-search" role="combobox" aria-autocomplete="list" aria-expanded={results.length > 0} aria-controls="instrument-results" aria-activedescendant={activeIndex >= 0 ? `instrument-option-${activeIndex}` : undefined} aria-busy={pending || undefined} autoComplete="off" value={query} placeholder="Hledat akcie, ETF, dluhopisy…" className="pr-12 pl-12" onChange={(event) => onQueryChange(event.target.value)} onKeyDown={(event) => { if (!results.length) return; if (event.key === "ArrowDown") { event.preventDefault(); onActiveIndexChange((activeIndex + 1) % results.length); } if (event.key === "ArrowUp") { event.preventDefault(); onActiveIndexChange((activeIndex - 1 + results.length) % results.length); } if (event.key === "Enter" && activeIndex >= 0) { event.preventDefault(); onChoose(results[activeIndex].instrumentId); } if (event.key === "Escape") { event.stopPropagation(); onActiveIndexChange(-1); } }} />{pending ? <span className="absolute top-3.5 right-4 text-small text-secondary">…</span> : null}</div></div>{results.length > 0 ? <ul id="instrument-results" role="listbox" aria-label="Výsledky hledání instrumentů" className="mt-3 divide-y divide-border overflow-hidden rounded-surface border border-border bg-surface shadow-elevation-1">{results.map((result, index) => { const exchange = result.exchangeMic ?? result.exchangeCode; return <li key={result.instrumentId} id={`instrument-option-${index}`} role="option" aria-selected={index === activeIndex} aria-label={`${result.symbol} ${result.name}, ${assetTypeLabel(result.assetType)}, ${exchange ?? "burza není dostupná"}, ${result.quoteCurrency}`} className="aria-selected:bg-primary-soft"><button type="button" tabIndex={-1} className="flex min-h-16 w-full flex-col items-start gap-2 px-4 py-3 text-left hover:bg-primary-soft sm:flex-row sm:items-center sm:justify-between" onMouseDown={(event) => event.preventDefault()} onClick={() => onChoose(result.instrumentId)}><span className="w-full min-w-0 sm:w-auto"><strong className="block">{result.symbol}</strong><span className="block truncate text-small text-secondary">{result.name}</span></span><span className="w-full shrink-0 text-left text-microcopy text-secondary sm:w-auto sm:text-right"><span className="block font-semibold">{assetTypeLabel(result.assetType)} · {result.quoteCurrency}</span><span className="block">{exchange ? `${exchange} · ` : ""}{portfolioDataSourceLabel(sourceMode)}</span></span></button></li>; })}</ul> : state === "empty" ? <p role="status" className="mt-5 text-small text-secondary">Žádné investice nenalezeny. Zkus jiný název společnosti nebo ticker.</p> : state === "loading" ? <p role="status" className="mt-5 text-small text-secondary">Hledám tržní data…</p> : state === "error" ? null : <div className="mt-8 border-t border-border pt-6"><p className="text-small font-bold">Zkus hledat</p><p className="mt-1 text-small text-secondary">Zadej alespoň dva znaky názvu společnosti nebo tickeru.</p></div>}</section>;
 }
 
 function HoldingsList({ holdings, openMenu, onToggleMenu, onSell }: { holdings: Holding[]; openMenu: string | null; onToggleMenu: (instrumentId: string) => void; onSell: (holding: Holding, trigger: HTMLButtonElement) => void }) {
   return <>
     <div className="mt-4 hidden border-y border-border lg:block">
-      <table className="w-full table-fixed text-left text-small" aria-label="Current portfolio holdings">
-        <thead className="text-microcopy text-secondary"><tr><th scope="col" className="w-[29%] py-3 pr-4 font-semibold">Asset</th><th scope="col" className="w-[17%] px-2 py-3 text-right font-semibold">Price</th><th scope="col" className="w-[21%] px-2 py-3 text-right font-semibold">Value</th><th scope="col" className="w-[14%] px-2 py-3 text-right font-semibold">Weight</th><th scope="col" className="w-[15%] px-2 py-3 text-right font-semibold">Gain/loss</th><th scope="col" className="w-12 py-3"><span className="sr-only">Actions</span></th></tr></thead>
+      <table className="w-full table-fixed text-left text-small" aria-label="Aktuální pozice v portfoliu">
+        <thead className="text-microcopy text-secondary"><tr><th scope="col" className="w-[29%] py-3 pr-4 font-semibold">Aktivum</th><th scope="col" className="w-[17%] px-2 py-3 text-right font-semibold">Cena</th><th scope="col" className="w-[21%] px-2 py-3 text-right font-semibold">Hodnota</th><th scope="col" className="w-[14%] px-2 py-3 text-right font-semibold">Váha</th><th scope="col" className="w-[15%] px-2 py-3 text-right font-semibold">Zisk / ztráta</th><th scope="col" className="w-12 py-3"><span className="sr-only">Akce</span></th></tr></thead>
         <tbody className="divide-y divide-border">{holdings.map((holding) => <tr key={holding.instrumentId} data-testid={`holding-${holding.symbol}`}>
           <th scope="row" className="py-3.5 pr-4 align-top font-normal"><InstrumentIdentity holding={holding} /></th>
           <td className="px-2 py-3.5 text-right align-top"><MarketPrice holding={holding} /></td>
-          <td className="px-2 py-3.5 text-right align-top"><p className="font-bold tabular-nums">{holding.marketValueMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.marketValueMinor)}</p><p className="mt-0.5 text-microcopy text-secondary tabular-nums">{quantityLabel(holding.quantity)} shares</p>{holding.marketValueMinor === null ? <p className="mt-1 text-microcopy font-semibold text-warning-ink">{unavailableLabel(holding.unavailableReason)}</p> : null}</td>
+          <td className="px-2 py-3.5 text-right align-top"><p className="font-bold tabular-nums">{holding.marketValueMinor === null ? "Nedostupné" : formatPracticeCapitalMinor(holding.marketValueMinor)}</p><p className="mt-0.5 text-microcopy text-secondary tabular-nums">{quantityLabel(holding.quantity)} pozic</p>{holding.marketValueMinor === null ? <p className="mt-1 text-microcopy font-semibold text-warning-ink">{unavailableLabel(holding.unavailableReason)}</p> : null}</td>
           <td className="px-2 py-3.5 text-right align-top font-semibold tabular-nums">{percentFromBasisPoints(holding.allocationBasisPoints, false)}</td>
           <td className="px-2 py-3.5 text-right align-top"><GainLossValue value={holding.gainLossMinor} /></td>
           <td className="relative py-2 text-right align-top"><HoldingActions holding={holding} open={openMenu === holding.instrumentId} onToggle={onToggleMenu} onSell={onSell} /></td>
         </tr>)}</tbody>
       </table>
     </div>
-    <ul className="mt-4 divide-y divide-border border-y border-border lg:hidden" aria-label="Current portfolio holdings">{holdings.map((holding) => <li key={holding.instrumentId} data-testid={`holding-mobile-${holding.symbol}`} className="relative py-3.5 pr-12"><InstrumentIdentity holding={holding} /><dl className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 text-small"><div><dt className="text-microcopy text-secondary">Value</dt><dd className="mt-0.5 font-bold tabular-nums">{holding.marketValueMinor === null ? "Unavailable" : formatPracticeCapitalMinor(holding.marketValueMinor)}</dd><dd className="text-microcopy text-secondary tabular-nums">{quantityLabel(holding.quantity)} shares</dd></div><div><dt className="text-microcopy text-secondary">Gain/loss</dt><dd className="mt-0.5"><GainLossValue value={holding.gainLossMinor} /></dd></div><div><dt className="text-microcopy text-secondary">Price</dt><dd className="mt-0.5"><MarketPrice holding={holding} /></dd></div><div><dt className="text-microcopy text-secondary">Weight</dt><dd className="mt-0.5 font-semibold tabular-nums">{percentFromBasisPoints(holding.allocationBasisPoints, false)}</dd></div></dl>{holding.marketValueMinor === null ? <p className="mt-3 text-microcopy font-semibold text-warning-ink">{unavailableLabel(holding.unavailableReason)}</p> : null}<div className="absolute top-3 right-0"><HoldingActions holding={holding} idSuffix="-mobile" open={openMenu === holding.instrumentId} onToggle={onToggleMenu} onSell={onSell} /></div></li>)}</ul>
+    <ul className="mt-4 divide-y divide-border border-y border-border lg:hidden" aria-label="Aktuální pozice v portfoliu">{holdings.map((holding) => <li key={holding.instrumentId} data-testid={`holding-mobile-${holding.symbol}`} className="relative py-3.5 pr-12"><InstrumentIdentity holding={holding} /><dl className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 text-small"><div><dt className="text-microcopy text-secondary">Hodnota</dt><dd className="mt-0.5 font-bold tabular-nums">{holding.marketValueMinor === null ? "Nedostupné" : formatPracticeCapitalMinor(holding.marketValueMinor)}</dd><dd className="text-microcopy text-secondary tabular-nums">{quantityLabel(holding.quantity)} pozic</dd></div><div><dt className="text-microcopy text-secondary">Zisk / ztráta</dt><dd className="mt-0.5"><GainLossValue value={holding.gainLossMinor} /></dd></div><div><dt className="text-microcopy text-secondary">Cena</dt><dd className="mt-0.5"><MarketPrice holding={holding} /></dd></div><div><dt className="text-microcopy text-secondary">Váha</dt><dd className="mt-0.5 font-semibold tabular-nums">{percentFromBasisPoints(holding.allocationBasisPoints, false)}</dd></div></dl>{holding.marketValueMinor === null ? <p className="mt-3 text-microcopy font-semibold text-warning-ink">{unavailableLabel(holding.unavailableReason)}</p> : null}<div className="absolute top-3 right-0"><HoldingActions holding={holding} idSuffix="-mobile" open={openMenu === holding.instrumentId} onToggle={onToggleMenu} onSell={onSell} /></div></li>)}</ul>
   </>;
 }
 
@@ -362,27 +362,27 @@ function InstrumentIdentity({ holding }: { holding: Holding }) {
 }
 
 function MarketPrice({ holding }: { holding: Holding }) {
-  return <><span className="font-semibold tabular-nums">{quotePrice(holding.currentPrice, holding.currentPriceCurrency)}</span>{holding.quoteUsability === "closed-market-reference" ? <span className="block text-microcopy text-secondary">Market closed</span> : holding.quoteUsability === "stale" ? <span className="block text-microcopy text-secondary">Stale price</span> : null}</>;
+  return <><span className="font-semibold tabular-nums">{quotePrice(holding.currentPrice, holding.currentPriceCurrency)}</span>{holding.quoteUsability === "closed-market-reference" ? <span className="block text-microcopy text-secondary">Trh zavřený</span> : holding.quoteUsability === "stale" ? <span className="block text-microcopy text-secondary">Zastaralá cena</span> : null}</>;
 }
 
 function GainLossValue({ value }: { value: string | null }) {
   const state = gainLossState(value);
   const tone = state === "positive" ? "text-success-ink" : state === "negative" ? "text-danger-ink" : "text-secondary";
-  const label = state === "positive" ? "Gain" : state === "negative" ? "Loss" : state === "neutral" ? "No change" : "Unavailable";
+  const label = state === "positive" ? "Zisk" : state === "negative" ? "Ztráta" : state === "neutral" ? "Beze změny" : "Nedostupné";
   return <span className={`font-bold tabular-nums ${tone}`} aria-label={`${label}: ${signedMoney(value)}`}>{signedMoney(value)}</span>;
 }
 
 function HoldingActions({ holding, idSuffix = "", open, onToggle, onSell }: { holding: Holding; idSuffix?: string; open: boolean; onToggle: (instrumentId: string) => void; onSell: (holding: Holding, trigger: HTMLButtonElement) => void }) {
   const actionId = `holding-actions-${holding.instrumentId}${idSuffix}`;
-  return <><IconButton id={actionId} aria-label={`Actions for ${holding.symbol}`} variant="ghost" className="size-11 min-h-0 p-0" aria-haspopup="menu" aria-expanded={open} onClick={() => onToggle(holding.instrumentId)} onKeyDown={(event) => { if (event.key === "Escape") { onToggle(holding.instrumentId); event.currentTarget.focus(); } }}><Ellipsis aria-hidden="true" /></IconButton>{open ? <div role="menu" aria-label={`Actions for ${holding.symbol}`} className="absolute top-11 right-0 z-10 min-w-36 rounded-control border border-border bg-surface p-1 text-left shadow-elevation-2"><button type="button" role="menuitem" className="flex min-h-12 w-full items-center rounded-control px-4 text-left text-small font-semibold hover:bg-surface-muted focus-visible:bg-surface-muted" onClick={(event) => onSell(holding, document.getElementById(actionId) as HTMLButtonElement | null ?? event.currentTarget)}>Sell</button></div> : null}</>;
+  return <><IconButton id={actionId} aria-label={`Akce pro ${holding.symbol}`} variant="ghost" className="size-11 min-h-0 p-0" aria-haspopup="menu" aria-expanded={open} onClick={() => onToggle(holding.instrumentId)} onKeyDown={(event) => { if (event.key === "Escape") { onToggle(holding.instrumentId); event.currentTarget.focus(); } }}><Ellipsis aria-hidden="true" /></IconButton>{open ? <div role="menu" aria-label={`Akce pro ${holding.symbol}`} className="absolute top-11 right-0 z-10 min-w-36 rounded-control border border-border bg-surface p-1 text-left shadow-elevation-2"><button type="button" role="menuitem" className="flex min-h-12 w-full items-center rounded-control px-4 text-left text-small font-semibold hover:bg-surface-muted focus-visible:bg-surface-muted" onClick={(event) => onSell(holding, document.getElementById(actionId) as HTMLButtonElement | null ?? event.currentTarget)}>Prodat</button></div> : null}</>;
 }
 
 function ActivityList({ activity }: { activity: PortfolioView["recentActivity"] }) {
   return <section aria-labelledby="activity-heading" className="border-t border-border pt-6">
-    <h2 id="activity-heading" className="text-card-title font-bold">Recent activity</h2>
+    <h2 id="activity-heading" className="text-card-title font-bold">Poslední aktivita</h2>
     <ul className="mt-3 divide-y divide-border border-y border-border">{activity.map((trade) => <li key={trade.id} className="grid gap-x-4 gap-y-1 py-3 text-small sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center">
-      <strong className={trade.side === "BUY" ? "text-primary-hover" : "text-warning-ink"}>{trade.side === "BUY" ? "Buy" : "Sell"}</strong>
-      <span className="min-w-0"><span className="font-bold">{trade.symbol}</span><span className="ml-2 text-secondary">{trade.name} · {quantityLabel(trade.quantity)} shares</span></span>
+      <strong className={trade.side === "BUY" ? "text-primary-hover" : "text-warning-ink"}>{trade.side === "BUY" ? "Koupit" : "Prodat"}</strong>
+      <span className="min-w-0"><span className="font-bold">{trade.symbol}</span><span className="ml-2 text-secondary">{trade.name} · {quantityLabel(trade.quantity)} pozic</span></span>
       <span className="tabular-nums sm:text-right"><strong>{formatPracticeCapitalMinor(trade.grossAmountBaseMinor)}</strong><span className="ml-2 text-microcopy text-secondary sm:ml-0 sm:block">{timestamp(trade.executedAt)}</span></span>
     </li>)}</ul>
   </section>;

@@ -4,9 +4,9 @@ import { ArrowRight, Coins, GraduationCap, Landmark, TrendingUp } from "lucide-r
 import styles from "./marketing.module.css";
 
 const allocations = [
-  { id: "stocks", label: "Stocks", detail: "Growth potential", value: 60, icon: TrendingUp, className: styles.stocksAllocation },
-  { id: "bonds", label: "Bonds", detail: "Stability & income", value: 30, icon: Landmark, className: styles.bondsAllocation },
-  { id: "cash", label: "Cash", detail: "Flexibility & safety", value: 10, icon: Coins, className: styles.cashAllocation },
+  { id: "stocks", label: "Akcie", detail: "Potenciál růstu", value: 60, icon: TrendingUp, className: styles.stocksAllocation },
+  { id: "bonds", label: "Dluhopisy", detail: "Stabilita a příjem", value: 30, icon: Landmark, className: styles.bondsAllocation },
+  { id: "cash", label: "Hotovost", detail: "Flexibilita a bezpečí", value: 10, icon: Coins, className: styles.cashAllocation },
 ] as const;
 
 const formatAllocation = (value: number) => `${value.toLocaleString("en-GB", { maximumFractionDigits: 1 })}%`;
@@ -16,23 +16,23 @@ export function PortfolioShowcase() {
     <div className={`${styles.container} ${styles.portfolioShowcaseLayout}`}>
       <div className={styles.portfolioCopy}>
         <p className={styles.portfolioEyebrow}>PORTFOLIO LAB</p>
-        <h2 id="portfolio-showcase-title">Don’t just read about diversification. <span>Break a portfolio.</span></h2>
-        <p className={styles.portfolioDescription}>Build a portfolio, change the allocation and see how different choices affect the outcome.</p>
-        <Link href="/lab/portfolio" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.portfolioCta}`}>Try Portfolio Lab <ArrowRight aria-hidden="true" /></Link>
+        <h2 id="portfolio-showcase-title">O diverzifikaci jen nečti. <span>Rozlož portfolio.</span></h2>
+        <p className={styles.portfolioDescription}>Sestav portfolio, změň rozložení a sleduj, jak různé volby ovlivní výsledek.</p>
+        <Link href="/lab/portfolio" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.portfolioCta}`}>Vyzkoušet Portfolio Lab <ArrowRight aria-hidden="true" /></Link>
       </div>
 
       <div className={styles.portfolioDemoStage}>
         <div className={styles.portfolioDemo} data-testid="portfolio-showcase-demo">
           <div className={styles.portfolioDemoHeader}>
             <div>
-              <h3>Your portfolio</h3>
-              <p>Illustrative 60 / 30 / 10 allocation.</p>
+              <h3>Tvé portfolio</h3>
+              <p>Ilustrační rozložení 60 / 30 / 10.</p>
             </div>
-            <span className={styles.educationBadge}><GraduationCap aria-hidden="true" /> 100% allocated · safe to experiment</span>
+            <span className={styles.educationBadge}><GraduationCap aria-hidden="true" /> 100 % rozloženo · bezpečné experimentování</span>
           </div>
 
           <div className={styles.portfolioWorkspace}>
-            <div className={styles.portfolioControls} role="img" aria-label="Portfolio allocation: 60% stocks, 30% bonds, 10% cash.">
+            <div className={styles.portfolioControls} role="img" aria-label="Rozložení portfolia: 60 % akcie, 30 % dluhopisy, 10 % hotovost.">
               {allocations.map(({ id, label, detail, value, icon: Icon, className }) => <div className={`${styles.allocationControl} ${className}`} key={id} aria-hidden="true">
                 <span className={styles.allocationIcon}><Icon aria-hidden="true" /></span>
                 <span className={styles.allocationLabel}>
@@ -50,28 +50,28 @@ export function PortfolioShowcase() {
                 width={1200}
                 height={1200}
                 sizes="(max-width: 640px) 280px, (max-width: 919px) 340px, (max-width: 1220px) 280px, 330px"
-                alt="Three-part portfolio pie in Investi blue, green and warm neutral"
+                alt="Třídílný koláčový graf portfolia v modré, zelené a neutrální barvě investi"
               />
-              <figcaption>Starting mix shown: 60% stocks · 30% bonds · 10% cash</figcaption>
+              <figcaption>Zobrazené počáteční rozložení: 60 % akcie · 30 % dluhopisy · 10 % hotovost</figcaption>
             </figure>
           </div>
 
           <div className={styles.portfolioOutcomes}>
             <div className={styles.outcomeIntro}>
-              <strong>Potential outcomes</strong>
-              <span>Based on your current allocation</span>
+              <strong>Možné výsledky</strong>
+              <span>Podle tvého současného rozložení</span>
             </div>
             <div className={styles.outcomeMetric}>
-              <span>Expected return</span>
-              <strong>7.2%</strong>
-              <small>per example year</small>
+              <span>Očekávaný výnos</span>
+              <strong>7,2 %</strong>
+              <small>za modelový rok</small>
             </div>
             <div className={styles.outcomeMetric}>
-              <span>Example range</span>
-              <strong>-12% to +28%</strong>
-              <small>across two scenarios</small>
+              <span>Modelové rozpětí</span>
+              <strong>−12 % až +28 %</strong>
+              <small>ve dvou scénářích</small>
             </div>
-            <p className={styles.portfolioDisclosure}>Illustrative data for learning. Not a forecast or recommendation.</p>
+            <p className={styles.portfolioDisclosure}>Ilustrační data pro učení. Nejde o prognózu ani doporučení.</p>
           </div>
         </div>
       </div>

@@ -15,8 +15,7 @@ describe("FormulaBlock", () => {
   });
   it("renders a safe fallback for invalid authored math", () => {
     const html = renderToStaticMarkup(createElement(FormulaBlock, { formula: "\\invalidcommand{<script>}" }));
-    expect(html).toContain("This formula could not be displayed");
+    expect(html).toContain("Tento vzorec se nepodařilo zobrazit.");
     expect(html).not.toContain("<script>");
   });
 });
-

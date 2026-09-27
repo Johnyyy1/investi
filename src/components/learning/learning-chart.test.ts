@@ -16,7 +16,7 @@ describe("LearningChart fallbacks", () => {
   it.each([NaN, Infinity, -Infinity])("rejects non-finite values (%s)", (value) => {
     const html = renderToStaticMarkup(createElement(LearningChart, { ...props, data: [{ label: "Start", value }] }));
     expect(html).toContain('role="status"');
-    expect(html).toContain("This chart needs finite numeric values.");
+    expect(html).toContain("Tento graf potřebuje konečné číselné hodnoty.");
     expect(html).not.toContain("recharts-wrapper");
   });
 
@@ -24,7 +24,7 @@ describe("LearningChart fallbacks", () => {
     const html = renderToStaticMarkup(createElement(LearningChart, {
       ...props, data: [{ label: "Start", value: 10000 }, { label: "End", value: 9600 }],
     }));
-    expect(html).toContain("View data table");
+    expect(html).toContain("Zobrazit tabulku dat");
     expect(html).toContain("Investment value data");
     expect(html).toContain('scope="row"');
     expect(html).toContain("9600");

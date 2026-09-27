@@ -2,13 +2,13 @@
 import { AnswerOption } from "@/components/learning/answer-option";
 import { dailyGoals, experienceOptions, goalOptions, interestOptions, type OnboardingDraft } from "@/features/onboarding/domain";
 
-export const questionTitles = ["", "How familiar are you with investing?", "What would you like to get better at?", "What are you most interested in?", "How much time would you like to learn each day?"];
-export const questionHints = ["", "Choose the description that feels closest. There’s no test.", "Optional. Choose any goals you find useful.", "Optional. Choose topics you’d like to explore.", "A little time, consistently. Choose a pace that fits your day."];
+export const questionTitles = ["", "Jak se vyznáš v investování?", "V čem se chceš zlepšit?", "Co tě zajímá nejvíc?", "Kolik času chceš každý den věnovat učení?"];
+export const questionHints = ["", "Vyber popis, který ti sedí nejlépe. Není to test.", "Volitelné. Vyber cíle, které se ti hodí.", "Volitelné. Vyber témata, která chceš prozkoumat.", "Trocha času pravidelně. Zvol tempo, které vyhovuje tvému dni."];
 
 export function PreferencesQuestion({ step, answers, onChange, disabled = false }: {
   step: number; answers: OnboardingDraft; onChange: (answers: OnboardingDraft) => void; disabled?: boolean;
 }) {
-  const options = step === 1 ? experienceOptions : step === 2 ? goalOptions : step === 3 ? interestOptions : dailyGoals.map((value) => ({ value: String(value), label: `${value === 20 ? "20+" : value} minutes` }));
+  const options = step === 1 ? experienceOptions : step === 2 ? goalOptions : step === 3 ? interestOptions : dailyGoals.map((value) => ({ value: String(value), label: `${value === 20 ? "20+" : value} minut` }));
   const selected = step === 1 ? [answers.experienceLevel] : step === 2 ? answers.goals : step === 3 ? answers.interests : [String(answers.dailyGoalMinutes)];
   function select(value: string) {
     if (step === 1) onChange({ ...answers, experienceLevel: value as OnboardingDraft["experienceLevel"] });

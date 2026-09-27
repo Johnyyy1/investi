@@ -25,31 +25,31 @@ function metricGroups(snapshot: EquityFundamentalsSnapshot, quoteCurrency: Curre
     revenue: b.revenueFy, "net-income": b.netIncomeFy, fcf: b.freeCashFlowFy, eps: b.dilutedEpsFy,
   };
   const groups = [
-    group("Valuation", [
-      { id: "market-cap", label: "Market cap", value: formatMagnitude(v.marketCap, quoteCurrency), explanation: "The market value of all outstanding shares, based on the provider's company profile." },
-      { id: "pe", label: "P/E TTM", value: v.peTtmStatus === "not-meaningful" ? "N/M" : formatMultiple(v.peTtm), explanation: "Share price relative to trailing twelve-month earnings per share. N/M means earnings do not support a meaningful ratio." },
-      { id: "ps", label: "P/S TTM", value: formatMultiple(v.psTtm), explanation: "Market value relative to trailing twelve-month sales." },
-      { id: "pb", label: "P/B TTM", value: formatMultiple(v.pbTtm), explanation: "Share price relative to book value per share." },
-      { id: "ev-ebitda", label: "EV / EBITDA TTM", value: formatMultiple(v.evToEbitdaTtm), explanation: "Enterprise value relative to trailing operating earnings before interest, taxes, depreciation and amortization." },
-      { id: "p-fcf", label: "Price / FCF TTM", value: formatMultiple(v.priceToFcfTtm), explanation: "Share price relative to trailing free cash flow per share." },
+    group("Ocenění", [
+      { id: "market-cap", label: "Tržní kapitalizace", value: formatMagnitude(v.marketCap, quoteCurrency), explanation: "Tržní hodnota všech akcií v oběhu podle firemního profilu poskytovatele." },
+      { id: "pe", label: "P/E TTM", value: v.peTtmStatus === "not-meaningful" ? "N/M" : formatMultiple(v.peTtm), explanation: "Cena akcie vůči zisku na akcii za posledních 12 měsíců. N/M znamená, že zisk neumožňuje smysluplný poměr." },
+      { id: "ps", label: "P/S TTM", value: formatMultiple(v.psTtm), explanation: "Tržní hodnota vůči tržbám za posledních 12 měsíců." },
+      { id: "pb", label: "P/B TTM", value: formatMultiple(v.pbTtm), explanation: "Cena akcie vůči účetní hodnotě na akcii." },
+      { id: "ev-ebitda", label: "EV / EBITDA TTM", value: formatMultiple(v.evToEbitdaTtm), explanation: "Hodnota podniku vůči provoznímu zisku před úroky, daněmi a odpisy za posledních 12 měsíců." },
+      { id: "p-fcf", label: "Cena / FCF TTM", value: formatMultiple(v.priceToFcfTtm), explanation: "Cena akcie vůči volnému peněžnímu toku na akcii za posledních 12 měsíců." },
     ]),
-    group("Profitability", [
-      { id: "gross-margin", label: "Gross margin TTM", value: formatPercent(p.grossMarginTtm), explanation: "The share of trailing revenue left after direct production costs." },
-      { id: "operating-margin", label: "Operating margin TTM", value: formatPercent(p.operatingMarginTtm), explanation: "The share of trailing revenue earned from operations." },
-      { id: "net-margin", label: "Net margin TTM", value: formatPercent(p.netMarginTtm), explanation: "The share of trailing revenue retained as net income." },
-      { id: "roe", label: "ROE TTM", value: formatPercent(p.roeTtm), explanation: "Trailing profit generated relative to shareholders' equity." },
-      { id: "roic", label: "ROIC TTM", value: formatPercent(p.roicTtm), explanation: "Trailing operating return on capital invested in the business." },
+    group("Ziskovost", [
+      { id: "gross-margin", label: "Hrubá marže TTM", value: formatPercent(p.grossMarginTtm), explanation: "Podíl tržeb za posledních 12 měsíců, který zbývá po přímých výrobních nákladech." },
+      { id: "operating-margin", label: "Provozní marže TTM", value: formatPercent(p.operatingMarginTtm), explanation: "Podíl tržeb za posledních 12 měsíců vytvořený provozní činností." },
+      { id: "net-margin", label: "Čistá marže TTM", value: formatPercent(p.netMarginTtm), explanation: "Podíl tržeb za posledních 12 měsíců, který zůstává jako čistý zisk." },
+      { id: "roe", label: "ROE TTM", value: formatPercent(p.roeTtm), explanation: "Zisk za posledních 12 měsíců vůči vlastnímu kapitálu akcionářů." },
+      { id: "roic", label: "ROIC TTM", value: formatPercent(p.roicTtm), explanation: "Provozní výnos za posledních 12 měsíců z kapitálu investovaného do firmy." },
     ]),
-    group("Financial health", [
-      { id: "debt-equity", label: "Debt / equity TTM", value: formatMultiple(h.debtToEquityTtm, 2), explanation: "Debt relative to shareholders' equity in the provider's TTM ratio set." },
-      { id: "current-ratio", label: "Current ratio TTM", value: formatMultiple(h.currentRatioTtm, 2), explanation: "Current assets relative to current liabilities." },
-      { id: "net-debt-ebitda", label: "Net debt / EBITDA TTM", value: formatMultiple(h.netDebtToEbitdaTtm, 2), explanation: "Net debt relative to trailing EBITDA. A negative value can indicate net cash." },
+    group("Finanční zdraví", [
+      { id: "debt-equity", label: "Dluh / vlastní kapitál TTM", value: formatMultiple(h.debtToEquityTtm, 2), explanation: "Dluh ve vztahu k vlastnímu kapitálu akcionářů podle poměrů TTM poskytovatele." },
+      { id: "current-ratio", label: "Běžná likvidita TTM", value: formatMultiple(h.currentRatioTtm, 2), explanation: "Oběžná aktiva ve vztahu ke krátkodobým závazkům." },
+      { id: "net-debt-ebitda", label: "Čistý dluh / EBITDA TTM", value: formatMultiple(h.netDebtToEbitdaTtm, 2), explanation: "Čistý dluh ve vztahu k EBITDA za posledních 12 měsíců. Záporná hodnota může znamenat čistou hotovost." },
     ]),
-    group("Latest fiscal year", [
-      { id: "revenue", label: "Revenue FY", value: formatMagnitude(b.revenueFy, b.reportingCurrency), explanation: "Sales reported for the latest available full fiscal year." },
-      { id: "net-income", label: "Net income FY", value: formatMagnitude(b.netIncomeFy, b.reportingCurrency), explanation: "Profit reported for the latest available full fiscal year." },
-      { id: "fcf", label: "Free cash flow FY", value: formatMagnitude(b.freeCashFlowFy, b.reportingCurrency), explanation: "Operating cash flow less capital expenditure for the same fiscal year." },
-      { id: "eps", label: "Diluted EPS FY", value: formatPerShare(b.dilutedEpsFy, b.reportingCurrency), explanation: "Fiscal-year earnings per share after potential share dilution." },
+    group("Poslední fiskální rok", [
+      { id: "revenue", label: "Tržby FY", value: formatMagnitude(b.revenueFy, b.reportingCurrency), explanation: "Tržby vykázané za poslední dostupný celý fiskální rok." },
+      { id: "net-income", label: "Čistý zisk FY", value: formatMagnitude(b.netIncomeFy, b.reportingCurrency), explanation: "Zisk vykázaný za poslední dostupný celý fiskální rok." },
+      { id: "fcf", label: "Volný peněžní tok FY", value: formatMagnitude(b.freeCashFlowFy, b.reportingCurrency), explanation: "Provozní peněžní tok po odečtení kapitálových výdajů za stejný fiskální rok." },
+      { id: "eps", label: "Zředěný EPS FY", value: formatPerShare(b.dilutedEpsFy, b.reportingCurrency), explanation: "Zisk na akcii za fiskální rok po zohlednění možného rozředění akcií." },
     ]),
   ];
   return groups.map(({ title, metrics }) => ({ title, metrics: metrics.map((metric): Metric => {
@@ -63,7 +63,7 @@ const signalColor: Record<MetricSignal, string> = {
 };
 
 const signalDescription: Record<MetricSignal, string> = {
-  neutral: "", positive: "Broad reference: positive.", caution: "Broad reference: caution.", unavailable: "Unavailable.", "not-meaningful": "Not meaningful.",
+  neutral: "", positive: "Orientační srovnání: příznivé.", caution: "Orientační srovnání: opatrnost.", unavailable: "Nedostupné.", "not-meaningful": "Nedává smysl.",
 };
 
 export function EquityKeyMetrics({ snapshot, message, quoteCurrency }: { snapshot: EquityFundamentalsSnapshot | null; message: string | null; quoteCurrency: Currency }) {
@@ -71,15 +71,15 @@ export function EquityKeyMetrics({ snapshot, message, quoteCurrency }: { snapsho
   const company = snapshot?.company;
   const classification = [company?.sector, company?.industry, company?.country].filter(Boolean).join(" · ");
   return <section aria-labelledby="key-metrics-heading" className="mt-8 border-t border-border pt-7">
-    <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2"><h2 id="key-metrics-heading" className="text-section-title font-bold">Key metrics</h2>{snapshot ? <p className="text-small text-secondary">TTM ratios · latest available financials</p> : null}</div>
+    <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2"><h2 id="key-metrics-heading" className="text-section-title font-bold">Klíčové ukazatele</h2>{snapshot ? <p className="text-small text-secondary">Ukazatele TTM · poslední dostupné finanční údaje</p> : null}</div>
     {classification ? <p className="mt-2 text-small text-secondary">{classification}</p> : null}
-    {!snapshot ? <p role="status" className="mt-5 text-small text-secondary">{message ?? "Company metrics are unavailable right now."}</p> : <>
+    {!snapshot ? <p role="status" className="mt-5 text-small text-secondary">{message ?? "Ukazatele společnosti nejsou nyní dostupné."}</p> : <>
       <div className="mt-6 grid gap-x-10 gap-y-8 lg:grid-cols-2">
         {metricGroups(snapshot, quoteCurrency).map(({ title, metrics }) => <div key={title} className="min-w-0"><h3 className="border-b border-border pb-2 text-microcopy font-bold uppercase tracking-[0.1em] text-secondary">{title}</h3><dl className="divide-y divide-border/70">{metrics.map((metric) => <div key={metric.id} className="grid min-w-0 grid-cols-1 items-start gap-x-4 py-2.5 text-small min-[375px]:grid-cols-[minmax(0,1fr)_auto]"><dt className="min-w-0"><button type="button" aria-expanded={openMetric === metric.id} aria-controls={`metric-help-${metric.id}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-sm text-left text-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary" onClick={() => setOpenMetric(openMetric === metric.id ? null : metric.id)}><span>{metric.label}</span><CircleHelp aria-hidden="true" className="size-3.5 shrink-0 text-primary-hover" /></button><p id={`metric-help-${metric.id}`} hidden={openMetric !== metric.id} className="mt-1 max-w-[26rem] text-microcopy leading-relaxed text-secondary">{metric.explanation}</p></dt><dd data-metric={metric.id} data-signal={metric.signal} className={`break-words text-left font-bold tabular-nums min-[375px]:max-w-[45vw] min-[375px]:text-right sm:max-w-none ${signalColor[metric.signal]}`}>{metric.value}{signalDescription[metric.signal] ? <span className="sr-only"> {signalDescription[metric.signal]}</span> : null}</dd></div>)}</dl></div>)}
       </div>
-      <p className="mt-6 text-microcopy leading-relaxed text-secondary">TTM ratios use the latest available trailing twelve months. Market cap comes from the company profile. Fiscal-year figures are reported amounts{snapshot.businessPerformance.fiscalYearEnd ? ` for the year ended ${dateLabel(snapshot.businessPerformance.fiscalYearEnd)}` : ""}{snapshot.businessPerformance.filingDate ? `, filed ${dateLabel(snapshot.businessPerformance.filingDate)}` : ""}.</p>
-      <p className="mt-2 text-microcopy leading-relaxed text-secondary">Colors use broad educational reference ranges. They are not investment ratings and can vary by industry.</p>
-      {snapshot.provenance.unavailableDatasets.length ? <p role="status" className="mt-2 text-microcopy text-secondary">Some source datasets are unavailable: {snapshot.provenance.unavailableDatasets.join(", ")}. A dash means a value is unavailable; N/M means the ratio is not meaningful.</p> : <p className="mt-2 text-microcopy text-secondary">A dash means a value is unavailable; N/M means the ratio is not meaningful.</p>}
+      <p className="mt-6 text-microcopy leading-relaxed text-secondary">Poměry TTM používají posledních dostupných 12 měsíců. Tržní kapitalizace pochází z profilu společnosti. Údaje za fiskální rok jsou vykázané hodnoty{snapshot.businessPerformance.fiscalYearEnd ? ` za rok končící ${dateLabel(snapshot.businessPerformance.fiscalYearEnd)}` : ""}{snapshot.businessPerformance.filingDate ? `, podané ${dateLabel(snapshot.businessPerformance.filingDate)}` : ""}.</p>
+      <p className="mt-2 text-microcopy leading-relaxed text-secondary">Barvy používají orientační vzdělávací rozmezí. Nejde o investiční hodnocení a vhodné hodnoty se liší podle odvětví.</p>
+      {snapshot.provenance.unavailableDatasets.length ? <p role="status" className="mt-2 text-microcopy text-secondary">Některé zdrojové datové sady nejsou dostupné: {snapshot.provenance.unavailableDatasets.join(", ")}. Pomlčka znamená nedostupnou hodnotu; N/M znamená, že poměr není smysluplný.</p> : <p className="mt-2 text-microcopy text-secondary">Pomlčka znamená nedostupnou hodnotu; N/M znamená, že poměr není smysluplný.</p>}
     </>}
   </section>;
 }

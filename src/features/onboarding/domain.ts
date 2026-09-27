@@ -1,26 +1,26 @@
 import { z } from "zod";
 
 export const experienceOptions = [
-  { value: "BEGINNER", label: "I’m completely new" },
-  { value: "BASIC", label: "I know the basics" },
-  { value: "INVESTOR", label: "I already invest" },
-  { value: "ADVANCED", label: "I’m comfortable with advanced concepts" },
+  { value: "BEGINNER", label: "Začínám úplně od nuly" },
+  { value: "BASIC", label: "Znám základy" },
+  { value: "INVESTOR", label: "Už investuji" },
+  { value: "ADVANCED", label: "Vyznám se i v pokročilých pojmech" },
 ] as const;
 export const goalOptions = [
-  { value: "CONFIDENCE", label: "Start investing confidently" },
-  { value: "MARKETS", label: "Understand markets" },
-  { value: "PORTFOLIO", label: "Build a better portfolio" },
-  { value: "COMPANIES", label: "Analyze companies" },
-  { value: "QUANT", label: "Learn quantitative investing" },
-  { value: "KNOWLEDGE", label: "Improve my existing investing knowledge" },
+  { value: "CONFIDENCE", label: "Začít investovat s jistotou" },
+  { value: "MARKETS", label: "Porozumět trhům" },
+  { value: "PORTFOLIO", label: "Sestavit lepší portfolio" },
+  { value: "COMPANIES", label: "Analyzovat společnosti" },
+  { value: "QUANT", label: "Naučit se kvantitativní investování" },
+  { value: "KNOWLEDGE", label: "Rozšířit si znalosti investování" },
 ] as const;
 export const interestOptions = [
-  { value: "STOCKS", label: "Stocks" },
+  { value: "STOCKS", label: "Akcie" },
   { value: "ETFS", label: "ETFs" },
-  { value: "PORTFOLIO", label: "Portfolio building" },
-  { value: "MARKETS", label: "Markets & economics" },
-  { value: "FUNDAMENTALS", label: "Fundamental analysis" },
-  { value: "QUANT", label: "Quantitative strategies" },
+  { value: "PORTFOLIO", label: "Sestavování portfolia" },
+  { value: "MARKETS", label: "Trhy a ekonomika" },
+  { value: "FUNDAMENTALS", label: "Fundamentální analýza" },
+  { value: "QUANT", label: "Kvantitativní strategie" },
 ] as const;
 export const experienceValues = ["BEGINNER", "BASIC", "INVESTOR", "ADVANCED"] as const;
 export const goalValues = ["CONFIDENCE", "MARKETS", "PORTFOLIO", "COMPANIES", "QUANT", "KNOWLEDGE"] as const;
@@ -63,18 +63,18 @@ export type LearningRecommendation = {
 /** Recommendations link only to implemented modules; future targets have no URLs. */
 export function recommendLearningPath({ experienceLevel, goals, interests }: Pick<Preferences, "experienceLevel" | "goals" | "interests">): LearningRecommendation {
   const targets: string[] = [];
-  if (goals.includes("PORTFOLIO") || interests.includes("PORTFOLIO") || interests.includes("ETFS")) targets.push("Portfolio Construction");
-  if (goals.includes("QUANT") || interests.includes("QUANT")) targets.push("Quantitative Investing");
-  if (goals.includes("COMPANIES") || interests.includes("FUNDAMENTALS") || interests.includes("STOCKS")) targets.push("Fundamental Analysis");
-  if (goals.includes("MARKETS") || interests.includes("MARKETS")) targets.push("Markets & Economics");
+  if (goals.includes("PORTFOLIO") || interests.includes("PORTFOLIO") || interests.includes("ETFS")) targets.push("Sestavování portfolia");
+  if (goals.includes("QUANT") || interests.includes("QUANT")) targets.push("Kvantitativní investování");
+  if (goals.includes("COMPANIES") || interests.includes("FUNDAMENTALS") || interests.includes("STOCKS")) targets.push("Fundamentální analýza");
+  if (goals.includes("MARKETS") || interests.includes("MARKETS")) targets.push("Trhy a ekonomika");
   const foundations = experienceLevel === "BEGINNER" || (experienceLevel === "BASIC" && (goals.includes("CONFIDENCE") || (interests.includes("ETFS") && !goals.includes("QUANT") && !goals.includes("KNOWLEDGE"))));
   const reason = {
-    BEGINNER: "You told us you’re new to investing, so we’ll start with the concepts that make everything else easier to understand.",
-    BASIC: foundations ? "Build confidence with the ideas behind investing, company ownership, and funds before comparing investment returns." : "You know some basics. Returns and compounding are a useful next step toward understanding how investments change in value.",
-    INVESTOR: "Since you already invest, start by strengthening how you compare returns and understand compounding before exploring your chosen topics.",
-    ADVANCED: "Start with a shared foundation in returns and compounding, then build toward your chosen topics as the curriculum grows.",
+    BEGINNER: "Investování teprve poznáváš, proto začneme pojmy, které ti usnadní pochopit vše ostatní.",
+    BASIC: foundations ? "Než začneš porovnávat výnosy investic, upevni si principy investování, vlastnictví společností a fondů." : "Základy už znáš. Výnosy a složené zhodnocení jsou užitečný další krok k pochopení, jak se hodnota investic mění.",
+    INVESTOR: "Když už investuješ, začni tím, jak porovnávat výnosy a rozumět složenému zhodnocení. Pak se můžeš věnovat vybraným tématům.",
+    ADVANCED: "Začni společným základem ve výnosech a složeném zhodnocení, potom navazuj vybranými tématy podle toho, jak bude kurz růst.",
   }[experienceLevel];
-  return { recommendedModule: foundations ? { slug: "investing-foundations", title: "Investing Foundations", href: "/learn/investing-foundations" } : { slug: "returns", title: "Returns & Compounding", href: "/learn/returns" }, reason, futureTargets: targets.slice(0, 2) };
+  return { recommendedModule: foundations ? { slug: "investing-foundations", title: "Základy investování", href: "/learn/investing-foundations" } : { slug: "returns", title: "Výnos a složené zhodnocení", href: "/learn/returns" }, reason, futureTargets: targets.slice(0, 2) };
 }
 
 export const quickStartSchema = z.object({ experienceLevel: z.enum(experienceValues), timeZone: z.string().max(100) }).strict();

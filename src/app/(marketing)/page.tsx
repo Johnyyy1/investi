@@ -8,13 +8,13 @@ import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import styles from "@/components/marketing/marketing.module.css";
 
 export const metadata: Metadata = {
-  title: "Learn investing by doing",
-  description: "Interactive lessons, portfolio experiments and backtests — from your first stock to quantitative investing.",
+  title: "Uč se investovat praxí",
+  description: "Interaktivní lekce, portfolio experimenty a backtesty — od první akcie po kvantitativní investování.",
 };
 
 export default function MarketingPage() {
   return <>
-    <a href="#main" className={styles.skipLink}>Skip to content</a>
+    <a href="#main" className={styles.skipLink}>Přejít k obsahu</a>
     <MarketingHeader />
     <main id="main" tabIndex={-1}>
       <Hero />

@@ -32,13 +32,13 @@ export function parseQuantity(value: string) {
   const normalized = value.trim();
   const match = /^(\d+)(?:\.(\d+))?$/.exec(normalized);
   if (!match || (match[2]?.length ?? 0) > 8) {
-    throw new PortfolioInputError("InvalidQuantity", "Enter a quantity with up to 8 decimal places.");
+    throw new PortfolioInputError("InvalidQuantity", "Zadej množství s nejvýše 8 desetinnými místy.");
   }
   const whole = BigInt(match[1]);
   const fraction = BigInt((match[2] ?? "").padEnd(8, "0") || "0");
   const units = whole * QUANTITY_SCALE + fraction;
   if (units <= 0n || units >= 10n ** 24n) {
-    throw new PortfolioInputError("InvalidQuantity", "Quantity must be greater than zero and within the supported range.");
+    throw new PortfolioInputError("InvalidQuantity", "Množství musí být větší než nula a v podporovaném rozsahu.");
   }
   return units;
 }

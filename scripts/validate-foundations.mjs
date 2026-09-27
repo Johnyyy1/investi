@@ -72,10 +72,10 @@ try {
   page.on("console", (message) => { if (["warning", "error"].includes(message.type()) && !message.text().startsWith("You have Reduced Motion enabled")) errors.push(message.text()); });
 
   await page.goto(`${baseURL}/sign-up`);
-  await page.getByLabel("Name", { exact: true }).fill("Foundations learner");
-  await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await page.getByLabel("Jméno", { exact: true }).fill("Foundations learner");
+  await page.getByLabel("E-mail", { exact: true }).fill(email);
+  await page.getByLabel("Heslo", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Vytvořit účet", exact: true }).click();
   await finishOnboarding(page);
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
 
@@ -200,7 +200,7 @@ try {
 
   await page.getByRole("button", { name: "Otevřít Portfolio Lab", exact: true }).click();
   await page.getByTestId("portfolio-cash").filter({ hasText: /5\s000\sKč/ }).waitFor();
-  assert.equal(await page.getByRole("button", { name: /Invest/ }).count() > 0, true, "Unlocked portfolio has an Invest action");
+  assert.equal(await page.getByRole("button", { name: /Investovat/ }).count() > 0, true, "Unlocked portfolio has an Invest action");
   await page.screenshot({ path: `${screenshotDir}/11-unlocked-portfolio-1440.png`, fullPage: true });
 
   await page.goto(`${baseURL}/learn/investing-foundations`);

@@ -7,10 +7,10 @@ import { ArrowRight, Menu } from "lucide-react";
 import styles from "./marketing.module.css";
 
 const destinations = [
-  { href: "/", label: "Home", indicator: "home" },
-  { href: "/learn", label: "Learn", indicator: "learn" },
+  { href: "/", label: "Domů", indicator: "home" },
+  { href: "/learn", label: "Učení", indicator: "learn" },
   { href: "/lab/portfolio", label: "Portfolio Lab", indicator: "portfolio" },
-  { href: "/lab/backtesting", label: "Backtesting", indicator: "backtesting" },
+  { href: "/lab/backtesting", label: "Backtesting Lab", indicator: "backtesting" },
 ] as const;
 
 type Indicator = (typeof destinations)[number]["indicator"];
@@ -42,10 +42,10 @@ export function MarketingHeader() {
 
   return <header className={`${styles.container} ${styles.headerShell}`}>
     <div className={styles.headerGlass}>
-      <Link href="/" aria-label="investi home" className={styles.logo}>
+      <Link href="/" aria-label="investi domů" className={styles.logo}>
         <Image src="/brand/investi-logo.png" alt="investi" width={2172} height={724} sizes="120px" />
       </Link>
-      <nav aria-label="Main navigation" className={styles.desktopNav}>
+      <nav aria-label="Hlavní navigace" className={styles.desktopNav}>
         {destinations.map(({ href, label, indicator }) => {
           const active = isActiveDestination(pathname, href);
           return <Link key={href} href={href} prefetch={false} aria-current={active ? "page" : undefined} className={styles.navLink}>
@@ -55,18 +55,18 @@ export function MarketingHeader() {
         })}
       </nav>
       <div className={styles.headerActions}>
-        <Link href="/sign-in" prefetch={false} className={styles.signIn}>Sign in</Link>
-        <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton}`}>Start learning <ArrowRight aria-hidden="true" /></Link>
+        <Link href="/sign-in" prefetch={false} className={styles.signIn}>Přihlásit se</Link>
+        <Link href="/sign-up" prefetch={false} className={`${styles.button} ${styles.primaryButton}`}>Začít se učit <ArrowRight aria-hidden="true" /></Link>
       </div>
       <details className={styles.mobileMenu}>
-        <summary aria-label="Navigation menu"><Menu aria-hidden="true" /><span>Menu</span></summary>
-        <nav aria-label="Mobile navigation">
+        <summary aria-label="Navigační menu"><Menu aria-hidden="true" /><span>Menu</span></summary>
+        <nav aria-label="Mobilní navigace">
           {destinations.map(({ href, label }) => {
             const active = isActiveDestination(pathname, href);
             return <Link key={href} href={href} prefetch={false} aria-current={active ? "page" : undefined}>{label}</Link>;
           })}
-          <Link href="/sign-in" prefetch={false}>Sign in</Link>
-          <Link href="/sign-up" prefetch={false}>Start learning <ArrowRight aria-hidden="true" /></Link>
+          <Link href="/sign-in" prefetch={false}>Přihlásit se</Link>
+          <Link href="/sign-up" prefetch={false}>Začít se učit <ArrowRight aria-hidden="true" /></Link>
         </nav>
       </details>
     </div>

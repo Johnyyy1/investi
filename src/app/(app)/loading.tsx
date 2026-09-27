@@ -1,6 +1,6 @@
 export default function Loading() {
-  return <main className="mx-auto w-full max-w-5xl px-4 py-8 min-[375px]:px-5 sm:px-8 sm:py-10 lg:px-10 lg:py-14" role="status" aria-label="Loading learning experience">
-    <span className="sr-only">Getting your learning ready.</span>
+  return <main className="mx-auto w-full max-w-5xl px-4 py-8 min-[375px]:px-5 sm:px-8 sm:py-10 lg:px-10 lg:py-14" role="status" aria-label="Načítám prostředí pro učení">
+    <span className="sr-only">Připravuji prostředí pro učení.</span>
     <div className="motion-safe:animate-pulse">
       <div className="h-4 w-28 rounded-pill bg-primary-soft" />
       <div className="mt-3 h-8 w-64 max-w-full rounded-control bg-border" />

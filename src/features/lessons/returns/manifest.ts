@@ -1,10 +1,10 @@
 export const RETURNS_MODULE_ID = "module-returns";
 
 export const returnsLessons = [
-  { id: "returns-what-is-a-return", slug: "what-is-a-return", title: "What is a return?", summary: "Move from price changes to comparable investment outcomes.", estimatedMinutes: 12, status: "available" as const },
-  { id: "returns-simple-returns", slug: "simple-returns", title: "Simple returns", summary: "Calculate single-period returns from a price series.", estimatedMinutes: 14, status: "available" as const },
-  { id: "returns-compounding", slug: "compounding-and-cumulative-returns", title: "Compounding & cumulative returns", summary: "See how returns combine across periods.", estimatedMinutes: 15, status: "available" as const },
-  { id: "returns-log-returns", slug: "log-returns", title: "Log returns", summary: "Understand a useful alternative return convention.", estimatedMinutes: 10, status: "planned" as const },
-  { id: "returns-comparing", slug: "comparing-investments", title: "Comparing investments", summary: "Compare outcomes on a common basis.", estimatedMinutes: 10, status: "planned" as const },
-  { id: "returns-checkpoint", slug: "returns-checkpoint", title: "Returns checkpoint", summary: "Consolidate the core ideas.", estimatedMinutes: 8, status: "planned" as const },
+  { id: "returns-what-is-a-return", slug: "what-is-a-return", title: "Co je výnos?", summary: "Od změn ceny ke srovnatelným výsledkům investic.", estimatedMinutes: 12, status: "available" as const },
+  { id: "returns-simple-returns", slug: "simple-returns", title: "Jednoduché výnosy", summary: "Vypočítej jednorázové výnosy z cenové řady.", estimatedMinutes: 14, status: "available" as const },
+  { id: "returns-compounding", slug: "compounding-and-cumulative-returns", title: "Složené a kumulativní výnosy", summary: "Zjisti, jak se výnosy skládají v čase.", estimatedMinutes: 15, status: "available" as const },
+  { id: "returns-log-returns", slug: "log-returns", title: "Logaritmické výnosy", summary: "Seznam se s užitečnou alternativní definicí výnosu.", estimatedMinutes: 10, status: "planned" as const },
+  { id: "returns-comparing", slug: "comparing-investments", title: "Porovnání investic", summary: "Porovnej výsledky na společném základu.", estimatedMinutes: 10, status: "planned" as const },
+  { id: "returns-checkpoint", slug: "returns-checkpoint", title: "Kontrola výnosů", summary: "Upevni si základní myšlenky.", estimatedMinutes: 8, status: "planned" as const },
 ] as const;

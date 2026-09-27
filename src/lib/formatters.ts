@@ -42,3 +42,18 @@ export function formatDate(
     ...options,
   }).format(typeof value === "string" ? new Date(value) : value);
 }
+
+/** Czech has singular (1), paucal (2–4), and plural (everything else) forms. */
+export function czechPlural(value: number, forms: readonly [string, string, string]) {
+  const absolute = Math.abs(value);
+  const remainder = absolute % 100;
+  if (remainder >= 11 && remainder <= 14) return forms[2];
+  const last = absolute % 10;
+  if (last === 1) return forms[0];
+  if (last >= 2 && last <= 4) return forms[1];
+  return forms[2];
+}
+
+export function formatCount(value: number, forms: readonly [string, string, string]) {
+  return `${formatDecimal(value)} ${czechPlural(value, forms)}`;
+}

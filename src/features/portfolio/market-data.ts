@@ -81,7 +81,7 @@ export function assertCompatibleInstrumentId(gateway: PortfolioMarketDataGateway
 
 function assertTradeable(instrument: Instrument) {
   if (instrument.assetType === "cash" || instrument.assetType === "index") {
-    throw new PortfolioInputError("InvalidInstrument", "Choose a stock, ETF, or bond for this educational portfolio.");
+    throw new PortfolioInputError("InvalidInstrument", "Pro toto vzdělávací portfolio vyber akcii, ETF nebo dluhopis.");
   }
 }
 
@@ -108,15 +108,15 @@ export async function observePortfolioExecution(
   assertQuoteMatchesInstrument(instrument, quote);
   if (!quote.usability.usableForExecution) {
     if (quote.usability.marketState === "closed") {
-      throw new PortfolioInputError("MarketClosed", "Market is currently closed. New simulated investments require a current market observation.");
+      throw new PortfolioInputError("MarketClosed", "Trh je nyní zavřený. Nové simulované investice vyžadují aktuální tržní pozorování.");
     }
-    throw new PortfolioInputError("QuoteUnavailable", "The current market observation is not fresh enough to simulate this trade.");
+    throw new PortfolioInputError("QuoteUnavailable", "Aktuální tržní pozorování není pro simulaci tohoto obchodu dost čerstvé.");
   }
   const fx = await gateway.service.getFxRate(quote.currency, baseCurrency, quote.observedAt);
   const priceUnits = priceUnitsFromNumber(quote.price);
   const fxUnits = fxUnitsFromNumber(fx.rate);
   const grossMinor = grossBaseMinor(quantityUnits, priceUnits, fxUnits);
-  if (grossMinor <= 0n) throw new PortfolioInputError("InvalidQuantity", "This quantity is too small to produce a one-haléř trade value.");
+  if (grossMinor <= 0n) throw new PortfolioInputError("InvalidQuantity", "Toto množství je příliš malé na obchodní hodnotu alespoň jeden haléř.");
   return {
     instrument,
     quote,

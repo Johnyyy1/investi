@@ -14,9 +14,9 @@ describe("learning recommendations", () => {
     expect(recommendLearningPath({ ...answers, experienceLevel: "BEGINNER", goals: ["QUANT"], interests: ["QUANT"] }).recommendedModule.slug).toBe("investing-foundations");
   });
   it("uses goals and interests for future targets, with no more than two", () => {
-    expect(recommendLearningPath({ ...answers, experienceLevel: "INVESTOR", interests: ["PORTFOLIO"] }).futureTargets).toEqual(["Portfolio Construction"]);
-    expect(recommendLearningPath({ ...answers, experienceLevel: "ADVANCED", goals: ["QUANT"], interests: ["QUANT"] }).futureTargets).toEqual(["Quantitative Investing"]);
-    expect(recommendLearningPath({ ...answers, goals: ["PORTFOLIO", "QUANT", "COMPANIES", "MARKETS"] }).futureTargets).toEqual(["Portfolio Construction", "Quantitative Investing"]);
+    expect(recommendLearningPath({ ...answers, experienceLevel: "INVESTOR", interests: ["PORTFOLIO"] }).futureTargets).toEqual(["Sestavování portfolia"]);
+    expect(recommendLearningPath({ ...answers, experienceLevel: "ADVANCED", goals: ["QUANT"], interests: ["QUANT"] }).futureTargets).toEqual(["Kvantitativní investování"]);
+    expect(recommendLearningPath({ ...answers, goals: ["PORTFOLIO", "QUANT", "COMPANIES", "MARKETS"] }).futureTargets).toEqual(["Sestavování portfolia", "Kvantitativní investování"]);
   });
   it("uses BASIC goals and interests to select the appropriate published module", () => {
     expect(recommendLearningPath(answers).recommendedModule.slug).toBe("investing-foundations");

@@ -4,19 +4,19 @@ import styles from "./marketing.module.css";
 
 const footerGroups = [
   {
-    title: "Product",
+    title: "Produkt",
     links: [
-      { href: "/learn", label: "Learn" },
+      { href: "/learn", label: "Učení" },
       { href: "/lab/portfolio", label: "Portfolio Lab" },
-      { href: "/lab/backtesting", label: "Backtesting" },
-      { href: "/progress", label: "Progress" },
+      { href: "/lab/backtesting", label: "Backtesting Lab" },
+      { href: "/progress", label: "Pokrok" },
     ],
   },
   {
-    title: "Account",
+    title: "Účet",
     links: [
-      { href: "/sign-in", label: "Sign in" },
-      { href: "/sign-up", label: "Start learning" },
+      { href: "/sign-in", label: "Přihlásit se" },
+      { href: "/sign-up", label: "Začít se učit" },
     ],
   },
 ] as const;
@@ -26,10 +26,10 @@ export function MarketingFooter() {
     <div className={styles.container}>
       <div className={styles.footerTop}>
         <div className={styles.footerBrand}>
-          <Link href="/" aria-label="investi home" className={styles.footerLogo}>
+          <Link href="/" aria-label="investi domů" className={styles.footerLogo}>
             <Image src="/brand/investi-logo.png" alt="investi" width={2172} height={724} sizes="150px" />
           </Link>
-          <p>Learn investing through practice.</p>
+          <p>Uč se investovat praxí.</p>
         </div>
 
         <nav aria-label="Footer navigation" className={styles.footerNavigation}>
@@ -45,8 +45,8 @@ export function MarketingFooter() {
       </div>
 
       <div className={styles.footerBottom}>
-        <p>© 2026 Investi. All rights reserved.</p>
-        <p>Investi is an educational product. Nothing on this site is financial advice.</p>
+        <p>© 2026 investi. Všechna práva vyhrazena.</p>
+        <p>investi je vzdělávací produkt. Tento web neposkytuje finanční poradenství.</p>
       </div>
     </div>
   </footer>;

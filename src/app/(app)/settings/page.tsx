@@ -6,12 +6,12 @@ import { PreferencesEditor } from "@/components/onboarding/preferences-editor";
 import { AppHeader } from "@/components/shell/app-header";
 import { PageFrame } from "@/components/shell/page-frame";
 
-export const metadata = { title: "Learning preferences" };
+export const metadata = { title: "Nastavení" };
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
   const profile = await getLearningProfile(user.id);
   if (!profile?.onboardingCompletedAt) redirect("/onboarding");
   const answers = preferencesSchema.parse({ experienceLevel: profile.experienceLevel, goals: profile.goals, interests: profile.interests, dailyGoalMinutes: profile.dailyGoalMinutes });
-  return <PageFrame width="reading"><p className="mb-3 text-small font-bold text-primary-hover">Settings</p><AppHeader title="Learning preferences" description="Adjust your interests and your pace. Your lesson progress stays with you." /><PreferencesEditor initialAnswers={answers} /></PageFrame>;
+  return <PageFrame width="reading"><p className="mb-3 text-small font-bold text-primary-hover">Nastavení</p><AppHeader title="Předvolby učení" description="Uprav své zájmy a tempo. Postup v lekcích ti zůstane." /><PreferencesEditor initialAnswers={answers} /></PageFrame>;
 }

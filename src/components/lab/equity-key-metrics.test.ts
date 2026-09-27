@@ -6,10 +6,10 @@ import { createDeterministicMarketDataService } from "@/features/market-data/det
 
 describe("equity key metrics fallback", () => {
   it("shows a neutral failure within the section without inventing figures", () => {
-    const html = renderToStaticMarkup(createElement(EquityKeyMetrics, { snapshot: null, message: "Company metrics are unavailable right now.", quoteCurrency: "USD" }));
-    expect(html).toContain("Key metrics");
-    expect(html).toContain("Company metrics are unavailable right now.");
-    expect(html).not.toContain("Market cap");
+    const html = renderToStaticMarkup(createElement(EquityKeyMetrics, { snapshot: null, message: "Ukazatele společnosti nejsou nyní dostupné.", quoteCurrency: "USD" }));
+    expect(html).toContain("Klíčové ukazatele");
+    expect(html).toContain("Ukazatele společnosti nejsou nyní dostupné.");
+    expect(html).not.toContain("Tržní kapitalizace");
     expect(html).not.toContain("Sample data");
   });
   it("distinguishes a non-meaningful P/E from missing metrics and true zero", async () => {
@@ -29,8 +29,8 @@ describe("equity key metrics fallback", () => {
     expect(html).toMatch(/data-metric="operating-margin" data-signal="positive"[^>]*font-extrabold text-success-strong/);
     expect(html).toMatch(/data-metric="net-debt-ebitda" data-signal="positive"[^>]*font-extrabold text-success-strong/);
     expect(html).not.toContain("border-dotted");
-    expect(html).toMatch(/Broad reference: positive/);
-    expect(html).toContain("not investment ratings");
+    expect(html).toMatch(/Orientační srovnání: příznivé/);
+    expect(html).toContain("Nejde o investiční hodnocení");
     expect(html).toContain("Above Investi&#x27;s broad 10% educational reference.");
   });
   it("colors a negative net-debt ratio only when net cash is confirmed", async () => {

@@ -5,6 +5,7 @@ import { portfolioWeightedReturn } from "@/features/finance/foundations";
 import { calculateBacktestMetrics } from "@/features/lab/backtest";
 import { syntheticMonthlyData } from "@/features/lab/sample-data";
 import styles from "./marketing.module.css";
+import { formatPercentage } from "@/lib/formatters";
 
 const initialValue = 10_000;
 const portfolioReturns = syntheticMonthlyData.map((row) => portfolioWeightedReturn(
@@ -39,27 +40,27 @@ function point(values: readonly number[], index: number) {
 
 const portfolioEnd = point(portfolio.values, portfolio.values.length - 1);
 const benchmarkEnd = point(benchmark.values, benchmark.values.length - 1);
-const formatValue = (value: number) => `${Math.round(value).toLocaleString("en-GB")} Kč`;
-const formatPercent = (value: number) => `${(value * 100).toFixed(2)}%`;
-const formatAxisValue = (value: number) => `${Math.round(value / 1_000)}k Kč`;
+const formatValue = (value: number) => `${Math.round(value).toLocaleString("cs-CZ")} Kč`;
+const formatPercent = (value: number) => formatPercentage(value);
+const formatAxisValue = (value: number) => `${Math.round(value / 1_000).toLocaleString("cs-CZ")} tis. Kč`;
 
 const metrics = [
-  { label: "Final value", value: formatValue(portfolio.finalValue), detail: "from 10,000 Kč" },
-  { label: "CAGR", value: formatPercent(portfolio.cagr), detail: "per year" },
-  { label: "Max drawdown", value: formatPercent(portfolio.maxDrawdown), detail: "largest fall" },
-  { label: "Volatility", value: formatPercent(portfolio.volatility), detail: "annualized" },
+  { label: "Konečná hodnota", value: formatValue(portfolio.finalValue), detail: "z 10 000 Kč" },
+  { label: "CAGR", value: formatPercent(portfolio.cagr), detail: "za rok" },
+  { label: "Maximální drawdown", value: formatPercent(portfolio.maxDrawdown), detail: "největší pokles" },
+  { label: "Volatilita", value: formatPercent(portfolio.volatility), detail: "anualizovaná" },
 ] as const;
 
 export function BacktestingShowcase() {
-  const summary = `Example educational backtest from January 2015 to December 2025: the 60 / 30 / 10 portfolio starts at ${formatValue(initialValue)} and ends at ${formatValue(portfolio.finalValue)}, versus ${formatValue(benchmark.finalValue)} for the stock-like benchmark. Portfolio CAGR is ${formatPercent(portfolio.cagr)}, maximum drawdown is ${formatPercent(portfolio.maxDrawdown)}, and annualized volatility is ${formatPercent(portfolio.volatility)}.`;
+  const summary = `Ukázkový vzdělávací backtest od ledna 2015 do prosince 2025: portfolio 60 / 30 / 10 začíná na ${formatValue(initialValue)} a končí na ${formatValue(portfolio.finalValue)}, zatímco akciový benchmark končí na ${formatValue(benchmark.finalValue)}. CAGR portfolia je ${formatPercent(portfolio.cagr)}, maximální drawdown ${formatPercent(portfolio.maxDrawdown)} a anualizovaná volatilita ${formatPercent(portfolio.volatility)}.`;
 
   return <section aria-labelledby="backtesting-showcase-title" className={styles.backtestingShowcase}>
     <div className={`${styles.container} ${styles.backtestingLayout}`}>
       <div className={styles.backtestingCopy}>
-        <p className={styles.backtestingEyebrow}>BACKTESTING</p>
-        <h2 id="backtesting-showcase-title">Your intuition needs data.</h2>
-        <p className={styles.backtestingDescription}>Test an idea against educational market scenarios and see how it would have behaved.</p>
-        <Link href="/lab/backtesting" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.backtestingCta}`}>Try Backtesting <ArrowRight aria-hidden="true" /></Link>
+        <p className={styles.backtestingEyebrow}>BACKTESTING LAB</p>
+        <h2 id="backtesting-showcase-title">Tvoje intuice potřebuje data.</h2>
+        <p className={styles.backtestingDescription}>Otestuj nápad na vzdělávacích tržních scénářích a sleduj, jak by se choval.</p>
+        <Link href="/lab/backtesting" prefetch={false} className={`${styles.button} ${styles.primaryButton} ${styles.backtestingCta}`}>Vyzkoušet Backtesting Lab <ArrowRight aria-hidden="true" /></Link>
       </div>
 
       <div className={styles.backtestingSurface} data-testid="backtesting-showcase-demo">
@@ -67,7 +68,7 @@ export function BacktestingShowcase() {
           <div className={styles.backtestingChartHeader}>
             <div>
               <h3 id="backtesting-chart-title">Portfolio vs. benchmark</h3>
-              <p>{formatValue(initialValue)} starting value · Jan 2015–Dec 2025</p>
+              <p>Počáteční hodnota {formatValue(initialValue)} · leden 2015–prosinec 2025</p>
             </div>
             <div className={styles.backtestingLegend} aria-hidden="true">
               <span><i className={styles.portfolioLegend} />Portfolio</span>
@@ -110,7 +111,7 @@ export function BacktestingShowcase() {
           </div>)}
         </dl>
 
-        <p className={styles.backtestingDisclosure}><GraduationCap aria-hidden="true" /> Educational demo data · synthetic scenarios for learning</p>
+        <p className={styles.backtestingDisclosure}><GraduationCap aria-hidden="true" /> Vzdělávací demo data · syntetické scénáře pro učení</p>
       </div>
     </div>
   </section>;
