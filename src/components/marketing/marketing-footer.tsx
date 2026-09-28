@@ -32,7 +32,7 @@ export function MarketingFooter() {
           <p>Uč se investovat praxí.</p>
         </div>
 
-        <nav aria-label="Footer navigation" className={styles.footerNavigation}>
+        <nav aria-label="Navigace v zápatí" className={styles.footerNavigation}>
           {footerGroups.map((group) => <div key={group.title} className={styles.footerLinkGroup}>
             <h2>{group.title}</h2>
             <ul>

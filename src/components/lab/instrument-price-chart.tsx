@@ -13,16 +13,16 @@ function price(value: number, currency: Currency) {
   return `${new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(value)} ${currency}`;
 }
 function dateLabel(value: string, year = true) {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}), timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`));
+  return new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}), timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`));
 }
 function signed(value: number, suffix: string, maximumDigits = 2) {
-  return `${value > 0 ? "+" : ""}${new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: maximumDigits }).format(value)}${suffix}`;
+  return `${value > 0 ? "+" : ""}${new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: maximumDigits }).format(value)}${suffix === "%" ? " %" : suffix}`;
 }
 
 function candleLabel(candle: Candle, interval: CandleInterval) {
   return interval === "daily" ? dateLabel(candle.periodStart)
     : interval === "weekly" ? `${dateLabel(candle.periodStart)} – ${dateLabel(candle.periodEnd)}`
-    : interval === "monthly" ? new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${candle.periodStart}T00:00:00.000Z`))
+    : interval === "monthly" ? new Intl.DateTimeFormat("cs-CZ", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${candle.periodStart}T00:00:00.000Z`))
     : `${dateLabel(candle.periodStart)} – ${dateLabel(candle.periodEnd)}`;
 }
 

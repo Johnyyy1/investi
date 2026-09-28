@@ -3,12 +3,12 @@ import { gainLossState, portfolioDataSourceLabel, showSampleDataIndicator } from
 
 describe("Portfolio Lab data-source presentation", () => {
   it("labels deterministic observations as sample data", () => {
-    expect(portfolioDataSourceLabel("sample")).toBe("Sample data");
+    expect(portfolioDataSourceLabel("sample")).toBe("Ukázková data");
     expect(showSampleDataIndicator("sample")).toBe(true);
   });
 
   it("does not show the sample-data indicator for configured market data", () => {
-    expect(portfolioDataSourceLabel("market")).toBe("Market observations");
+    expect(portfolioDataSourceLabel("market")).toBe("Tržní pozorování");
     expect(showSampleDataIndicator("market")).toBe(false);
   });
 

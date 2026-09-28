@@ -66,7 +66,7 @@ try {
   assert.equal(await page.getByTestId("portfolio-cash").textContent(), "2\u00a0000\u00a0Kč", "later reward becomes available cash");
   assert.equal(await page.getByTestId("portfolio-invested").textContent(), "0\u00a0Kč", "an empty portfolio has no invested value");
   assert.equal(await page.getByText("Získaný Practice Capital", { exact: true }).count(), 0, "earned-capital copy is absent from the portfolio overview");
-  assert.match(await page.locator('section[aria-labelledby="portfolio-value-label"]').textContent(), /0\sKč\s*·\s*0\.00%/, "reward does not create investment gain");
+  assert.match(await page.locator('section[aria-labelledby="portfolio-value-label"]').textContent(), /0\sKč\s*·\s*0,00\s*%/, "reward does not create investment gain");
   await page.getByRole("heading", { name: "Portfolio je připravené", exact: true }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Pozice", exact: true }).count(), 0, "empty state avoids an empty holdings section");
   assert.equal(await page.getByRole("heading", { name: "Nedávná aktivita", exact: true }).count(), 0, "empty state avoids an empty activity section");
@@ -86,7 +86,7 @@ try {
 
   const investTrigger = page.getByRole("button", { name: "Investovat", exact: true });
   await investTrigger.click();
-  const investDialog = page.getByRole("dialog", { name: "Investuj Practice Capital" });
+  const investDialog = page.getByRole("dialog", { name: "Investuj virtuální kapitál" });
   await investDialog.waitFor();
   const emptySearch = investDialog.getByRole("combobox", { name: "Hledat investice" });
   await page.waitForFunction((element) => document.activeElement === element, await emptySearch.elementHandle());
@@ -116,7 +116,7 @@ try {
   assert.match(await page.locator("main").innerText(), /Cenový výnos za 1 rok/);
   await page.getByRole("heading", { name: "Klíčové ukazatele" }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Přehled fondu" }).count(), 0, "equities do not render ETF analytics");
-  assert.match(await page.locator("main").innerText(), /382\.4B USD/);
+  assert.match(await page.locator("main").innerText(), /382,4B USD/);
   const metricSignal = async (id) => page.locator(`[data-metric="${id}"]`).getAttribute("data-signal");
   assert.equal(await metricSignal("pe"), "neutral", "P/E remains neutral");
   assert.equal(await metricSignal("market-cap"), "neutral", "size remains neutral");
@@ -126,7 +126,7 @@ try {
   await page.getByRole("button", { name: "P/E TTM" }).click();
   await page.getByText(/Cena akcie vůči zisku na akcii za posledních 12 měsíců/).waitFor();
   await page.getByRole("button", { name: "P/E TTM" }).click();
-  const equityScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobile navigation"] { position: static !important; }' });
+  const equityScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobilní navigace"] { position: static !important; }' });
   await page.screenshot({ path: `${screenshotDir}/instrument-aapl-1y-1440.png`, fullPage: true });
   await page.locator('section[aria-labelledby="key-metrics-heading"]').screenshot({ path: `${screenshotDir}/instrument-equity-metrics-clean.png` });
   const priceHistory = page.locator('section[aria-labelledby="price-history-heading"]');
@@ -161,7 +161,7 @@ try {
     await page.getByRole("navigation", { name: "Období vývoje ceny" }).getByRole("link", { name: longRange }).click();
     await page.waitForURL(new RegExp(`range=${longRange}`));
     await page.getByRole("button", { name: "Svíčky", exact: true }).click();
-    assert.match(await page.getByRole("img", { name: /měsíční, svíčkový graf cen očištěných o splity/ }).getAttribute("aria-label"), /pokrývá pozorování od 2 Jan 2025 do 16 Jan 2026/, `${longRange} candles retain all available observations`);
+    assert.match(await page.getByRole("img", { name: /měsíční, svíčkový graf cen očištěných o splity/ }).getAttribute("aria-label"), /pokrývá pozorování od 2\. 1\. 2025 do 16\. 1\. 2026/, `${longRange} candles retain all available observations`);
     await page.screenshot({ path: `${screenshotDir}/instrument-aapl-${longRange.toLowerCase()}-candles-1440.png`, fullPage: true });
   }
   await page.getByRole("navigation", { name: "Období vývoje ceny" }).getByRole("link", { name: "1Y" }).click();
@@ -207,8 +207,8 @@ try {
   assert.equal(await page.getByText("Poslední dostupná cena · Poslední dostupná cena", { exact: false }).count(), 0, "unknown session state does not duplicate the observation label");
   assert.equal(await page.getByRole("heading", { name: "Tvoje pozice" }).count(), 0, "unowned ETF has no fake position");
   await page.getByRole("heading", { name: "Přehled fondu" }).waitFor();
-  assert.match(await page.locator('[data-testid="etf-analytics"]').innerText(), /Nákladovost[\s\S]*0\.22%[\s\S]*AUM[\s\S]*14\.8B EUR[\s\S]*NAV[\s\S]*123\.68 EUR/);
-  assert.match(await page.locator('[data-testid="etf-analytics"]').innerText(), /Největší pozice[\s\S]*Podíl 10 největších pozic[\s\S]*23\.1%[\s\S]*Sample Atlas Devices/);
+  assert.match(await page.locator('[data-testid="etf-analytics"]').innerText(), /Nákladovost[\s\S]*0,22\s*%[\s\S]*AUM[\s\S]*14,8B EUR[\s\S]*NAV[\s\S]*123,68 EUR/);
+  assert.match(await page.locator('[data-testid="etf-analytics"]').innerText(), /Největší pozice[\s\S]*Podíl 10 největších pozic[\s\S]*23,1\s*%[\s\S]*Sample Atlas Devices/);
   assert.equal(await page.getByRole("heading", { name: "Sektorové zastoupení" }).count(), 1);
   assert.equal(await page.getByRole("heading", { name: "Geografické zastoupení" }).count(), 1);
   assert.equal(await page.getByText("P/E TTM", { exact: true }).count(), 0, "ETF does not show company ratios");
@@ -217,7 +217,7 @@ try {
   await page.getByText("Roční provozní náklady fondu jako procento aktiv.").waitFor();
   await page.keyboard.press("Enter");
   await page.getByRole("heading", { name: "Přehled fondu" }).click();
-  const etfScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobile navigation"] { position: static !important; }' });
+  const etfScreenshotStyle = await page.addStyleTag({ content: 'header.sticky { position: static !important; } nav[aria-label="Mobilní navigace"] { position: static !important; }' });
   await page.screenshot({ path: `${screenshotDir}/instrument-etf-1440.png`, fullPage: true });
   await page.locator('[data-testid="etf-analytics"]').screenshot({ path: `${screenshotDir}/instrument-etf-analytics-clean.png` });
   const etfStatistics = await page.locator('section[aria-labelledby="price-history-heading"] dl').last().innerText();
@@ -285,12 +285,12 @@ try {
   assert.equal(await page.getByRole("heading", { name: "Portfolio je připravené", exact: true }).count(), 0, "onboarding disappears after the first investment");
   assert.equal(await page.getByText("Historie výkonnosti zatím není dostupná", { exact: true }).count(), 1, "the hero is honest about missing performance history");
   assert.equal(await page.getByRole("heading", { name: "Alokace", exact: true }).count(), 0, "allocation is part of holdings, not a separate panel");
-  assert.match(await aapl.textContent(), /100\.00%/, "a single holding owns the full invested weight");
+  assert.match(await aapl.textContent(), /100,00\s*%/, "a single holding owns the full invested weight");
   const firstCash = minorFromCzk(await page.getByTestId("portfolio-cash").textContent());
   const firstInvested = minorFromCzk(await page.getByTestId("portfolio-invested").textContent());
   const firstTotal = minorFromCzk(await page.getByTestId("portfolio-value").textContent());
   assert.equal(firstCash + firstInvested, firstTotal, "portfolio value equals available cash plus invested value");
-  assert.match(await page.getByTestId("portfolio-gain-loss").textContent(), /0\sKč\s*·\s*0\.00%/, "the initial holding does not fabricate investment performance");
+  assert.match(await page.getByTestId("portfolio-gain-loss").textContent(), /0\sKč\s*·\s*0,00\s*%/, "the initial holding does not fabricate investment performance");
 
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -336,8 +336,8 @@ try {
   assert.equal(await page.getByRole("table", { name: "Aktuální pozice v portfoliu" }).getByRole("row").count(), 3, "the desktop table contains a header plus two holdings");
   assert.equal(await page.getByRole("table", { name: "Aktuální pozice v portfoliu" }).getByRole("columnheader", { name: "Zisk / ztráta" }).count(), 1, "absolute holding P&L is labeled as gain/loss");
   assert.equal(await page.locator("main header").getByRole("button", { name: "Možnosti portfolia", exact: true }).count(), 1, "portfolio options live beside the primary header action");
-  assert.match(await page.getByTestId("holding-AAPL").textContent(), /\d+\.\d{2}%/);
-  assert.match(await page.getByTestId("holding-MSFT").textContent(), /\d+\.\d{2}%/, "multiple holdings show weight in the table");
+  assert.match(await page.getByTestId("holding-AAPL").textContent(), /\d+,\d{2}\s*%/);
+  assert.match(await page.getByTestId("holding-MSFT").textContent(), /\d+,\d{2}\s*%/, "multiple holdings show weight in the table");
   assert.equal(await page.locator('section[aria-labelledby="activity-heading"] li').count(), 2, "recent activity remains secondary and records both buys");
   const multiCash = minorFromCzk(await page.getByTestId("portfolio-cash").textContent());
   const multiInvested = minorFromCzk(await page.getByTestId("portfolio-invested").textContent());
@@ -382,7 +382,7 @@ try {
   await page.waitForFunction((element) => document.activeElement === element, await holdingAction.elementHandle());
   assert.equal(await holdingAction.evaluate((element) => element === document.activeElement), true, "sale returns focus to the holding action");
   await page.reload();
-  await page.getByTestId("holding-AAPL").getByText("0.15 pozic", { exact: true }).waitFor();
+  await page.getByTestId("holding-AAPL").getByText("0,15 pozic", { exact: true }).waitFor();
 
   const [{ id: activePortfolioId }] = await sql`select id from portfolio where user_id = ${userId} and closed_at is null`;
   const unavailableTradeTime = new Date();

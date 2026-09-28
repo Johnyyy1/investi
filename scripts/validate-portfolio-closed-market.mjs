@@ -64,7 +64,7 @@ try {
   const cashBeforePreview = await page.getByTestId("portfolio-cash").textContent();
 
   await page.getByRole("button", { name: "Investovat", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Investuj Practice Capital" });
+  const dialog = page.getByRole("dialog", { name: "Investuj virtuální kapitál" });
   await dialog.getByRole("combobox", { name: "Hledat investice" }).fill("AAPL");
   await dialog.getByRole("option", { name: /AAPL/ }).waitFor();
   await dialog.getByRole("combobox", { name: "Hledat investice" }).press("Enter");

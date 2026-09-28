@@ -29,7 +29,8 @@ function percentFromBasisPoints(value: string | null, signed = true) {
   const basisPoints = BigInt(value);
   const sign = basisPoints > 0n && signed ? "+" : basisPoints < 0n ? "−" : "";
   const absolute = basisPoints < 0n ? -basisPoints : basisPoints;
-  return `${sign}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}%`;
+  const percentage = new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(absolute) / 100);
+  return `${sign}${percentage} %`;
 }
 
 function signedMoney(value: string | null) {
@@ -44,7 +45,7 @@ function quotePrice(value: string | null, currency: string | null) {
 }
 
 function quantityLabel(value: string) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 }).format(Number(value));
+  return new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 8 }).format(Number(value));
 }
 
 function timestamp(value: string) {
@@ -52,7 +53,12 @@ function timestamp(value: string) {
 }
 
 function assetTypeLabel(value: string | null) {
-  return value ? value.charAt(0).toUpperCase() + value.slice(1) : "Security";
+  if (value === "equity") return "Akcie";
+  if (value === "etf") return "ETF";
+  if (value === "bond") return "Dluhopis";
+  if (value === "cash") return "Hotovost";
+  if (value === "index") return "Index";
+  return "Instrument";
 }
 
 function unavailableLabel(reason: Holding["unavailableReason"]) {
@@ -273,7 +279,7 @@ export function PortfolioLab({ portfolio }: { portfolio: PortfolioView }) {
     <dialog ref={investDialog} aria-labelledby="invest-title" aria-describedby="invest-description" onClose={() => { resetInvestFlow(); restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current); requestAnimationFrame(() => restoreTriggerFocus(investReturnFocus.current, primaryInvestRef.current)); }} className="fixed inset-y-0 right-0 left-auto m-0 h-[100dvh] max-h-none w-full max-w-none overflow-y-auto border-0 border-l border-border bg-surface p-0 text-foreground shadow-elevation-2 backdrop:bg-foreground/35 sm:max-w-[34rem] sm:rounded-l-panel">
       <div className="flex min-h-full flex-col">
         <div className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-4 border-b border-border bg-surface/95 px-[min(1.25rem,5vw)] py-5 backdrop-blur sm:px-7">
-          <div className="min-w-0 flex-1"><p className="whitespace-nowrap text-microcopy font-bold uppercase tracking-[0.12em] text-primary-hover">Objevuj</p><h2 id="invest-title" className="mt-1 break-words text-card-title font-bold">Investuj Practice Capital</h2><p id="invest-description" className="sr-only">Vyhledej investici a vyber instrument, jehož informace si chceš prohlédnout.</p></div>
+          <div className="min-w-0 flex-1"><p className="whitespace-nowrap text-microcopy font-bold uppercase tracking-[0.12em] text-primary-hover">Objevuj</p><h2 id="invest-title" className="mt-1 break-words text-card-title font-bold">Investuj virtuální kapitál</h2><p id="invest-description" className="sr-only">Vyhledej investici a vyber instrument, jehož informace si chceš prohlédnout.</p></div>
           <IconButton aria-label="Zavřít výběr investice" variant="ghost" className="shrink-0" onClick={closeInvest}><X aria-hidden="true" /></IconButton>
         </div>
 

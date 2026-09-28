@@ -6,10 +6,37 @@ import { etfConcentration, formatEtfPercent, sortedHoldings } from "@/features/i
 function magnitude(value: number | null, currency: Currency | null) {
   if (value === null) return "—";
   const scale = value >= 1e12 ? [1e12, "T"] as const : value >= 1e9 ? [1e9, "B"] as const : value >= 1e6 ? [1e6, "M"] as const : [1, ""] as const;
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value / scale[0])}${scale[1]} ${currency ?? "· currency not supplied"}`;
+  return `${new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 1 }).format(value / scale[0])}${scale[1]} ${currency ?? "· měna neuvedena"}`;
 }
 function money(value: number | null, currency: Currency | null) {
-  return value === null || currency === null ? "—" : `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)} ${currency}`;
+  return value === null || currency === null ? "—" : `${new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 2 }).format(value)} ${currency}`;
+}
+
+const allocationLabels: Readonly<Record<string, string>> = {
+  Technology: "Technologie",
+  Financials: "Finance",
+  Industrials: "Průmysl",
+  Healthcare: "Zdravotnictví",
+  "Consumer goods": "Spotřební zboží",
+  Communication: "Komunikace",
+  Energy: "Energetika",
+  Materials: "Materiály",
+  Utilities: "Veřejné služby",
+  "Real estate": "Nemovitosti",
+  "United States": "Spojené státy",
+  Japan: "Japonsko",
+  "United Kingdom": "Spojené království",
+  China: "Čína",
+  Canada: "Kanada",
+  France: "Francie",
+  Germany: "Německo",
+  Switzerland: "Švýcarsko",
+  India: "Indie",
+  Taiwan: "Tchaj-wan",
+};
+
+function allocationLabel(value: string) {
+  return allocationLabels[value] ?? value;
 }
 function metric(label: string, value: string, explanation: string) {
   return <div key={label} className="min-w-0 py-2"><dt className="min-w-0 break-words text-small text-secondary">{label} <details className="inline-block align-middle"><summary aria-label={`Více o položce ${label}`} className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-sm text-primary-hover focus-visible:outline-2 focus-visible:outline-primary"><CircleHelp aria-hidden="true" className="size-4" /></summary><p className="mt-1 max-w-[24rem] break-words text-microcopy leading-relaxed text-secondary">{explanation}</p></details></dt><dd className="mt-1 break-words text-card-title font-bold tabular-nums">{value}</dd></div>;
@@ -24,7 +51,7 @@ function WeightBar({ weight, max }: { weight: number; max: number }) {
 function exposure(title: string, id: string, explanation: string, dataset: EtfDataset<readonly EtfAllocation[]> | null) {
   const rows = dataset ? [...dataset.value].sort((a, b) => b.weight - a.weight || a.name.localeCompare(b.name)) : [];
   const max = rows[0]?.weight ?? 0;
-  return <section aria-labelledby={id} className="min-w-0 border-t border-border pt-6"><h3 id={id} className="text-card-title font-bold">{title}</h3><p className="mt-1 text-small text-secondary">{explanation}</p>{rows.length ? <ul className="mt-4 divide-y divide-border/70">{rows.map((row) => <li key={row.name} className="min-w-0 py-2.5"><div className="flex min-w-0 items-baseline justify-between gap-3 text-small"><span className="min-w-0 break-words font-semibold">{row.name}</span><span className="shrink-0 tabular-nums">{formatEtfPercent(row.weight)}</span></div><WeightBar weight={row.weight} max={max} /></li>)}</ul> : unavailable()}{dataset ? freshness(dataset) : null}</section>;
+  return <section aria-labelledby={id} className="min-w-0 border-t border-border pt-6"><h3 id={id} className="text-card-title font-bold">{title}</h3><p className="mt-1 text-small text-secondary">{explanation}</p>{rows.length ? <ul className="mt-4 divide-y divide-border/70">{rows.map((row) => <li key={row.name} className="min-w-0 py-2.5"><div className="flex min-w-0 items-baseline justify-between gap-3 text-small"><span className="min-w-0 break-words font-semibold">{allocationLabel(row.name)}</span><span className="shrink-0 tabular-nums">{formatEtfPercent(row.weight)}</span></div><WeightBar weight={row.weight} max={max} /></li>)}</ul> : unavailable()}{dataset ? freshness(dataset) : null}</section>;
 }
 function topHoldings(dataset: EtfAnalyticsSnapshot["holdings"], reportedTotal: number | null) {
   const all = dataset ? sortedHoldings(dataset.value.rows) : [];

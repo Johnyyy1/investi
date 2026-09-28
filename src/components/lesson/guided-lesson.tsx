@@ -106,7 +106,7 @@ export function GuidedLesson({ lesson, initialStatus, initialPosition, initialCo
         <div className="mt-7 rounded-surface border border-border bg-surface p-5 text-left"><LearningStats stats={reward?.learningMomentum ?? initialLearningMomentum} earnedPracticeCapitalMinor={reward?.earnedPracticeCapitalMinor ?? initialEarnedPracticeCapitalMinor} goal /></div>
         {reward && !reward.allComplete && !reward.portfolioLabUnlocked && <p className="mt-6 text-ql-small text-ql-secondary">Další na řadě: {reward.nextTitle}</p>}
       </CompletionScreen>
-      <div className="border-t border-border px-6 py-4 text-center"><LearningLink variant="ghost" href="/learn"><ArrowLeft aria-hidden="true" className="size-4" />Zpět na Učení</LearningLink><LearningLink variant="ghost" href={moduleHref}>Zobrazit modul</LearningLink><p className="sr-only" data-testid="completion-progress">Dokončeno {completedLessons} dostupných lekcí modulu {learningModule.title} · Uloženo k účtu</p></div>
+      <div className="border-t border-border px-6 py-4 text-center"><LearningLink variant="ghost" href="/learn"><ArrowLeft aria-hidden="true" className="size-4" />Zpět na Učení</LearningLink><LearningLink variant="ghost" href={moduleHref}>Zobrazit modul</LearningLink><p className="sr-only" data-testid="completion-progress">Počet dokončených dostupných lekcí v modulu {learningModule.title}: {completedLessons} · Uloženo k účtu</p></div>
     </div> : <>
       <article key={position} className="mt-7 min-w-0" aria-labelledby="step-title">
         <div>

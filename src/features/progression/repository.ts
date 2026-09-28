@@ -40,13 +40,13 @@ export async function ensurePortfolioLabUnlockInTransaction(query: ProgressionQu
 export async function loadPortfolioLabUnlock(userId: string) {
   return db.transaction(async (tx) => {
     const [owner] = await tx.select({ id: user.id }).from(user).where(eq(user.id, userId)).for("update");
-    if (!owner) throw new Error("Account unavailable.");
+    if (!owner) throw new Error("Účet není dostupný.");
     return ensurePortfolioLabUnlockInTransaction(tx, userId);
   });
 }
 
 export async function requirePortfolioLabUnlock(userId: string) {
   const status = await loadPortfolioLabUnlock(userId);
-  if (!status.unlocked) throw new Error("Portfolio Lab is locked. Complete Investing Foundations to unlock it.");
+  if (!status.unlocked) throw new Error("Portfolio Lab je zamčený. Odemkneš ho dokončením Základů investování.");
   return status;
 }

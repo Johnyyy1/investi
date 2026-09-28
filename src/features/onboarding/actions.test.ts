@@ -15,7 +15,7 @@ describe("authenticated onboarding saves", () => {
   it.each([[completeOnboardingAction, mocks.complete], [saveDraftAction, mocks.draft], [updatePreferencesAction, mocks.update]] as const)("uses the session owner and recovers from database failure", async (action, operation) => {
     operation.mockRejectedValueOnce(new Error("database connection failed"));
     const payload = { userId: "untrusted" };
-    expect(await action(payload)).toMatchObject({ ok: false, message: expect.stringContaining("Please try again") });
+    expect(await action(payload)).toMatchObject({ ok: false, message: expect.stringContaining("zkus to znovu") });
     expect(operation).toHaveBeenCalledWith("session-owner", payload);
     expect(mocks.revalidate).not.toHaveBeenCalled();
     operation.mockResolvedValueOnce(undefined);

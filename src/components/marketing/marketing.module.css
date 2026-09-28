@@ -262,7 +262,7 @@
 .panel::after { content: ""; position: absolute; inset: 0 18px auto; height: 1px; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 95%), transparent); pointer-events: none; }
 .panel > * { position: relative; z-index: 1; }
 .cardStage:hover .panel, .cardStage:focus-within .panel { border-color: #fff; box-shadow: 0 30px 52px rgb(7 31 91 / 30%), 0 10px 18px rgb(8 37 101 / 13%), inset 0 1px 0 #fff; transform: translateY(-3px) rotate(var(--active-angle)) scale(1.004); }
-.panel h3 { margin: 24px 0 0; font: 800 clamp(1.6rem, 2vw, 1.95rem)/1.05 var(--font-marketing-display), sans-serif; letter-spacing: -.03em; }
+.panel h3 { margin: 24px 0 0; font: 800 clamp(1.3rem, 2vw, 1.95rem)/1.05 var(--font-marketing-display), sans-serif; letter-spacing: -.03em; }
 .panel p { margin: 13px 0 25px; color: #52657c; font-size: .98rem; line-height: 1.46; }
 .panelIcon { display: flex; width: 64px; height: 64px; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid rgb(255 255 255 / 74%); border-radius: 20px; box-shadow: inset 0 1px 0 rgb(255 255 255 / 80%), 0 9px 16px rgb(32 71 116 / 7%); }
 .panelIcon svg { width: 31px; height: 31px; stroke-width: 2.55; }
@@ -952,7 +952,7 @@
   .journeyPanels { grid-template-columns: 1fr; gap: 18px; padding: 0 5px; }
   .cardStage1, .cardStage2, .cardStage3 { padding: 0; }
   .panel, .buildPanel { min-height: 242px; padding: 24px; border-radius: 24px; }
-  .panel h3 { margin-top: 18px; font-size: 1.8rem; }
+  .panel h3 { margin-top: 18px; font-size: clamp(1.3rem, 9vw, 1.8rem); }
   .panel p { max-width: 330px; margin: 10px 62px 0 0; }
   .panelArrow { position: absolute; right: 22px; bottom: 22px; }
   .cardStage1 { --card-angle: -1.2deg; --active-angle: -.25deg; }

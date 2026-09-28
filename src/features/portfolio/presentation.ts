@@ -1,7 +1,7 @@
 import type { PortfolioMarketDataMode } from "./market-data";
 
 export function portfolioDataSourceLabel(mode: PortfolioMarketDataMode) {
-  return mode === "sample" ? "Sample data" : "Market observations";
+  return mode === "sample" ? "Ukázková data" : "Tržní pozorování";
 }
 
 export function showSampleDataIndicator(mode: PortfolioMarketDataMode) {

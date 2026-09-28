@@ -15,5 +15,5 @@ export function etfConcentration(holdings: EtfHoldings) {
 }
 
 export function formatEtfPercent(value: number | null, digits = 1): string {
-  return value === null ? "—" : `${new Intl.NumberFormat("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value * 100)}%`;
+  return value === null ? "—" : `${new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value * 100)}\u00a0%`;
 }

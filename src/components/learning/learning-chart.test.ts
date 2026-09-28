@@ -9,7 +9,7 @@ describe("LearningChart fallbacks", () => {
   it("renders a labeled empty state without a chart", () => {
     const html = renderToStaticMarkup(createElement(LearningChart, { ...props, data: [] }));
     expect(html).toContain("Investment value");
-    expect(html).toContain("No data to display yet.");
+    expect(html).toContain("Zatím nejsou k dispozici žádná data.");
     expect(html).not.toContain("recharts-wrapper");
   });
 
@@ -25,7 +25,7 @@ describe("LearningChart fallbacks", () => {
       ...props, data: [{ label: "Start", value: 10000 }, { label: "End", value: 9600 }],
     }));
     expect(html).toContain("Zobrazit tabulku dat");
-    expect(html).toContain("Investment value data");
+    expect(html).toContain("Data grafu Investment value");
     expect(html).toContain('scope="row"');
     expect(html).toContain("9600");
   });

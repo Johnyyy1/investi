@@ -89,9 +89,9 @@ try {
   await page.setViewportSize({ width: 320, height: 800 });
   await overflow();
   await next("Prozkoumej složené zhodnocení");
-  await page.getByText("9 600,00", { exact: true }).waitFor();
+  await page.getByText("96,00", { exact: true }).waitFor();
   await page.getByRole("textbox", { name: "Počáteční hodnota", exact: true }).fill("");
-  await page.getByRole("alert").filter({ hasText: "Počáteční hodnota je povinná." }).waitFor();
+  await page.getByRole("alert").filter({ hasText: "Pole „Počáteční hodnota“ je povinné." }).waitFor();
   assert.equal(await page.locator(".recharts-wrapper").count(), 0);
   await page.getByRole("textbox", { name: "Počáteční hodnota", exact: true }).fill("10000");
   await page.getByRole("textbox", { name: "Výnos za období 2", exact: true }).fill("-101");
@@ -122,13 +122,13 @@ try {
   await page.getByRole("textbox", { name: "100 → 110", exact: true }).fill("10");
   await page.getByRole("textbox", { name: "110 → 99", exact: true }).fill("-10");
   assert.equal(await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).isDisabled(), true);
-  await page.getByRole("textbox", { name: "Cumulative return", exact: true }).fill("-1");
+  await page.getByRole("textbox", { name: "Kumulativní výnos", exact: true }).fill("-1");
   await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).click();
   await heading("Správně");
   await next("Zotavení po ztrátě");
-  for (const [loss, recovery] of [[10, "+11.11%"], [20, "+25.00%"], [50, "+100.00%"]]) {
+  for (const [loss, recovery] of [[10, "+11,11 %"], [20, "+25 %"], [50, "+100 %"]]) {
     await page.getByRole("button", { name: `Zkusit −${loss}%`, exact: true }).click();
-    await page.getByText(recovery.replace(".", ","), { exact: true }).waitFor();
+    await page.getByText(recovery, { exact: true }).waitFor();
   }
   await page.getByRole("textbox", { name: "Velikost ztráty", exact: true }).fill("");
   assert.equal(await page.getByRole("textbox", { name: "Velikost ztráty", exact: true }).getAttribute("aria-invalid"), "true");
@@ -140,11 +140,15 @@ try {
   await page.getByRole("radio").nth(1).check();
   await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).click();
   await heading("Zkus to ještě jednou");
+  await page.getByRole("button", { name: "Zkusit znovu", exact: true }).click();
+  await page.getByRole("radio").first().check();
+  await page.getByRole("button", { name: "Zkontrolovat odpověď", exact: true }).click();
+  await heading("Správně");
   await next("Spoj si to dohromady");
   assert.equal((await row()).status, "in_progress", "Reaching the end does not auto-complete");
   await page.getByRole("button", { name: "Dokončit lekci", exact: true }).click();
   await heading("Lekce dokončena");
-  assert.match(await page.getByTestId("completion-progress").textContent(), /1 lekce/);
+  assert.match(await page.getByTestId("completion-progress").textContent(), /Počet dokončených dostupných lekcí.*: 1/);
   const completed = await row();
   assert.equal(completed.status, "completed");
   await page.getByRole("link", { name: "Zobrazit modul", exact: true }).click();

@@ -17,7 +17,7 @@ describe("equity fundamentals educational signals", () => {
   it("applies broad profitability thresholds at exact boundaries", () => {
     for (const id of ["operating-margin", "roe"] as const) expectSignals(id, [[-0.01, "caution"], [0, "neutral"], [0.08, "neutral"], [0.1499, "neutral"], [0.15, "positive"], [0.2, "positive"]]);
     for (const id of ["net-margin", "roic"] as const) expectSignals(id, [[-0.01, "caution"], [0, "neutral"], [0.0999, "neutral"], [0.10, "positive"], [0.15, "positive"]]);
-    expect(equityMetricSignal("roic", 0.348).context).toMatch(/10% educational reference/);
+    expect(equityMetricSignal("roic", 0.348).context).toMatch(/vzdělávací referencí investi 10 %/);
   });
 
   it("treats financial health as ranges, including negative debt and high liquidity", () => {
@@ -25,7 +25,7 @@ describe("equity fundamentals educational signals", () => {
     expectSignals("current-ratio", [[0.8, "caution"], [0.9999, "caution"], [1, "neutral"], [1.2, "neutral"], [1.4999, "neutral"], [1.5, "positive"], [2, "positive"], [3, "positive"], [3.0001, "neutral"], [5, "neutral"]]);
     expectSignals("net-debt-ebitda", [[-0.4, "neutral"], [0, "positive"], [1, "positive"], [2, "positive"], [2.0001, "neutral"], [3, "neutral"], [4, "neutral"], [4.0001, "caution"], [5, "caution"]]);
     expect(equityMetricSignal("net-debt-ebitda", -0.4, undefined, true).signal).toBe("positive");
-    expect(equityMetricSignal("current-ratio", 0.7).context).toMatch(/liabilities exceed current assets/);
+    expect(equityMetricSignal("current-ratio", 0.7).context).toMatch(/krátkodobé závazky převyšují oběžná aktiva/);
   });
 
   it("flags negative fiscal amounts without coloring positive size or earnings", () => {

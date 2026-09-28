@@ -8,13 +8,13 @@ describe("ETF analytics presentation", () => {
     const snapshot = await createDeterministicMarketDataService().getEtfAnalytics("IE-XETR:VWCE");
     const html = renderToStaticMarkup(<EtfAnalytics snapshot={snapshot} message={null} />);
     expect(html).toContain("Přehled fondu");
-    expect(html).toContain("0.22%");
-    expect(html).toContain("14.8B EUR");
+    expect(html).toContain("0,22\u00a0%");
+    expect(html).toContain("14,8B EUR");
     expect(html).toContain("NAV");
     expect(html).toContain("Největší pozice");
     expect(html).toContain("Sample Atlas Devices");
     expect(html).toContain("Podíl 10 největších pozic");
-    expect(html).toContain("23.1%");
+    expect(html).toContain("23,1\u00a0%");
     expect(html).toContain("12 · 3\u00a0600 celkem podle zdroje");
     expect(html).toContain("Sektorové zastoupení");
     expect(html).toContain("Geografické zastoupení");

@@ -17,7 +17,7 @@ describe("equity key metrics fallback", () => {
     const snapshot = { ...sample, valuation: { ...sample.valuation, peTtm: null, peTtmStatus: "not-meaningful" as const }, financialHealth: { ...sample.financialHealth, debtToEquityTtm: 0 } };
     const html = renderToStaticMarkup(createElement(EquityKeyMetrics, { snapshot, message: null, quoteCurrency: "USD" }));
     expect(html).toContain("N/M");
-    expect(html).toContain("0.00×");
+    expect(html).toContain("0,00×");
     expect(html).toContain("—");
     expect(html).not.toContain("Sample data");
   });
@@ -31,7 +31,7 @@ describe("equity key metrics fallback", () => {
     expect(html).not.toContain("border-dotted");
     expect(html).toMatch(/Orientační srovnání: příznivé/);
     expect(html).toContain("Nejde o investiční hodnocení");
-    expect(html).toContain("Above Investi&#x27;s broad 10% educational reference.");
+    expect(html).toContain("Nad širokou vzdělávací referencí investi 10 %.");
   });
   it("colors a negative net-debt ratio only when net cash is confirmed", async () => {
     const sample = await createDeterministicMarketDataService().getEquityFundamentals("US-XNAS:MSFT");

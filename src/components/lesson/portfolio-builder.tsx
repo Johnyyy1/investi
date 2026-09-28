@@ -13,21 +13,21 @@ type AssetId = typeof assets[number]["id"];
 type Inputs = Record<AssetId, string>;
 
 const presets: { label: string; allocation: Inputs }[] = [
-  { label: "100% stocks", allocation: { stocks: "100", bonds: "0", cash: "0" } },
-  { label: "60 / 30 / 10 example", allocation: { stocks: "60", bonds: "30", cash: "10" } },
+  { label: "100 % akcie", allocation: { stocks: "100", bonds: "0", cash: "0" } },
+  { label: "Příklad 60 / 30 / 10", allocation: { stocks: "60", bonds: "30", cash: "10" } },
 ];
 
-const formatPercent = (value: number, maximumFractionDigits = 2) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value).toLocaleString("en-IE", { maximumFractionDigits })}%`;
+const formatPercent = (value: number, maximumFractionDigits = 2) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value).toLocaleString("cs-CZ", { maximumFractionDigits })} %`;
 
 function parseAllocations(values: Inputs) {
   const errors: Partial<Record<AssetId, string>> = {};
   const percentages = assets.map(({ id, label }) => {
     try {
-      const value = parsePrice(values[id], `${label} allocation`);
-      if (value < 0 || value > 100) throw new FinancialInputError(`${label} allocation must be from 0% to 100%.`);
+      const value = parsePrice(values[id], `Rozložení pro ${label.toLowerCase()}`);
+      if (value < 0 || value > 100) throw new FinancialInputError(`Rozložení pro ${label.toLowerCase()} musí být od 0 % do 100 %.`);
       return value;
     } catch (cause) {
-      errors[id] = cause instanceof Error ? cause.message : "Enter a valid allocation.";
+      errors[id] = cause instanceof Error ? cause.message : "Zadej platné rozložení.";
       return undefined;
     }
   });
@@ -44,26 +44,26 @@ export function PortfolioBuilder() {
   const allocationPercentages = completeAllocations ? parsed.percentages as number[] : undefined;
   const total = allocationPercentages ? allocationPercentages.reduce((sum, value) => sum + value, 0) : undefined;
   const remaining = total === undefined ? undefined : 100 - total;
-  let allocationMessage = "Enter a valid percentage for each asset.";
+  let allocationMessage = "Zadej platné procento pro každé aktivum.";
   let valid = false;
   if (completeAllocations) {
     try {
       validatePortfolioWeights(allocationPercentages!.map((value) => value / 100));
       valid = true;
-      allocationMessage = "Ready · allocation equals 100%.";
+      allocationMessage = "Hotovo · rozložení je přesně 100 %.";
     } catch {
-      allocationMessage = remaining! > 0 ? `Allocate the remaining ${formatPercent(remaining!, 4).replace("+", "")}.` : `Reduce the allocation by ${formatPercent(Math.abs(remaining!), 4).replace("+", "")}.`;
+      allocationMessage = remaining! > 0 ? `Rozděl ještě ${formatPercent(remaining!, 4).replace("+", "")}.` : `Sniž rozložení o ${formatPercent(Math.abs(remaining!), 4).replace("+", "")}.`;
     }
   }
 
   const returnErrors: Partial<Record<AssetId, string>> = {};
   const parsedReturns = assets.map(({ id, label }) => {
     try {
-      const value = parsePrice(returns[id], `${label} return`);
-      if (value < -100) throw new FinancialInputError(`${label} return cannot be below −100%.`);
+      const value = parsePrice(returns[id], `Výnos pro ${label.toLowerCase()}`);
+      if (value < -100) throw new FinancialInputError(`Výnos pro ${label.toLowerCase()} nemůže být nižší než −100 %.`);
       return value;
     } catch (cause) {
-      returnErrors[id] = cause instanceof Error ? cause.message : "Enter a valid return.";
+      returnErrors[id] = cause instanceof Error ? cause.message : "Zadej platný výnos.";
       return undefined;
     }
   });
@@ -77,13 +77,13 @@ export function PortfolioBuilder() {
     setReturns((current) => ({ ...current, [id]: value }));
   }
 
-  return <section aria-label="Portfolio Builder" className="min-w-0 space-y-8">
+  return <section aria-label="Sestavení portfolia" className="min-w-0 space-y-8">
     <div>
       <h3 className="text-ql-title font-semibold">Sestavení portfolia</h3>
       <p className="mt-2 text-ql-body text-ql-secondary">Nastav, jakou část tohoto hypotetického portfolia tvoří jednotlivé kategorie aktiv. Jde o vzdělávací sandbox, ne o doporučené rozložení.</p>
     </div>
 
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Load an allocation example">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Načíst příklad rozložení">
       {presets.map((preset) => {
         const selected = assets.every(({ id }) => allocations[id] === preset.allocation[id]);
         return <button key={preset.label} type="button" aria-pressed={selected} onClick={() => setAllocations(preset.allocation)} className={`min-h-12 rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${selected ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{preset.label}</button>;
@@ -96,39 +96,39 @@ export function PortfolioBuilder() {
         return <div key={asset.id} className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
           <div className="min-w-0">
             <label htmlFor={`${allocationErrorId}-${asset.id}-slider`} className="mb-2 flex items-center gap-2 text-ql-small font-semibold"><span aria-hidden="true" className={`h-3 w-3 rounded-full ${asset.color}`} />{asset.label}</label>
-            <Slider id={`${allocationErrorId}-${asset.id}-slider`} aria-label={`${asset.label} allocation slider`} min="0" max="100" step="1" value={sliderValue} onChange={(event) => setAllocation(asset.id, event.target.value)} />
+            <Slider id={`${allocationErrorId}-${asset.id}-slider`} aria-label={`Rozložení pro ${asset.label.toLowerCase()}`} min="0" max="100" step="1" value={sliderValue} onChange={(event) => setAllocation(asset.id, event.target.value)} />
           </div>
-          <FinanceInput label={`${asset.label} allocation`} mode="percentage" value={allocations[asset.id]} onValueChange={(value) => setAllocation(asset.id, value)} error={parsed.errors[asset.id]} />
+          <FinanceInput label={`Rozložení · ${asset.label}`} mode="percentage" value={allocations[asset.id]} onValueChange={(value) => setAllocation(asset.id, value)} error={parsed.errors[asset.id]} />
         </div>;
       })}
     </div>
 
-    {completeAllocations ? <div role="img" className="h-6 overflow-hidden rounded-ql-full bg-ql-subtle" aria-label={`Portfolio allocation: ${assets.map((asset, index) => `${asset.label} ${parsed.percentages[index]}%`).join(", ")}`}>
+    {completeAllocations ? <div role="img" className="h-6 overflow-hidden rounded-ql-full bg-ql-subtle" aria-label={`Rozložení portfolia: ${assets.map((asset, index) => `${asset.label} ${parsed.percentages[index]} %`).join(", ")}`}>
       <div className="flex h-full min-w-0">
         {assets.map((asset, index) => <span key={asset.id} title={`${asset.label}: ${parsed.percentages[index]}%`} aria-hidden="true" className={`h-full shrink-0 ${asset.color}`} style={{ width: `${parsed.percentages[index]}%` }} />)}
       </div>
     </div> : null}
 
     <div aria-live="polite" aria-atomic="true" className="grid gap-5 border-y border-ql-border py-6 sm:grid-cols-2">
-      <MetricResult label="Total allocation" value={total === undefined ? "—" : `${total.toLocaleString("en-IE", { maximumFractionDigits: 4 })}%`} />
-      <MetricResult label="Remaining allocation" value={remaining === undefined ? "—" : `${remaining.toLocaleString("en-IE", { maximumFractionDigits: 4 })}%`} sentiment={remaining === 0 ? "positive" : "negative"} />
+      <MetricResult label="Celkové rozložení" value={total === undefined ? "—" : `${total.toLocaleString("cs-CZ", { maximumFractionDigits: 4 })} %`} />
+      <MetricResult label="Zbývá rozdělit" value={remaining === undefined ? "—" : `${remaining.toLocaleString("cs-CZ", { maximumFractionDigits: 4 })} %`} sentiment={remaining === 0 ? "positive" : "negative"} />
       <p id={allocationErrorId} role="status" className={`sm:col-span-2 text-ql-small ${valid ? "text-ql-success-ink" : "text-ql-danger-ink"}`}>{allocationMessage}</p>
     </div>
 
     <div className="space-y-5">
       <div>
-        <h4 className="text-ql-title font-semibold">Test one hypothetical period</h4>
-        <p className="mt-2 text-ql-small text-ql-secondary">These inputs are invented for learning. They are not expected returns, market forecasts, or guarantees.</p>
+        <h4 className="text-ql-title font-semibold">Otestuj jedno hypotetické období</h4>
+        <p className="mt-2 text-ql-small text-ql-secondary">Tyto hodnoty jsou vymyšlené pro výuku. Nejde o očekávané výnosy, tržní prognózu ani záruku.</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Load hypothetical return inputs">
-        <button type="button" onClick={() => setReturns({ stocks: "8", bonds: "2", cash: "0" })} className="min-h-12 rounded-ql-md border border-ql-border px-4 py-3 text-left text-ql-small font-semibold hover:bg-ql-subtle">Stocks +8% example</button>
-        <button type="button" onClick={() => setReturns({ stocks: "-10", bonds: "2", cash: "0" })} className="min-h-12 rounded-ql-md border border-ql-border px-4 py-3 text-left text-ql-small font-semibold hover:bg-ql-subtle">Stocks fall −10%</button>
+      <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Načíst hypotetické výnosy">
+        <button type="button" onClick={() => setReturns({ stocks: "8", bonds: "2", cash: "0" })} className="min-h-12 rounded-ql-md border border-ql-border px-4 py-3 text-left text-ql-small font-semibold hover:bg-ql-subtle">Příklad: akcie +8 %</button>
+        <button type="button" onClick={() => setReturns({ stocks: "-10", bonds: "2", cash: "0" })} className="min-h-12 rounded-ql-md border border-ql-border px-4 py-3 text-left text-ql-small font-semibold hover:bg-ql-subtle">Akcie klesnou o 10 %</button>
       </div>
       <div className="grid gap-5 sm:grid-cols-3">
-        {assets.map((asset) => <FinanceInput key={asset.id} label={`${asset.label} hypothetical return`} mode="percentage" value={returns[asset.id]} onValueChange={(value) => setReturn(asset.id, value)} error={returnErrors[asset.id]} />)}
+        {assets.map((asset) => <FinanceInput key={asset.id} label={`Hypotetický výnos · ${asset.label}`} mode="percentage" value={returns[asset.id]} onValueChange={(value) => setReturn(asset.id, value)} error={returnErrors[asset.id]} />)}
       </div>
       {Object.keys(returnErrors).length ? <p id={returnErrorId} role="alert" className="text-ql-small text-ql-danger-ink">Použij konečné výnosy; výnos za jedno období nemůže být nižší než −100 %.</p> : portfolioReturn === undefined ? <ConceptCard title="Nejprve dokonči rozložení">Vážený výnos se zobrazí, až budou všechna rozložení platná a jejich součet bude přesně 100 %.</ConceptCard> : <div aria-live="polite" aria-atomic="true" className="space-y-4 border-y border-ql-border py-6">
-        <MetricResult label="Hypothetical one-period portfolio return" value={formatPercent(portfolioReturn, 4)} sentiment={portfolioReturn > 0 ? "positive" : portfolioReturn < 0 ? "negative" : "neutral"} />
+        <MetricResult label="Hypotetický výnos portfolia za jedno období" value={formatPercent(portfolioReturn, 4)} sentiment={portfolioReturn > 0 ? "positive" : portfolioReturn < 0 ? "negative" : "neutral"} />
         <p className="break-words text-ql-small text-ql-secondary">{assets.map((asset, index) => `${parsed.percentages[index]}% × ${formatPercent(parsedReturns[index]!, 4)}`).join(" + ")} = {formatPercent(portfolioReturn, 4)}</p>
       </div>}
     </div>

@@ -62,7 +62,7 @@ export function ShareExplorer({ kind }: { kind: "ownership" | "market-cap" }) {
     </div>
     {error ? <p id={errorId} role="alert" className="rounded-control border border-danger bg-danger-soft px-4 py-3 text-small text-danger-ink">{error}</p> : result ? <div aria-live="polite" aria-atomic="true" className="rounded-surface border border-primary/35 bg-primary-soft p-5 sm:p-6">
       <div className="flex items-start gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-primary-hover"><Calculator className="size-5" /></span><MetricResult label={ownership ? "Tvůj vlastnický podíl" : "Tržní kapitalizace"} value={ownership ? `${number(result.amount)}%` : euros(result.amount)} /></div>
-      <p className="mt-5 break-words rounded-control bg-surface px-4 py-3 text-small font-bold tabular-nums text-foreground">{ownership ? `${number(result.value)} owned ÷ ${number(result.total)} total × 100 = ${number(result.amount)}%` : `${euros(result.value)} × ${number(result.total)} shares = ${euros(result.amount)}`}</p>
+      <p className="mt-5 break-words rounded-control bg-surface px-4 py-3 text-small font-bold tabular-nums text-foreground">{ownership ? `${number(result.value)} vlastněných ÷ ${number(result.total)} celkem × 100 = ${number(result.amount)}%` : `${euros(result.value)} × ${number(result.total)} akcií = ${euros(result.amount)}`}</p>
       <p className="mt-3 text-small text-secondary">{ownership ? "Předpokládá stejný podíl na akcii. Samotná změna ceny akcie nemění tvůj vlastnický zlomek." : "Aktuální tržní hodnota vlastního kapitálu. Není to tržba, zisk, hotovost ani hodnota podniku."}</p>
     </div> : null}
   </section>;
@@ -230,7 +230,7 @@ const liquidityExamples = {
 export function LiquidityComparison() {
   const [example, setExample] = useState<keyof typeof liquidityExamples>("highlyTraded");
   const selected = liquidityExamples[example];
-  return <section aria-label="Liquidity comparison" className="space-y-5">
+  return <section aria-label="Porovnání likvidity" className="space-y-5">
     <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber podmínky obchodování k porovnání">
       {(Object.keys(liquidityExamples) as (keyof typeof liquidityExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{liquidityExamples[key].name}</button>)}
     </div>
@@ -246,8 +246,8 @@ const concentrationExamples = {
 export function DiversificationPreview() {
   const [example, setExample] = useState<keyof typeof concentrationExamples>("oneCompany");
   const selected = concentrationExamples[example];
-  return <section aria-label="Diversification preview" className="space-y-5">
-    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Choose a portfolio concentration example">
+  return <section aria-label="Náhled diverzifikace" className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Vyber příklad koncentrace portfolia">
       {(Object.keys(concentrationExamples) as (keyof typeof concentrationExamples)[]).map((key) => <button key={key} type="button" onClick={() => setExample(key)} aria-pressed={example === key} className={`rounded-ql-md border px-4 py-3 text-left text-ql-small font-semibold transition-colors ${example === key ? "border-ql-link bg-ql-subtle text-ql-link" : "border-ql-border hover:bg-ql-subtle"}`}>{concentrationExamples[key].name}</button>)}
     </div>
     <ConceptCard title={selected.name}>{selected.detail}</ConceptCard>

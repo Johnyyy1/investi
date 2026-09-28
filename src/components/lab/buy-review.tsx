@@ -6,12 +6,19 @@ import type { InstrumentPreview } from "@/features/portfolio/service";
 import { formatPracticeCapitalMinor } from "@/features/rewards/presentation";
 
 function quantityLabel(value: string) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 }).format(Number(value));
+  return new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 8 }).format(Number(value));
 }
 function quotePrice(value: string, currency: string) {
   return `${new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 8 }).format(Number(value))} ${currency}`;
 }
-function assetTypeLabel(value: string) { return value.charAt(0).toUpperCase() + value.slice(1); }
+function assetTypeLabel(value: string) {
+  if (value === "equity") return "Akcie";
+  if (value === "etf") return "ETF";
+  if (value === "bond") return "Dluhopis";
+  if (value === "cash") return "Hotovost";
+  if (value === "index") return "Index";
+  return "Instrument";
+}
 
 export function BuyReview({ preview, quantity, estimate, availableCash, onBack }: { preview: InstrumentPreview; quantity: string; estimate: bigint | null; availableCash: string; onBack: () => void }) {
   return <section aria-labelledby="buy-review-title">

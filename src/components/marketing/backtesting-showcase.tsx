@@ -67,12 +67,12 @@ export function BacktestingShowcase() {
         <figure className={styles.backtestingFigure} aria-labelledby="backtesting-chart-title" aria-describedby="backtesting-chart-summary">
           <div className={styles.backtestingChartHeader}>
             <div>
-              <h3 id="backtesting-chart-title">Portfolio vs. benchmark</h3>
+              <h3 id="backtesting-chart-title">Portfolio vs. srovnávací index</h3>
               <p>Počáteční hodnota {formatValue(initialValue)} · leden 2015–prosinec 2025</p>
             </div>
             <div className={styles.backtestingLegend} aria-hidden="true">
               <span><i className={styles.portfolioLegend} />Portfolio</span>
-              <span><i className={styles.benchmarkLegend} />Benchmark</span>
+              <span><i className={styles.benchmarkLegend} />Srovnávací index</span>
             </div>
           </div>
 

@@ -45,7 +45,7 @@ async function layout(page, width, enlarged) {
       .map((heading) => heading.parentElement.getBoundingClientRect());
     const labCopy = lab.querySelector("h2").parentElement.getBoundingClientRect();
     const labDemo = lab.querySelector('[data-testid="portfolio-showcase-demo"]').getBoundingClientRect();
-    const labPie = lab.querySelector('img[alt^="Three-part portfolio pie"]').getBoundingClientRect();
+    const labPie = lab.querySelector('img[alt^="Třídílný koláčový graf portfolia"]').getBoundingClientRect();
     const backtestingCopy = backtesting.querySelector("h2").parentElement.getBoundingClientRect();
     const backtestingDemo = backtesting.querySelector('[data-testid="backtesting-showcase-demo"]').getBoundingClientRect();
     const progressCopy = progress.querySelector("h2").parentElement.getBoundingClientRect();
@@ -107,11 +107,11 @@ async function layout(page, width, enlarged) {
   assert.ok(dimensions.labPieWidth >= (width <= 390 ? 220 : 260), `Portfolio pie remains meaningful: ${width}, enlarged=${enlarged}`);
   await page.screenshot({ path: `${output}/landing-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
   if (width <= 1100) {
-    const menu = page.getByLabel("Navigation menu");
+    const menu = page.getByLabel("Navigační menu");
     await menu.focus(); await menu.press("Enter");
-    const nav = page.getByRole("navigation", { name: "Mobile navigation" });
+    const nav = page.getByRole("navigation", { name: "Mobilní navigace" });
     assert.equal(await nav.isVisible(), true);
-    assert.deepEqual(await nav.getByRole("link").allTextContents(), ["Home", "Learn", "Portfolio Lab", "Backtesting", "Sign in", "Start learning "]);
+    assert.deepEqual(await nav.getByRole("link").allTextContents(), ["Domů", "Učení", "Portfolio Lab", "Backtesting Lab", "Přihlásit se", "Začít se učit "]);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Expanded menu fits");
     await page.screenshot({ path: `${output}/menu-${width}${enlarged ? "-200" : ""}.png`, fullPage: true });
     await menu.press("Enter");
@@ -122,43 +122,43 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(baseURL);
   await page.evaluate(() => document.fonts.ready);
-  assert.equal(await page.title(), "Learn investing by doing · investi");
+  assert.equal(await page.title(), "Uč se investovat praxí · investi");
   assert.equal(await page.locator("h1").count(), 1);
-  assert.equal(await page.locator("h1").innerText(), "Learn investing\nby doing.");
+  assert.equal(await page.locator("h1").innerText(), "Uč se investovat\npraxí.");
   assert.equal(await page.locator("main > section").count(), 7, "Includes all product showcases and the final CTA");
-  assert.deepEqual(await page.locator("article h3").allTextContents(), ["Learn", "Build", "Backtest"]);
+  assert.deepEqual(await page.locator("article h3").allTextContents(), ["Uč se", "Sestavuj", "Backtestuj"]);
   assert.deepEqual(await page.locator("main > section h2").allTextContents(), [
-    "Learn. Build. Backtest.",
-    "How does Investi work?",
-    "Don’t just read about diversification. Break a portfolio.",
-    "Your intuition needs data.",
-    "Keep the streak.See yourself grow.",
-    "Ready to start learning by doing?",
+    "Uč se. Sestavuj. Backtestuj.",
+    "Jak investi funguje?",
+    "O diverzifikaci jen nečti. Rozlož portfolio.",
+    "Tvoje intuice potřebuje data.",
+    "Udrž si rytmus.Sleduj, jak rosteš.",
+    "Jsi připravený učit se investovat praxí?",
   ]);
-  assert.equal(await page.getByRole("img", { name: "Investi lesson screen explaining what a stock is" }).count(), 1);
-  assert.equal(await page.getByRole("img", { name: /Three-part portfolio pie/ }).count(), 1);
+  assert.equal(await page.getByRole("img", { name: "Obrazovka lekce investi vysvětlující, co je akcie" }).count(), 1);
+  assert.equal(await page.getByRole("img", { name: /Třídílný koláčový graf portfolia/ }).count(), 1);
   assert.equal(await page.getByRole("slider").count(), 0, "Portfolio showcase exposes no fake slider controls");
   assert.equal(await page.locator('input[type="range"]').count(), 0, "Portfolio showcase has no native range inputs");
-  assert.equal(await page.getByRole("img", { name: "Portfolio allocation: 60% stocks, 30% bonds, 10% cash." }).count(), 1, "Portfolio allocation has a static text equivalent");
-  assert.equal(await page.locator('[aria-label^="Portfolio allocation:"]').evaluate((element) => getComputedStyle(element).pointerEvents), "none", "Static allocation ignores pointer interaction");
-  assert.equal(await page.getByText("100% allocated · safe to experiment", { exact: true }).count(), 1);
-  assert.equal(await page.getByText("Illustrative 60 / 30 / 10 allocation.", { exact: true }).count(), 1);
-  assert.equal(await page.getByText("Illustrative data for learning. Not a forecast or recommendation.", { exact: true }).count(), 1);
-  assert.equal(await page.getByRole("link", { name: "Try Backtesting", exact: true }).getAttribute("href"), "/lab/backtesting");
-  assert.equal(await page.getByText("Educational demo data · synthetic scenarios for learning", { exact: true }).count(), 1);
-  assert.equal(await page.getByText(/Example educational backtest from January 2015 to December 2025/).count(), 1, "Backtest chart has a screen-reader summary");
-  assert.deepEqual(await page.locator('[data-testid="backtesting-showcase-demo"] dt').allTextContents(), ["Final value", "CAGR", "Max drawdown", "Volatility"]);
-  assert.equal(await page.locator('[data-testid="backtesting-showcase-demo"] dd').filter({ hasText: "14.16%" }).count(), 1, "Max drawdown uses the product's positive loss-magnitude convention");
+  assert.equal(await page.getByRole("img", { name: "Rozložení portfolia: 60 % akcie, 30 % dluhopisy, 10 % hotovost." }).count(), 1, "Portfolio allocation has a static text equivalent");
+  assert.equal(await page.locator('[aria-label^="Rozložení portfolia:"]').evaluate((element) => getComputedStyle(element).pointerEvents), "none", "Static allocation ignores pointer interaction");
+  assert.equal(await page.getByText("100 % rozloženo · bezpečné experimentování", { exact: true }).count(), 1);
+  assert.equal(await page.getByText("Ilustrační rozložení 60 / 30 / 10.", { exact: true }).count(), 1);
+  assert.equal(await page.getByText("Ilustrační data pro učení. Nejde o prognózu ani doporučení.", { exact: true }).count(), 1);
+  assert.equal(await page.getByRole("link", { name: "Vyzkoušet Backtesting Lab", exact: true }).getAttribute("href"), "/lab/backtesting");
+  assert.equal(await page.getByText("Vzdělávací demo data · syntetické scénáře pro učení", { exact: true }).count(), 1);
+  assert.equal(await page.getByText(/Ukázkový vzdělávací backtest od ledna 2015 do prosince 2025/).count(), 1, "Backtest chart has a screen-reader summary");
+  assert.deepEqual(await page.locator('[data-testid="backtesting-showcase-demo"] dt').allTextContents(), ["Konečná hodnota", "CAGR", "Maximální drawdown", "Volatilita"]);
+  assert.equal(await page.locator('[data-testid="backtesting-showcase-demo"] dd').filter({ hasText: "14,16" }).count(), 1, "Max drawdown uses the product's positive loss-magnitude convention");
   const progress = page.locator('[data-testid="progress-showcase-demo"]');
   await progress.scrollIntoViewIfNeeded();
   await progress.locator("img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
-  assert.equal(await progress.getByText("Illustrative progress preview", { exact: true }).count(), 1);
-  assert.equal(await progress.getByText("4 days", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText("Ilustrační náhled pokroku", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText("4 dny", { exact: true }).count(), 1);
   assert.equal(await progress.getByText("5 000 Kč", { exact: true }).count(), 1);
-  assert.equal(await progress.locator("strong").filter({ hasText: "7 of 10 lessons completed" }).count(), 1);
-  assert.equal(await progress.getByText("420 XP · Portfolio Lab unlocked", { exact: true }).count(), 1);
-  assert.equal(await progress.getByText(/per lesson/i).count(), 0, "Progress marketing does not imply a per-lesson capital reward");
-  assert.equal(await progress.getByRole("progressbar", { name: "7 of 10 lessons completed" }).getAttribute("value"), "7");
+  assert.equal(await progress.locator("strong").filter({ hasText: "7 z 10 lekcí dokončeno" }).count(), 1);
+  assert.equal(await progress.getByText("420 XP · Portfolio Lab odemčen", { exact: true }).count(), 1);
+  assert.equal(await progress.getByText(/za lekci/i).count(), 0, "Progress marketing does not imply a per-lesson capital reward");
+  assert.equal(await progress.getByRole("progressbar", { name: "7 z 10 lekcí dokončeno" }).getAttribute("value"), "7");
   const progressAssets = ["flame-icon.webp", "growing-coin.webp", "gold-icon.webp", "books-icon.webp"];
   assert.equal(await progress.locator("img").count(), progressAssets.length, "Progress scene uses a curated four-asset composition");
   for (const asset of progressAssets) {
@@ -186,7 +186,7 @@ try {
     assert.equal(await image.getAttribute("alt"), "", "Hero artwork has empty alt text");
     assert.equal(await image.evaluate((img) => img.complete && img.naturalWidth > 0), true, "Hero artwork loads");
   }
-  const pie = page.getByRole("img", { name: /Three-part portfolio pie/ });
+  const pie = page.getByRole("img", { name: /Třídílný koláčový graf portfolia/ });
   assert.equal((await pie.getAttribute("src")).includes("portfolio-pie.webp"), true, "Approved portfolio pie is used");
   assert.equal(await pie.evaluate((img) => img.complete && img.naturalWidth > 0), true, "Portfolio pie artwork loads");
   for (const text of ["A smarter", "A brighter"]) {
@@ -196,9 +196,9 @@ try {
   const finalCta = page.locator('[data-testid="final-cta"]');
   await finalCta.scrollIntoViewIfNeeded();
   await finalCta.locator("img").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
-  assert.equal(await finalCta.getByText("Final step", { exact: true }).count(), 1);
-  assert.equal(await finalCta.getByRole("link", { name: "Start learning", exact: true }).getAttribute("href"), "/sign-up");
-  assert.equal(await finalCta.getByRole("button", { name: "Explore demo", exact: true }).count(), 1);
+  assert.equal(await finalCta.getByText("Další krok", { exact: true }).count(), 1);
+  assert.equal(await finalCta.getByRole("link", { name: "Začít se učit", exact: true }).getAttribute("href"), "/sign-up");
+  assert.equal(await finalCta.getByRole("button", { name: "Vyzkoušet demo", exact: true }).count(), 1);
   for (const asset of ["hill.webp", "clouds.webp"]) {
     const image = finalCta.locator(`img[src*="${asset}"]`);
     assert.equal(await image.count(), 1, `${asset} is used once in the final CTA`);
@@ -206,10 +206,10 @@ try {
     assert.equal(await image.evaluate((img) => img.complete && img.naturalWidth > 0), true, `${asset} loads`);
   }
   const footer = page.locator("footer");
-  assert.deepEqual(await footer.getByRole("heading").allTextContents(), ["Product", "Account"]);
-  assert.equal(await footer.getByText("Learn investing through practice.", { exact: true }).count(), 1);
-  assert.equal(await footer.getByText("© 2026 Investi. All rights reserved.", { exact: true }).count(), 1);
-  assert.equal(await footer.getByText("Investi is an educational product. Nothing on this site is financial advice.", { exact: true }).count(), 1);
+  assert.deepEqual(await footer.getByRole("heading").allTextContents(), ["Produkt", "Účet"]);
+  assert.equal(await footer.getByText("Uč se investovat praxí.", { exact: true }).count(), 1);
+  assert.equal(await footer.getByText("© 2026 investi. Všechna práva vyhrazena.", { exact: true }).count(), 1);
+  assert.equal(await footer.getByText("investi je vzdělávací produkt. Tento web neposkytuje finanční poradenství.", { exact: true }).count(), 1);
   assert.equal(await page.getByText(/real market data/i).count(), 0, "Marketing makes no unsupported real-market-data claim");
   assert.deepEqual(
     [...new Set(await page.locator("a[href]").evaluateAll((links) => links.map((link) => link.getAttribute("href"))))].sort(),
@@ -227,30 +227,30 @@ try {
   await page.evaluate(() => document.documentElement.style.fontSize = "");
   checks.push("Portfolio allocation is static, has no fake slider semantics, preserves the 60 / 30 / 10 example, and retains a readable disclosure");
   await page.setViewportSize({ width: 390, height: 1000 });
-  for (const [name, path] of [["Home", "/"], ["Learn", "/sign-in"], ["Portfolio Lab", "/sign-in"], ["Backtesting", "/sign-in"], ["Sign in", "/sign-in"], ["Start learning", "/sign-up"]]) {
+  for (const [name, path] of [["Domů", "/"], ["Učení", "/sign-in"], ["Portfolio Lab", "/sign-in"], ["Backtesting Lab", "/sign-in"], ["Přihlásit se", "/sign-in"], ["Začít se učit", "/sign-up"]]) {
     await page.goto(baseURL);
-    await page.getByLabel("Navigation menu").click();
-    await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name, exact: true }).click();
+    await page.getByLabel("Navigační menu").click();
+    await page.getByRole("navigation", { name: "Mobilní navigace" }).getByRole("link", { name, exact: true }).click();
     await page.waitForURL(`**${path}`);
   }
   checks.push("Every mobile-menu destination works, including protected-route auth gates and Start learning");
   await page.goto(baseURL);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  assert.equal(await page.getByRole("button", { name: "Explore demo" }).first().evaluate((el) => getComputedStyle(el).transitionDuration), "0s");
+  assert.equal(await page.getByRole("button", { name: "Vyzkoušet demo" }).first().evaluate((el) => getComputedStyle(el).transitionDuration), "0s");
   assert.equal(await progress.locator("img").first().evaluate((el) => getComputedStyle(el).transitionDuration), "0s");
   await page.goto(baseURL);
   await page.keyboard.press("Tab");
-  assert.equal(await page.getByRole("link", { name: "Skip to content" }).evaluate((el) => el === document.activeElement), true);
+  assert.equal(await page.getByRole("link", { name: "Přejít k obsahu" }).evaluate((el) => el === document.activeElement), true);
   await page.keyboard.press("Enter");
   assert.equal(await page.locator("main").evaluate((el) => el === document.activeElement), true);
-  await page.getByRole("link", { name: "Start learning", exact: true }).last().click();
+  await page.getByRole("link", { name: "Začít se učit", exact: true }).last().click();
   await page.waitForURL("**/sign-up");
-  await page.getByRole("heading", { name: "Create account", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Vytvořit účet", exact: true }).waitFor();
   await page.goto(baseURL);
-  await page.getByRole("link", { name: "Sign in", exact: true }).first().click();
+  await page.getByRole("link", { name: "Přihlásit se", exact: true }).first().click();
   await page.waitForURL("**/sign-in");
-  await page.getByRole("heading", { name: "Welcome back" }).waitFor();
+  await page.getByRole("heading", { name: "Vítej zpět" }).waitFor();
   checks.push("Metadata, one H1, seven semantic sections, accessible product visuals, final conversion CTA, structured footer, loaded decorative artwork, skip link, reduced motion, existing signup and sign-in");
 
   await page.goto(baseURL);
@@ -262,24 +262,24 @@ try {
     await new Promise((resolve) => { releaseFailure = resolve; reportFailureStarted(); });
     await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "Unavailable" }) });
   });
-  await page.getByRole("button", { name: "Explore demo" }).first().click();
+  await page.getByRole("button", { name: "Vyzkoušet demo" }).first().click();
   await failureStarted;
-  assert.equal(await page.getByRole("button", { name: "Opening demo…" }).first().isDisabled(), true, "Demo prevents repeat activation while pending");
+  assert.equal(await page.getByRole("button", { name: "Otevírám demo…" }).first().isDisabled(), true, "Demo prevents repeat activation while pending");
   releaseFailure();
-  await page.getByRole("alert").filter({ hasText: "We couldn’t open the demo" }).waitFor();
+  await page.getByRole("alert").filter({ hasText: "Demo se nepodařilo otevřít" }).waitFor();
   assert.equal(new URL(page.url()).pathname, "/");
-  assert.equal(await page.getByRole("button", { name: "Explore demo" }).first().isEnabled(), true);
+  assert.equal(await page.getByRole("button", { name: "Vyzkoušet demo" }).first().isEnabled(), true);
   await page.unroute("**/api/auth/sign-in/anonymous");
-  await page.getByRole("button", { name: "Explore demo" }).first().click();
+  await page.getByRole("button", { name: "Vyzkoušet demo" }).first().click();
   await page.waitForURL("**/learn");
   const owner = await session(context);
   await page.goto(baseURL);
   assert.equal(new URL(page.url()).pathname, "/", "Root stays public with a session");
-  await page.getByRole("button", { name: "Explore demo" }).first().click();
+  await page.getByRole("button", { name: "Vyzkoušet demo" }).first().click();
   await page.waitForURL("**/learn");
   assert.equal(await session(context), owner, "Demo reuses an existing session");
   await page.goto(baseURL);
-  await page.locator('[data-testid="final-cta"]').getByRole("button", { name: "Explore demo" }).click();
+  await page.locator('[data-testid="final-cta"]').getByRole("button", { name: "Vyzkoušet demo" }).click();
   await page.waitForURL("**/learn");
   assert.equal(await session(context), owner, "Final CTA demo reaches the same real experience");
   for (const path of ["/lab/portfolio", "/lab/backtesting", "/progress"]) {
@@ -290,7 +290,7 @@ try {
   }
   const other = await newContext(), otherPage = await other.newPage();
   await otherPage.goto(baseURL);
-  await otherPage.getByRole("button", { name: "Explore demo" }).first().click();
+  await otherPage.getByRole("button", { name: "Vyzkoušet demo" }).first().click();
   await otherPage.waitForURL("**/learn");
   assert.notEqual(await session(other), owner, "Separate browsers create isolated demo profiles");
   checks.push("Demo failure/retry, one-click real demo, existing-session reuse, isolated profiles, protected product routes still work");

@@ -7,28 +7,28 @@ export class FinancialInputError extends Error {
 
 function assertFinite(value: number, label: string) {
   if (!Number.isFinite(value)) {
-    throw new FinancialInputError(`${label} must be a finite number.`);
+    throw new FinancialInputError(`${label} musí být konečné číslo.`);
   }
 }
 
 function assertStartingPrice(start: number) {
-  assertFinite(start, "Starting price");
+  assertFinite(start, "Počáteční cena");
   if (start <= 0) {
-    throw new FinancialInputError("Starting price must be greater than zero.");
+    throw new FinancialInputError("Počáteční cena musí být větší než nula.");
   }
 }
 
 function assertEndingPrice(end: number) {
-  assertFinite(end, "Ending price");
+  assertFinite(end, "Konečná cena");
   if (end < 0) {
-    throw new FinancialInputError("Ending price cannot be negative.");
+    throw new FinancialInputError("Konečná cena nemůže být záporná.");
   }
 }
 
 function assertSimpleReturn(returnValue: number) {
-  assertFinite(returnValue, "Period return");
+  assertFinite(returnValue, "Výnos za období");
   if (returnValue < -1) {
-    throw new FinancialInputError("A simple return cannot be below -100%.");
+    throw new FinancialInputError("Jednoduchý výnos nemůže být nižší než −100 %.");
   }
 }
 
@@ -49,7 +49,7 @@ export function simpleReturn(start: number, end: number) {
 /** Unrounded period returns for each consecutive pair in a price series. */
 export function consecutiveSimpleReturns(prices: readonly number[]) {
   if (prices.length < 2) {
-    throw new FinancialInputError("At least two prices are required to calculate period returns.");
+    throw new FinancialInputError("Pro výpočet výnosů za období jsou potřeba alespoň dvě ceny.");
   }
   return prices.slice(1).map((currentPrice, index) => simpleReturn(prices[index], currentPrice));
 }
@@ -91,9 +91,9 @@ export function compoundPeriods(startValue: number, returns: readonly number[]):
 
 /** Required gain after a positive loss magnitude, e.g. 0.5 loss requires 1.0 gain. */
 export function recoveryReturn(loss: number) {
-  assertFinite(loss, "Loss");
+  assertFinite(loss, "Ztráta");
   if (loss < 0 || loss >= 1) {
-    throw new FinancialInputError("Loss must be at least 0% and less than 100%.");
+    throw new FinancialInputError("Ztráta musí být alespoň 0 % a menší než 100 %.");
   }
   return 1 / (1 - loss) - 1;
 }
@@ -101,7 +101,7 @@ export function recoveryReturn(loss: number) {
 /** Parses user-entered price strings without treating an empty field as zero. */
 export function parsePrice(value: string, label: string) {
   if (value.trim() === "") {
-    throw new FinancialInputError(`${label} is required.`);
+    throw new FinancialInputError(`Pole „${label}“ je povinné.`);
   }
   const parsed = Number(value);
   assertFinite(parsed, label);

@@ -14,7 +14,18 @@ function group(title: string, metrics: MetricInput[]) {
   return { title, metrics };
 }
 
-function dateLabel(value: string) { return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`)); }
+function dateLabel(value: string) { return new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`)); }
+
+const classificationLabels: Readonly<Record<string, string>> = {
+  Technology: "Technologie",
+  "Consumer devices": "Spotřební elektronika",
+  Semiconductors: "Polovodiče",
+  US: "USA",
+};
+
+function classificationLabel(value: string | null | undefined) {
+  return value ? classificationLabels[value] ?? value : null;
+}
 
 function metricGroups(snapshot: EquityFundamentalsSnapshot, quoteCurrency: Currency) {
   const { valuation: v, profitability: p, financialHealth: h, businessPerformance: b } = snapshot;
@@ -69,7 +80,7 @@ const signalDescription: Record<MetricSignal, string> = {
 export function EquityKeyMetrics({ snapshot, message, quoteCurrency }: { snapshot: EquityFundamentalsSnapshot | null; message: string | null; quoteCurrency: Currency }) {
   const [openMetric, setOpenMetric] = useState<string | null>(null);
   const company = snapshot?.company;
-  const classification = [company?.sector, company?.industry, company?.country].filter(Boolean).join(" · ");
+  const classification = [company?.sector, company?.industry, company?.country].map(classificationLabel).filter(Boolean).join(" · ");
   return <section aria-labelledby="key-metrics-heading" className="mt-8 border-t border-border pt-7">
     <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2"><h2 id="key-metrics-heading" className="text-section-title font-bold">Klíčové ukazatele</h2>{snapshot ? <p className="text-small text-secondary">Ukazatele TTM · poslední dostupné finanční údaje</p> : null}</div>
     {classification ? <p className="mt-2 text-small text-secondary">{classification}</p> : null}

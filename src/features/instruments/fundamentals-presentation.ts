@@ -1,6 +1,6 @@
 import type { Currency } from "@/features/market-data/contracts";
 
-const decimal = (digits: number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+const decimal = (digits: number) => new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 export function formatMagnitude(value: number | null, currency: Currency | null): string {
   if (value === null || !Number.isFinite(value) || !currency) return "—";
@@ -14,7 +14,7 @@ export function formatMultiple(value: number | null, digits = 1): string {
 }
 
 export function formatPercent(value: number | null): string {
-  return value === null || !Number.isFinite(value) ? "—" : `${decimal(1).format(value * 100)}%`;
+  return value === null || !Number.isFinite(value) ? "—" : `${decimal(1).format(value * 100)}\u00a0%`;
 }
 
 export function formatPerShare(value: number | null, currency: Currency | null): string {

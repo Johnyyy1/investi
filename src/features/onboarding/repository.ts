@@ -28,7 +28,7 @@ export async function updatePreferences(userId: string, input: unknown) {
   const answers = preferencesSchema.parse(input);
   const rows = await db.update(learningProfile).set({ ...answers, recommendedStart: recommendLearningPath(answers).recommendedModule.slug, updatedAt: new Date() })
     .where(and(eq(learningProfile.userId, userId), sql`${learningProfile.onboardingCompletedAt} is not null`)).returning({ userId: learningProfile.userId });
-  if (!rows.length) throw new Error("Complete onboarding first");
+  if (!rows.length) throw new Error("Nejprve dokonči úvodní nastavení.");
 }
 
 /** One useful answer; keep legacy answers and the original completion marker intact. */

@@ -18,8 +18,8 @@ export const deterministicInstruments: readonly Instrument[] = [
   { instrumentId: "US-XNAS:MSFT", symbol: "MSFT", name: "Microsoft Corporation", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD", equityProfile: { sector: "Technology", industry: "Software", country: "US", marketCap: 2_240_000_000_000 } },
   { instrumentId: "US-XNAS:NVDA", symbol: "NVDA", name: "NVIDIA Corporation", assetType: "equity", exchangeMic: "XNAS", quoteCurrency: "USD", equityProfile: { sector: "Technology", industry: "Semiconductors", country: "US", marketCap: 1_920_000_000_000 } },
   { instrumentId: "IE-XETR:VWCE", symbol: "VWCE", name: "Vanguard FTSE All-World UCITS ETF", assetType: "etf", exchangeMic: "XETR", quoteCurrency: "EUR" },
-  { instrumentId: "CZ-XPRA:CZGB35", symbol: "CZGB35", name: "Czech Government Bond 2035", assetType: "bond", exchangeMic: "XPRA", quoteCurrency: "CZK" },
-  { instrumentId: "CASH:CZK", symbol: "CZK", name: "Czech Koruna Cash", assetType: "cash", exchangeMic: null, quoteCurrency: "CZK" },
+  { instrumentId: "CZ-XPRA:CZGB35", symbol: "CZGB35", name: "Český státní dluhopis 2035", assetType: "bond", exchangeMic: "XPRA", quoteCurrency: "CZK" },
+  { instrumentId: "CASH:CZK", symbol: "CZK", name: "Hotovost v českých korunách", assetType: "cash", exchangeMic: null, quoteCurrency: "CZK" },
   { instrumentId: "US-XCBO:SPX", symbol: "SPX", name: "S&P 500 Index", assetType: "index", exchangeMic: "XCBO", quoteCurrency: "USD" },
 ];
 
