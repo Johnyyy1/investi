@@ -16,6 +16,14 @@ describe("Portfolio Lab unlock", () => {
     expect(result.unlocked).toBe(true);
     expect(result.totalXp).toBe(0);
   });
+  it("opens the demo without completing lessons or fabricating XP", () => {
+    const result = evaluateUnlock(PORTFOLIO_LAB_UNLOCK_ID, { totalXp: 360, completedLessonIds: new Set(required.slice(0, 5)) }, false, true);
+    expect(result.unlocked).toBe(true);
+    expect(result.totalXp).toBe(360);
+    expect(result.completedPrerequisiteLessons).toBe(5);
+    expect(result.prerequisitesComplete).toBe(false);
+    expect(status(360, [...required.slice(0, 5)]).unlocked).toBe(false);
+  });
   it("uses the existing 60 XP receipt scale and exact minor units", () => {
     expect(required).toHaveLength(7);
     expect(progressionUnlocks.PORTFOLIO_LAB.xpRequired).toBe(required.length * 60);

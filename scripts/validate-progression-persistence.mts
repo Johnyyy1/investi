@@ -13,16 +13,17 @@ import { loadPortfolioLabUnlock, requirePortfolioLabUnlock } from "../src/featur
 import { progressionUnlocks } from "../src/features/progression/unlocks";
 import { loadPracticeCapitalSummary } from "../src/features/rewards/repository";
 import { loadPortfolioView } from "../src/features/portfolio/service";
-import { executeTrade } from "../src/features/portfolio/repository";
+import { executeTrade, resetActivePortfolio } from "../src/features/portfolio/repository";
+import { ensureDemoSeed } from "../src/features/demo/repository";
 
 const databaseUrl = process.env.DATABASE_URL;
 assert.ok(databaseUrl && ["localhost", "127.0.0.1", "[::1]"].includes(new URL(databaseUrl).hostname), "Requires a local test database.");
 const sql = postgres(databaseUrl, { prepare: false });
 const ids: string[] = [];
-async function owner() {
+async function owner(isAnonymous = false) {
   const id = `progression_qa_${randomUUID()}`;
   ids.push(id);
-  await db.insert(user).values({ id, email: `${id}@example.com`, name: "Progression QA", createdAt: new Date(), updatedAt: new Date() });
+  await db.insert(user).values({ id, email: `${id}@example.com`, name: "Progression QA", isAnonymous, createdAt: new Date(), updatedAt: new Date() });
   return id;
 }
 async function finalCursor(userId: string, lessonId: string) {
@@ -30,6 +31,44 @@ async function finalCursor(userId: string, lessonId: string) {
 }
 
 try {
+  // A pre-existing seeded demo gets access lazily without rewriting its learning history.
+  const demo = await owner(true), otherDemo = await owner(true);
+  await ensureDemoSeed(demo);
+  await ensureDemoSeed(otherDemo);
+  const demoProgress = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, demo));
+  const demoAwards = await db.select().from(lessonAward).where(eq(lessonAward.userId, demo));
+  const demoAccess = await Promise.all([loadPortfolioLabUnlock(demo), requirePortfolioLabUnlock(demo)]);
+  assert.ok(demoAccess.every((status) => status.unlocked && !status.newlyUnlocked && !status.prerequisitesComplete));
+  assert.equal(demoAccess.reduce((sum, status) => sum + status.capitalAwardedMinor, 0n), 500_000n);
+  const demoGrants = await db.select().from(progressionUnlock).where(eq(progressionUnlock.userId, demo));
+  assert.equal(demoGrants.length, 1);
+  assert.equal(demoGrants[0].reason, "demo_access");
+  assert.deepEqual(await db.select().from(lessonProgress).where(eq(lessonProgress.userId, demo)), demoProgress);
+  assert.deepEqual(await db.select().from(lessonAward).where(eq(lessonAward.userId, demo)), demoAwards);
+  const demoView = await loadPortfolioView(demo);
+  assert.equal(demoView.earnedPracticeCapitalMinor, "500000");
+  assert.equal(demoView.investmentGainLossMinor, "0", "demo capital is a contribution, not investment performance");
+  await requirePortfolioLabUnlock(otherDemo);
+  const otherDemoView = await loadPortfolioView(otherDemo);
+  const demoBuy = { instrumentId: "US-XNAS:AAPL", quantity: "0.1", side: "BUY" as const, clientIdempotencyKey: randomUUID() };
+  await executeTrade(demo, demoBuy);
+  assert.equal((await executeTrade(demo, demoBuy)).duplicate, true);
+  assert.deepEqual(await loadPortfolioView(otherDemo), otherDemoView, "demo trading remains isolated");
+  await executeTrade(demo, { ...demoBuy, side: "SELL", clientIdempotencyKey: randomUUID() });
+  await resetActivePortfolio(demo, randomUUID());
+  await ensureDemoSeed(demo);
+  await requirePortfolioLabUnlock(demo);
+  const resetDemo = await loadPortfolioView(demo);
+  assert.equal(resetDemo.availableCashMinor, "500000");
+  assert.equal(resetDemo.investmentGainLossMinor, "0");
+  assert.equal(resetDemo.holdings.length, 0, "reset and revisit never reseed trades");
+  assert.equal((await db.select().from(progressionUnlock).where(eq(progressionUnlock.userId, demo))).length, 1);
+  await db.update(lessonProgress).set({ lastPosition: lessonSteps("foundations-risk-reward").length - 1 }).where(and(eq(lessonProgress.userId, demo), eq(lessonProgress.lessonId, "foundations-risk-reward")));
+  const demoCompletion = await completeLesson(demo, "foundations-risk-reward");
+  assert.equal(demoCompletion.xpAwarded, 60);
+  assert.equal(demoCompletion.unlockCapitalAwardedMinor, 0n, "later lessons do not duplicate the demo grant");
+  assert.equal(demoCompletion.portfolioLabUnlocked, false);
+
   const learner = await owner();
   assert.equal((await loadPortfolioLabUnlock(learner)).unlocked, false);
   await assert.rejects(() => requirePortfolioLabUnlock(learner));
@@ -100,7 +139,7 @@ try {
   const afterBackfill = await loadPortfolioView(backfill);
   assert.equal(afterBackfill.holdings[0].quantity, beforeBackfill.holdings[0].quantity, "migration backfill preserves holdings and trades");
   assert.equal(afterBackfill.earnedPracticeCapitalMinor, beforeBackfill.earnedPracticeCapitalMinor, "grandfathering contributes no capital");
-  console.log("PASS: XP, concurrent unlock, one-time capital, grandfathering, accounting, and migration rerun.");
+  console.log("PASS: demo access, isolated trading/reset, concurrent one-time demo grant, preserved learning history, XP, concurrent learning unlock, grandfathering, accounting, and migration rerun.");
 } finally {
   await db.delete(user).where(eq(user.id, ids[0] ?? ""));
   for (const id of ids.slice(1)) await db.delete(user).where(eq(user.id, id));

@@ -21,7 +21,7 @@ export const progressionUnlocks = {
 export type UnlockId = keyof typeof progressionUnlocks;
 export type LearningProgression = { totalXp: number; completedLessonIds: ReadonlySet<string> };
 
-export function evaluateUnlock(id: UnlockId, progression: LearningProgression, persisted = false) {
+export function evaluateUnlock(id: UnlockId, progression: LearningProgression, persisted = false, isDemo = false) {
   const definition = progressionUnlocks[id];
   const completedPrerequisiteLessons = definition.prerequisiteLessonIds.filter((lessonId) => progression.completedLessonIds.has(lessonId)).length;
   const requiredPrerequisiteLessons = definition.prerequisiteLessonIds.length;
@@ -34,6 +34,6 @@ export function evaluateUnlock(id: UnlockId, progression: LearningProgression, p
     completedPrerequisiteLessons,
     requiredPrerequisiteLessons,
     prerequisitesComplete,
-    unlocked: persisted || (progression.totalXp >= definition.xpRequired && prerequisitesComplete),
+    unlocked: persisted || isDemo || (progression.totalXp >= definition.xpRequired && prerequisitesComplete),
   };
 }

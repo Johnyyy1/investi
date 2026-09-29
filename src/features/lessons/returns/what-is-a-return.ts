@@ -17,7 +17,7 @@ export const whatIsAReturnLesson: AuthoredLesson = {
   ],
   navigation: { next: { href: "/learn/returns/simple-returns", label: "Jednoduché výnosy" } },
   blocks: [
-    { id: "meaning", type: "heading", title: "Výnos říká, co investice vydělala vzhledem k počáteční hodnotě.", body: "Pohyb ceny je fakt. Výnos mu dává souvislost." },
+    { id: "meaning", type: "heading", title: "Výnos říká, co investice vydělala vzhledem k počáteční hodnotě.", body: "Pohyb ceny je fakt. Výnos mu dává souvislost. V této lekci počítáme cenový výnos: změnu ceny bez dividend, poplatků a dalších peněžních toků." },
     { id: "price-change", type: "paragraph", content: "Představ si aktivum, jehož cena vzroste ze 100 na 110. Cena se změnila o 10 jednotek. Tato absolutní změna je užitečná, ale sama neříká, jak velký byl zisk vzhledem k investovaným penězům." },
     { id: "formula-one", type: "formula", latex: "R = \\frac{P_{\\mathrm{end}} - P_{\\mathrm{start}}}{P_{\\mathrm{start}}}", expression: "R = (P_end − P_start) / P_start", variables: [{ symbol: "R", description: "jednoduchý výnos" }, { symbol: "P_start", description: "počáteční cena" }, { symbol: "P_end", description: "konečná cena" }] },
     { id: "formula-two", type: "formula", latex: "R = \\frac{P_{\\mathrm{end}}}{P_{\\mathrm{start}}} - 1", expression: "R = P_end / P_start − 1", variables: [{ symbol: "R", description: "stejný jednoduchý výnos" }, { symbol: "P_start", description: "počáteční cena" }, { symbol: "P_end", description: "konečná cena" }] },

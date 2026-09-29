@@ -47,7 +47,7 @@ try {
   const [one, two] = await Promise.all([completeLesson(a, "foundations-risk-reward"), completeLesson(a, "foundations-risk-reward")]);
   assert.equal(one.xpAwarded + two.xpAwarded, 60);
   assert.equal(one.practiceCapitalAwardedMinor + two.practiceCapitalAwardedMinor, BigInt(0));
-  assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, BigInt(0), "concurrent completion awards no lesson capital");
+  assert.equal((await loadPracticeCapitalSummary(a)).earnedPracticeCapitalMinor, 500_000n, "concurrent demo completion grants demo access once, with no lesson capital");
   assert.equal((await getAwards(a)).length, 7);
   assert.equal((await getAwards(b)).length, 6);
   assert.equal((await loadPracticeCapitalSummary(b)).earnedPracticeCapitalMinor, BigInt(0), "new demo identities receive no lesson capital");

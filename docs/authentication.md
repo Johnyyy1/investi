@@ -32,6 +32,10 @@ Keep Better Auth's safe defaults: implicit linking requires a matching email, a 
 
 Both social buttons call `authClient.signIn.social` with `callbackURL: "/learn"`. The existing authenticated layout decides whether a new learner needs onboarding; returning learners retain their normal destination. Email registration keeps its existing `/onboarding` redirect. Authentication adds no lesson progress or rewards.
 
+## Demo access
+
+Anonymous demo profiles can use all published lessons, Portfolio Lab (including instrument details, buy/sell and reset), and Backtesting Lab immediately. The server reads the stored anonymous identity when evaluating Portfolio Lab access; no client flag can unlock a regular account. First access records a single `demo_access` entitlement with 5,000 Kč of virtual Practice Capital in the existing unlock ledger. Existing sessions get this access on their next visit without reseeding lesson history. Existing unlock receipts and portfolios keep their original capital; reloads, lesson completion and portfolio resets never repeat the grant. Normal accounts retain the Foundations/420 XP requirements. Planned content remains unpublished.
+
 ## Failure and loading behavior
 
 OAuth uses full-page redirects. Both social buttons lock immediately during an attempt, with a pending label and `aria-busy`; API/network failures unlock them. Browser Back restores usable buttons. Per-attempt errors return to the originating auth page. Errors without usable OAuth state fall back to `/sign-in` via `onAPIError.errorURL`.
