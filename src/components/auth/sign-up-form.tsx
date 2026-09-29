@@ -27,7 +27,7 @@ export function SignUpForm() {
     finally { setIsSubmitting(false); }
   }
 
-  return <form action={onSubmit} className="mt-9 space-y-5">
+  return <form action={onSubmit} className="space-y-5">
     <TextInput label="Jméno" type="text" name="name" autoComplete="name" placeholder="Tvoje jméno" required />
     <TextInput label="E-mail" type="email" name="email" autoComplete="email" placeholder="ty@example.com" required />
     <TextInput label="Heslo" type="password" name="password" autoComplete="new-password" minLength={8} required hint="Použij alespoň 8 znaků." />

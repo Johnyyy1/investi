@@ -10,6 +10,10 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { env } from "@/lib/env";
+import { createSocialAuthConfig } from "@/lib/auth-providers";
+
+const socialAuth = createSocialAuthConfig(env);
+export const authProviderAvailability = socialAuth.availability;
 
 export const auth = betterAuth({
   appName: "investi",
@@ -17,6 +21,9 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: { enabled: true },
+  socialProviders: socialAuth.socialProviders,
+  // Preserve Better Auth's verified-email linking safeguards; no trusted-provider override.
+  onAPIError: { errorURL: new URL("/sign-in", env.BETTER_AUTH_URL).href },
   rateLimit: { enabled: true, customRules: { "/sign-in/anonymous": { window: 60, max: 5 } } },
   databaseHooks: {
     session: { create: { before: async (session) => {

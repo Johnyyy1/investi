@@ -1,9 +1,28 @@
-import { DemoButton } from "./demo-button";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-export function AuthLayout({ title, description, children, footer }: { title: string; description: string; children: ReactNode; footer: ReactNode }) {
-  return <main className="mx-auto flex min-h-screen max-w-lg flex-col px-5 py-8 sm:px-10 sm:py-12">
-    <Link href="/" className="self-center text-ql-page-title font-bold">investi<span className="text-ql-link">.</span></Link>
-    <section className="my-auto py-7"><p className="text-ql-small font-semibold text-ql-link">Uč se investovat praxí.</p><h1 className="mt-4 text-ql-page-title font-semibold">{title}</h1><p className="mt-3 text-ql-body text-ql-secondary">{description}</p>{children}<DemoButton /><p className="mt-8 text-ql-small text-ql-secondary">{footer}</p></section>
-  </main>;
+import { DemoButton } from "./demo-button";
+
+export function AuthLayout({ title, description, children, footer }: {
+  title: string;
+  description: string;
+  children: ReactNode;
+  footer: ReactNode;
+}) {
+  return (
+    <main className="mx-auto flex min-h-svh w-full max-w-[496px] flex-col px-[20px] py-8 sm:px-[32px] sm:py-12">
+      <Link href="/" aria-label="investi – úvodní stránka" className="self-center rounded-control">
+        <Image src="/brand/investi-logo.png" alt="investi" width={2172} height={724} sizes="144px" className="h-auto w-[144px]" />
+      </Link>
+      <section aria-labelledby="auth-title" className="my-auto py-10 sm:py-12">
+        <header className="mb-7">
+          <h1 id="auth-title" className="text-[1.875rem] leading-tight font-bold tracking-tight">{title}</h1>
+          <p className="mt-3 text-body text-secondary">{description}</p>
+        </header>
+        {children}
+        <p className="mt-7 text-center text-small text-secondary">{footer}</p>
+        <DemoButton className="mt-7 border-t border-border pt-4" buttonClassName="w-full border-transparent bg-transparent text-secondary shadow-none hover:border-transparent hover:bg-surface-muted" />
+      </section>
+    </main>
+  );
 }

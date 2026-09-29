@@ -20,7 +20,7 @@ export function SignInForm() {
     } catch { setErrorMessage("Připojení se nepodařilo. Zkus to znovu."); }
     finally { setIsSubmitting(false); }
   }
-  return <form action={onSubmit} className="mt-9 space-y-5">
+  return <form action={onSubmit} className="space-y-5">
     <TextInput label="E-mail" type="email" name="email" autoComplete="email" placeholder="ty@example.com" required />
     <TextInput label="Heslo" type="password" name="password" autoComplete="current-password" required />
     {errorMessage ? <p className="text-ql-small text-ql-danger-ink" role="alert">{errorMessage}</p> : null}

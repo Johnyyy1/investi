@@ -32,6 +32,10 @@ Learn investing by doing. The authenticated product is organized around three de
 
 `db:seed` is idempotent. Apply all committed migrations through `0005_sweet_anthem.sql`: completion writes require the Practice Capital fields on `lesson_award`, and Portfolio Lab requires the `portfolio` and `portfolio_trade` tables.
 
+## Optional social sign-in
+
+Google and Facebook can be enabled independently with server-only credential pairs. See [authentication setup](docs/authentication.md) for callback URLs, provider-console setup, safe account-linking behavior and verification. Email/password and demo continue to work without OAuth credentials.
+
 ## Docker
 
 Prerequisites: Docker Desktop (or Docker Engine with the Compose plugin). On first use, create an ignored Compose environment file and replace both placeholder secrets with locally generated values:
