@@ -24,7 +24,7 @@ const simpleSteps: Step[] = [
   { title: "Vypočítej zisk", blocks: ["first-calculation"] },
   { title: "Vypočítej ztrátu", blocks: ["negative-return"] },
   { title: "Desetinná čísla a procenta", blocks: ["representation", "decimal-callout", "decimal-practice"] },
-  { title: "Porovnej dvě investice", blocks: ["comparison"] },
+  { title: "Spočítej výnosová pozorování", blocks: ["comparison"] },
   { title: "Promysli dvě období", blocks: ["practice", "two-periods"] },
   { title: "Shrň si to", blocks: ["raw-differences", "takeaway", "checkpoint"] },
 ];

@@ -84,10 +84,16 @@ try {
   assert.equal(await page.getByRole("button", { name: "Pokračovat", exact: true }).evaluate((element) => element === document.activeElement), true);
   await next("Počáteční hodnota se mění");
   await next("Přemýšlej v růstových faktorech");
+  await page.getByRole("textbox", { name: "Tvoje odpověď", exact: true }).fill("0,96");
+  await check.click();
+  await heading("Správně");
   await next("Vynásob růstové faktory");
   assert.equal(await page.locator("math").count(), 2);
   await page.setViewportSize({ width: 320, height: 800 });
   await overflow();
+  await page.getByRole("textbox", { name: "Tvoje odpověď", exact: true }).fill("2200");
+  await check.click();
+  await heading("Správně");
   await next("Prozkoumej složené zhodnocení");
   await page.getByText("96,00", { exact: true }).waitFor();
   await page.getByRole("textbox", { name: "Počáteční hodnota", exact: true }).fill("");

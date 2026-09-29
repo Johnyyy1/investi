@@ -42,6 +42,14 @@ describe("consecutiveSimpleReturns", () => {
     expect(returns[2]).toBeCloseTo(0.0588235294117647, 12);
   });
 
+  it("derives N−1 unrounded returns without inserting a zero for the first observation", () => {
+    const returns = consecutiveSimpleReturns([100, 103, 101, 106]);
+    expect(returns).toHaveLength(3);
+    expect(returns).toEqual([simpleReturn(100, 103), simpleReturn(103, 101), simpleReturn(101, 106)]);
+    expect(returns[1]).not.toBe(-0.0194);
+    expect(consecutiveSimpleReturns([100, 100])).toEqual([0]);
+  });
+
   it("supports decimals and unchanged prices", () => {
     expect(consecutiveSimpleReturns([10.5, 10.5, 10.75])).toEqual([0, expect.closeTo(0.0238095238095238, 12)]);
   });
