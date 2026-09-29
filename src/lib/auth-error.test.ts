@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getAuthErrorMessage } from "./auth-error";
+import { getSocialAuthErrorMessage } from "./social-auth-error";
 
 describe("getAuthErrorMessage", () => {
   it("explains duplicate email registration", () => {
@@ -15,5 +16,11 @@ describe("getAuthErrorMessage", () => {
 
   it("uses the service message for unexpected errors", () => {
     expect(getAuthErrorMessage({ message: "Service unavailable" }, "Fallback")).toBe("Service unavailable");
+  });
+
+  it("makes an existing account actionable after an unlinked social sign-in", () => {
+    expect(getSocialAuthErrorMessage("account_not_linked")).toBe(
+      "Účet s tímto e-mailem už existuje. Přihlas se původním způsobem a v Nastavení si Google nebo Facebook připoj.",
+    );
   });
 });

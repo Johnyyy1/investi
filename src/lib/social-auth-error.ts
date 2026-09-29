@@ -7,6 +7,7 @@ export function getSocialAuthErrorMessage(code: string): string {
     case "email_not_found":
       return "Služba neposkytla e-mail. Použij jiný způsob přihlášení nebo se zaregistruj e-mailem.";
     case "account_not_linked":
+      return "Účet s tímto e-mailem už existuje. Přihlas se původním způsobem a v Nastavení si Google nebo Facebook připoj.";
     case "unable_to_link_account":
     case "email_not_verified":
     case "email_does_not_match":
