@@ -1,0 +1,31 @@
+.flow {
+  container: onboarding / inline-size;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* Keep text enlargement from also consuming the narrow viewport with gutters. */
+@media (max-width: 420px) {
+  .flow {
+    padding-inline: min(1rem, 16px);
+  }
+}
+
+/* em follows the container's text size, so approved unzoomed layouts stay intact. */
+@container onboarding (width < 14em) {
+  .flow h1 {
+    /* The document is Czech; use its dictionary for oversized heading words. */
+    hyphens: auto;
+  }
+
+  .flow label {
+    padding-inline: 8px;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .flow label > input {
+    /* Center the control on the first 1.6rem line, not the whole growing card. */
+    margin-block-start: 0.3rem;
+  }
+}

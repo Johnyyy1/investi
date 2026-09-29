@@ -1,9 +1,11 @@
 # Onboarding and learning preferences
 
-Current onboarding is a single focused decision: experience level, then **Start learning**. Beginner is selected by default, so a new account can reach the first meaningful lesson interaction with one intentional click after account creation. The server validates the selected enum and browser-provided IANA timezone, creates the completed learning profile, and returns the central next-lesson route.
+New learners see a short Czech flow: primary goal, optional interests, experience, approximate session length, five diagnostic questions, and a saved recommended plan. Skipping uses the authoritative safe-default action. Neither completing nor skipping personalization awards XP, completes lessons, or unlocks Portfolio Lab.
 
-New quick-start profiles use a ten-minute daily preference and empty goals/interests; the application does not invent answers. Settings retains the full legacy preference editor for experience, optional goals/interests, and 5/10/15/20-minute choices. Those minutes map to one or two completed-lesson targets rather than fictional time spent.
+Existing learners retain app access when their profile is missing or incomplete but they have learning history, awards, an entitlement, or a portfolio. Learn offers optional, dismissible personalization. Settings edits the same profile and offers a separate diagnostic retake after personalization has been completed.
 
-The authenticated layout sends incomplete profiles to onboarding and completed profiles directly into Learn. Existing completed learners never replay onboarding. Conditional upsert semantics prevent stale onboarding requests from replacing a completed profile, while Settings preserves the original onboarding completion timestamp.
+The `dailyGoalMinutes` column remains in storage; these screens describe it as preferred session length. The deterministic recommendation engine supplies Learn and the result page. These surfaces do not read legacy `recommendedStart`. The ordinary curriculum remains visible.
 
-Server actions derive ownership from the current session and validate again in the server-only repository. See [product-reset.md](product-reset.md) for next-lesson priority, daily-goal, timezone, compatibility, and validation details.
+Initial personalization and skip retain their conditional upserts. Edits preserve diagnostic evidence; retakes preserve the original personalization completion marker. Actions authenticate ownership, validate inputs server-side, and evaluate answer IDs on the server.
+
+See [Phase 6A.3A](personalization-phase-6a3a.md) for the additive migration and domain invariants, and [Phase 6A.3B](personalization-phase-6a3b.md) for UI integration, validation, screenshots, and deferred lesson adaptation.

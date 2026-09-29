@@ -28,7 +28,10 @@
     "test:progression-browser": "node scripts/validate-progression-browser.mjs",
     "test:foundations-browser": "node scripts/validate-foundations.mjs",
     "smoke:fmp": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/smoke-fmp-market-data.mts",
-    "demo:cleanup": "node scripts/cleanup-demos.mjs"
+    "demo:cleanup": "node scripts/cleanup-demos.mjs",
+    "test:personalization-persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-personalization-persistence.mts",
+    "test:personalization-compatibility": "node scripts/validate-personalization-compatibility.mjs",
+    "test:personalization-browser": "node scripts/validate-personalization-browser.mjs"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.11",

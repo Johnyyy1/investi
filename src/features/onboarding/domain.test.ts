@@ -18,14 +18,14 @@ describe("learning recommendations", () => {
     expect(recommendLearningPath({ ...answers, experienceLevel: "ADVANCED", goals: ["QUANT"], interests: ["QUANT"] }).futureTargets).toEqual(["Kvantitativní investování"]);
     expect(recommendLearningPath({ ...answers, goals: ["PORTFOLIO", "QUANT", "COMPANIES", "MARKETS"] }).futureTargets).toEqual(["Sestavování portfolia", "Kvantitativní investování"]);
   });
-  it("uses BASIC goals and interests to select the appropriate published module", () => {
+  it("keeps BASIC learners in Foundations regardless of interests", () => {
     expect(recommendLearningPath(answers).recommendedModule.slug).toBe("investing-foundations");
     expect(recommendLearningPath({ ...answers, goals: ["PORTFOLIO"], interests: ["ETFS"] }).recommendedModule.slug).toBe("investing-foundations");
-    expect(recommendLearningPath({ ...answers, goals: ["KNOWLEDGE"] }).recommendedModule.slug).toBe("returns");
-    expect(recommendLearningPath({ ...answers, goals: ["QUANT"], interests: ["QUANT"] }).recommendedModule.slug).toBe("returns");
+    expect(recommendLearningPath({ ...answers, goals: ["KNOWLEDGE"] }).recommendedModule.slug).toBe("investing-foundations");
+    expect(recommendLearningPath({ ...answers, goals: ["QUANT"], interests: ["QUANT"] }).recommendedModule.slug).toBe("investing-foundations");
   });
-  it.each(["INVESTOR", "ADVANCED"] as const)("starts %s at Returns", (experienceLevel) => {
-    expect(recommendLearningPath({ ...answers, experienceLevel }).recommendedModule.slug).toBe("returns");
+  it.each(["INVESTOR", "ADVANCED"] as const)("does not let %s self-assessment bypass Foundations", (experienceLevel) => {
+    expect(recommendLearningPath({ ...answers, experienceLevel }).recommendedModule.slug).toBe("investing-foundations");
   });
   it("is deterministic and does not mutate input", () => {
     const before = structuredClone(answers);

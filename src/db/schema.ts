@@ -1,3 +1,4 @@
+import type { DiagnosticResult } from "../features/personalization/diagnostic";
 import { sql } from "drizzle-orm";
 import { experienceValues, goalValues, interestValues } from "../features/onboarding/domain";
 import {
@@ -7,6 +8,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -150,6 +152,8 @@ export const learningProfile = pgTable("learning_profile", {
   timeZone: text("time_zone"),
   recommendedStart: recommendedStartEnum("recommended_start"),
   onboardingStep: integer("onboarding_step").notNull().default(0),
+  diagnosticResult: jsonb("diagnostic_result").$type<DiagnosticResult>(),
+  personalizedOnboardingCompletedAt: timestamp("personalized_onboarding_completed_at", { withTimezone: true }),
   onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

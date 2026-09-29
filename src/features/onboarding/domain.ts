@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { recommendLearning } from "../personalization/recommendation";
+import { readLearnerProfile } from "../personalization/profile";
 
 export const experienceOptions = [
   { value: "BEGINNER", label: "Začínám úplně od nuly" },
@@ -23,16 +25,16 @@ export const interestOptions = [
   { value: "QUANT", label: "Kvantitativní strategie" },
 ] as const;
 export const experienceValues = ["BEGINNER", "BASIC", "INVESTOR", "ADVANCED"] as const;
-export const goalValues = ["CONFIDENCE", "MARKETS", "PORTFOLIO", "COMPANIES", "QUANT", "KNOWLEDGE"] as const;
-export const interestValues = ["STOCKS", "ETFS", "PORTFOLIO", "MARKETS", "FUNDAMENTALS", "QUANT"] as const;
+export const goalValues = ["CONFIDENCE", "MARKETS", "PORTFOLIO", "COMPANIES", "QUANT", "KNOWLEDGE", "LONG_TERM_ETF"] as const;
+export const interestValues = ["STOCKS", "ETFS", "PORTFOLIO", "MARKETS", "FUNDAMENTALS", "QUANT", "DATA", "BACKTESTING"] as const;
 export const dailyGoals = [5, 10, 15, 20] as const;
 const goalsSchema = z.array(z.enum(goalValues)).max(6).refine((v) => new Set(v).size === v.length);
-const interestsSchema = z.array(z.enum(interestValues)).max(6).refine((v) => new Set(v).size === v.length);
+const interestsSchema = z.array(z.enum(interestValues)).max(9).refine((v) => new Set(v).size === v.length);
 export const preferencesSchema = z.object({
   experienceLevel: z.enum(experienceValues),
   goals: goalsSchema,
   interests: interestsSchema,
-  dailyGoalMinutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(20)]),
+  dailyGoalMinutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
 }).strict();
 export const draftSchema = z.object({
   experienceLevel: preferencesSchema.shape.experienceLevel.nullable(),
@@ -67,13 +69,10 @@ export function recommendLearningPath({ experienceLevel, goals, interests }: Pic
   if (goals.includes("QUANT") || interests.includes("QUANT")) targets.push("Kvantitativní investování");
   if (goals.includes("COMPANIES") || interests.includes("FUNDAMENTALS") || interests.includes("STOCKS")) targets.push("Fundamentální analýza");
   if (goals.includes("MARKETS") || interests.includes("MARKETS")) targets.push("Trhy a ekonomika");
-  const foundations = experienceLevel === "BEGINNER" || (experienceLevel === "BASIC" && (goals.includes("CONFIDENCE") || (interests.includes("ETFS") && !goals.includes("QUANT") && !goals.includes("KNOWLEDGE"))));
-  const reason = {
-    BEGINNER: "Investování teprve poznáváš, proto začneme pojmy, které ti usnadní pochopit vše ostatní.",
-    BASIC: foundations ? "Než začneš porovnávat výnosy investic, upevni si principy investování, vlastnictví společností a fondů." : "Základy už znáš. Výnosy a složené zhodnocení jsou užitečný další krok k pochopení, jak se hodnota investic mění.",
-    INVESTOR: "Když už investuješ, začni tím, jak porovnávat výnosy a rozumět složenému zhodnocení. Pak se můžeš věnovat vybraným tématům.",
-    ADVANCED: "Začni společným základem ve výnosech a složeném zhodnocení, potom navazuj vybranými tématy podle toho, jak bude kurz růst.",
-  }[experienceLevel];
+  // Compatibility presenter for the old onboarding. All selection lives in the new engine.
+  const recommendation = recommendLearning({ profile: readLearnerProfile({ experienceLevel, goals, interests, dailyGoalMinutes: 10 }) });
+  const foundations = recommendation.nextLessonId?.startsWith("foundations-") ?? true;
+  const reason = "Začni společnými Základy investování. Dokončením lekcí si ověříš pojmy potřebné pro další učení.";
   return { recommendedModule: foundations ? { slug: "investing-foundations", title: "Základy investování", href: "/learn/investing-foundations" } : { slug: "returns", title: "Výnos a složené zhodnocení", href: "/learn/returns" }, reason, futureTargets: targets.slice(0, 2) };
 }
 

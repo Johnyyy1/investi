@@ -6,8 +6,10 @@ import { eq } from "drizzle-orm";
 import { loadGamification } from "@/features/gamification/repository";
 import { loadPracticeCapitalSummary } from "@/features/rewards/repository";
 import { getLearningProfile } from "@/features/onboarding/repository";
-import { preferencesSchema, recommendLearningPath } from "@/features/onboarding/domain";
+import { availableLessons } from "./catalog";
 
+import { readLearnerProfile } from "@/features/personalization/profile";
+import { recommendLearning } from "@/features/personalization/recommendation";
 import { getLearnerSummary } from "./learner-summary";
 
 export async function loadLearner() {
@@ -19,8 +21,6 @@ export async function loadLearner() {
     loadPracticeCapitalSummary(user.id),
   ]) : [[], undefined, undefined, { earnedPracticeCapitalMinor: BigInt(0) }];
   const states = rows.filter((row) => row !== undefined);
-  // Recompute from stored answers: old recommendedStart values never force repeat onboarding.
-  const preferences = preferencesSchema.safeParse(profile ? { experienceLevel: profile.experienceLevel, goals: profile.goals, interests: profile.interests, dailyGoalMinutes: profile.dailyGoalMinutes } : undefined);
-  const recommendedStart = preferences.success ? recommendLearningPath(preferences.data).recommendedModule.slug : profile?.recommendedStart ?? "investing-foundations";
-  return { user, profile, gamification, practiceCapital, states, ...getLearnerSummary(states, recommendedStart) };
+  const recommendation = recommendLearning({ profile: readLearnerProfile(profile), progress: states });
+  return { user, profile, recommendation, gamification, practiceCapital, states, ...getLearnerSummary(states, availableLessons.find((lesson) => lesson.id === recommendation.nextLessonId)?.moduleSlug) };
 }
