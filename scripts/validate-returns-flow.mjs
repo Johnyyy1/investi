@@ -52,7 +52,7 @@ try {
   assert.equal(await page.locator(".learning-theme").count(), 1, "Learn uses the shared theme");
   await page.locator('a[href="/learn/returns"]').click();
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "0 / 3 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "0 / 4 lekcí dokončeno");
   const compounding = page.getByRole("listitem").filter({ hasText: "Složené a kumulativní výnosy" });
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -159,15 +159,15 @@ try {
   assert.equal(completed.status, "completed");
   await page.getByRole("link", { name: "Zobrazit modul", exact: true }).click();
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 3 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 4 lekcí dokončeno");
   await page.reload();
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 3 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 4 lekcí dokončeno");
   await signOut();
   await signIn();
   await page.goto(`${baseURL}/learn/returns`);
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 3 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 4 lekcí dokončeno");
   await compounding.getByRole("button", { name: "Zopakovat lekci" }).click();
   await heading("Od jednoho období k posloupnosti");
   await page.emulateMedia({ reducedMotion: "reduce" });

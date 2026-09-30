@@ -8,9 +8,11 @@ describe("authored lesson registry", () => {
     expect(lesson).toMatchObject({ id: returnsLessons[0].id, title: "Co je výnos?" });
   });
 
-  it("registers the three published Returns lessons while later lessons stay unavailable", () => {
+  it("registers the four published Returns lessons while later lessons stay unavailable", () => {
     expect(getAuthoredLesson("returns", "simple-returns")).toMatchObject({ title: "Jednoduché výnosy" });
     expect(getAuthoredLesson("returns", "compounding-and-cumulative-returns")).toMatchObject({ title: "Složené a kumulativní výnosy" });
+    expect(getAuthoredLesson("returns", "comparing-investments")).toMatchObject({ id: "returns-comparing", position: 4, estimatedMinutes: 14 });
+    expect(getAuthoredLesson("returns", "returns-checkpoint")).toBeUndefined();
     expect(getAuthoredLesson("returns", "log-returns")).toBeUndefined();
   });
 });

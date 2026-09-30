@@ -28,10 +28,21 @@ const simpleSteps: Step[] = [
   { title: "Promysli dvě období", blocks: ["practice", "two-periods"] },
   { title: "Shrň si to", blocks: ["raw-differences", "takeaway", "checkpoint"] },
 ];
+const comparingSteps: Step[] = [
+  { title: "Stejná cena, stejný výsledek?", blocks: ["prediction"] },
+  { title: "Co měří cenový výnos", blocks: ["price-return", "price-formula", "price-example"] },
+  { title: "Připočti vyplacenou hotovost", blocks: ["cash-example", "cash-formula"] },
+  { title: "Celkový výnos potřebuje metodiku", blocks: ["total-return", "methodology", "return-definitions"] },
+  { title: "Porovnávej na společném základě", blocks: ["comparison-basis", "definition-and-costs", "splits"] },
+  { title: "Přečti výnos v Labu správně", blocks: ["instrument-detail", "investor-return"] },
+  { title: "Stačí shodných osm procent?", kind: "mastery", blocks: ["comparison-example", "fair-comparison"] },
+  { title: "Shrň si to", blocks: ["takeaway", "checkpoint"] },
+];
 export function getStepDefinitions(lessonId: string): readonly Step[] {
   if (lessonId === returnsLessons[0].id) return introductionSteps;
   if (lessonId === returnsLessons[1].id) return simpleSteps;
   if (lessonId === returnsLessons[2].id) return compoundingSteps;
+  if (lessonId === returnsLessons[3].id) return comparingSteps;
   if (foundationsSteps[lessonId]) return foundationsSteps[lessonId];
   throw new Error("This lesson is not available.");
 }

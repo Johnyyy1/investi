@@ -1,0 +1,53 @@
+import type { AuthoredLesson } from "../types";
+import { returnsLessons } from "./manifest";
+
+export const comparingInvestmentsLesson: AuthoredLesson = {
+  id: returnsLessons[3].id,
+  moduleSlug: "returns",
+  slug: returnsLessons[3].slug,
+  title: returnsLessons[3].title,
+  eyebrow: "Výnosy a složené zhodnocení",
+  position: 4,
+  estimatedMinutes: returnsLessons[3].estimatedMinutes,
+  sections: [
+    { id: "prediction", label: "Předpověz výsledek" },
+    { id: "price-return", label: "Cenový výnos" },
+    { id: "cash-example", label: "Cena a vyplacená hotovost" },
+    { id: "total-return", label: "Co zahrnuje celkový výnos" },
+    { id: "comparison-basis", label: "Společný základ porovnání" },
+    { id: "instrument-detail", label: "Přenes to do Labu" },
+    { id: "fair-comparison", label: "Ověř si porozumění" },
+  ],
+  navigation: { previous: { href: "/learn/returns/compounding-and-cumulative-returns", label: returnsLessons[2].title } },
+  blocks: [
+    {
+      id: "prediction", type: "multipleChoiceQuestion",
+      prompt: "Nejdřív předpověz výsledek. Investice A i B za stejné období zdraží ze 100 na 105 Kč. A nic nevyplatí, B během období vyplatí 2 Kč na jednu akcii. Držíš jednu akcii po celé období a vyplacenou hotovost si ponecháš. Bez poplatků a daní: získáš v obou případech stejný výsledek?",
+      options: [
+        { id: "same-price", label: "Ano, protože obě ceny vzrostly stejně." },
+        { id: "cash-matters", label: "Ne, u B mám vedle akcie také vyplacené 2 Kč." },
+        { id: "distribution-is-loss", label: "Ne, u B musím vyplacené 2 Kč odečíst od svého výsledku." },
+      ],
+      correctOptionId: "cash-matters",
+      correctExplanation: "Cenový pohyb je stejný, ale u B držíš vedle akcie za 105 Kč také 2 Kč v hotovosti. Samotná změna ceny proto nevystihuje celý výsledek.",
+      incorrectExplanation: "Sečti, co na konci držíš: u A akcii za 105 Kč; u B akcii za 105 Kč a vyplacené 2 Kč. Stejné počáteční a konečné ceny neznamenají stejný výsledek včetně hotovosti.",
+    },
+    { id: "price-return", type: "explanation", title: "Cenový výnos sleduje změnu ceny", content: "Cenový výnos vyjadřuje změnu tržní ceny za vybrané období vzhledem k počáteční ceně. Použij srovnatelné ceny na stejném základě očištění. Samotný cenový výnos nezahrnuje vyplacené dividendy ani jiné peněžní distribuce." },
+    { id: "price-formula", type: "formula", expression: "R_price = (P_end − P_start) / P_start", latex: String.raw`R_{\mathrm{price}} = \frac{P_{\mathrm{end}} - P_{\mathrm{start}}}{P_{\mathrm{start}}}`, variables: [{ symbol: "P_start", description: "počáteční cena" }, { symbol: "P_end", description: "konečná cena" }, { symbol: "R_price", description: "desetinný cenový výnos" }] },
+    { id: "price-example", type: "workedExample", title: "Stejný cenový výnos", introduction: "Pevný výukový příklad: cena jedné akcie roste ze 100 na 105 Kč.", steps: [{ label: "Počáteční cena", value: "100 Kč" }, { label: "Konečná cena", value: "105 Kč" }, { label: "Změna ceny", value: "+5 Kč" }, { label: "Cenový výnos", value: "+5 %", emphasis: true }], conclusion: "(105 − 100) ÷ 100 = 0,05 = 5 %. U A i B je cenový výnos stejný. O vyplacené hotovosti tento výpočet nic neříká." },
+    { id: "cash-example", type: "workedExample", title: "Cena plus vyplacená hotovost", introduction: "V tomto zjednodušeném příkladu držíš jednu akcii B od začátku do konce. Vyplacené 2 Kč ponecháš v hotovosti bez úročení a nereinvestuješ je. Nejsou žádné poplatky, daně, další vklady ani výběry.", steps: [{ label: "Počáteční hodnota", value: "100 Kč" }, { label: "Konečná cena akcie", value: "105 Kč" }, { label: "Vyplacená hotovost", value: "2 Kč" }, { label: "Akcie a hotovost na konci", value: "107 Kč", emphasis: true }], conclusion: "Celkem máš o 7 Kč více než na začátku. Vyplacenou hotovost zde jednoduše započítáváme vůči počáteční hodnotě: (105 − 100 + 2) ÷ 100 = 0,07 = 7 %. Cenový výnos přitom zůstává 5 %." },
+    { id: "cash-formula", type: "formula", expression: "R_cash = (P_end − P_start + D) / P_start", latex: String.raw`R_{\mathrm{cash}} = \frac{P_{\mathrm{end}} - P_{\mathrm{start}} + D}{P_{\mathrm{start}}}`, variables: [{ symbol: "P_start", description: "počáteční cena jedné akcie" }, { symbol: "P_end", description: "konečná cena jedné akcie" }, { symbol: "D", description: "hotovost vyplacená na jednu akcii, ponechaná bez reinvestování" }, { symbol: "R_cash", description: "desetinný výsledek včetně hotovosti pouze za předpokladů tohoto příkladu" }] },
+    { id: "total-return", type: "explanation", title: "Celkový výnos zahrnuje také distribuce", content: "Celkový výnos (total return) zachycuje kromě změny ceny i distribuce, například dividendy. Náš výsledek 7 % ukazuje tuto myšlenku v jednoduchém příkladu s hotovostí. Není to obecný postup výpočtu reinvestovaného total-return indexu." },
+    { id: "methodology", type: "conceptCallout", title: "Rozhoduje metodika", content: "Skutečné total-return řady a indexy závisí na načasování distribuce, pravidlech reinvestování a reinvestiční ceně. Záleží také na metodice očištění a na tom, zda výsledek zahrnuje poplatky nebo daně. Nelze obecně sečíst cenový výnos s libovolně uvedeným dividendovým výnosem a prohlásit součet za přesný total return." },
+    { id: "return-definitions", type: "multiNumericQuestion", prompt: "Rozliš oba údaje v našem příkladu: počáteční cena 100 Kč, konečná cena 105 Kč, vyplacené 2 Kč zůstávají v hotovosti. Bez reinvestování, poplatků a daní. Jaké jsou výnosy?", answers: [{ id: "price", label: "Cenový výnos", answer: 5, tolerance: 0.01, unit: "%" }, { id: "cash", label: "Zjednodušený výsledek včetně hotovosti", answer: 7, tolerance: 0.01, unit: "%" }], correctExplanation: "Cena přidala 5 Kč ze základu 100 Kč, tedy 5 %. S vyplacenými 2 Kč je výsledek 7 Kč ze stejného základu, tedy 7 %, za předpokladů tohoto příkladu.", incorrectExplanation: "Odděl změnu ceny od hotovosti: cenový výnos je (105 − 100) ÷ 100 × 100 = 5 %. S ponechanou distribucí je výsledek (105 − 100 + 2) ÷ 100 × 100 = 7 %." },
+    { id: "comparison-basis", type: "explanation", title: "Nejdřív sjednoť, co čísla měří", content: "Období: porovnávej stejné počáteční a konečné datum. Výnos za měsíc nestav vedle ročního výnosu, jako by měřily stejný horizont. Měna: používej stejnou měnu nebo výslovně popsané zacházení s kurzem. +10 % v USD nemusí být +10 % pro investora měřícího výsledek v CZK." },
+    { id: "definition-and-costs", type: "paragraph", content: "Definice: porovnávej cenový výnos s cenovým, nebo celkový s celkovým při srovnatelné metodice. Očištění: obě cenové řady musí se splity a dalšími úpravami zacházet konzistentně. Poplatky a daně: zjisti, zda jsou čísla před jejich odečtením, nebo po něm. Hrubý a čistý výnos nejsou automaticky totéž." },
+    { id: "splits", type: "conceptCallout", title: "Split sám o sobě není ztráta", content: "Při splitu 2 : 1 se jedna akcie za 100 Kč změní na dvě akcie po 50 Kč, pokud se nic jiného nezmění. Celková hodnota zůstává 100 Kč. Pokles nominální ceny proto není ekonomická ztráta 50 %. Historie očištěná o splity převádí ceny na srovnatelný základ; toto očištění samo o sobě nezahrnuje dividendy." },
+    { id: "instrument-detail", type: "labBridge", title: "Co právě ukazuje detail instrumentu v investi", content: "Výnos za vybrané období se v detailu instrumentu počítá z první a poslední dostupné závěrečné ceny v historické řadě očištěné o splity. Jde o cenový výnos v měně instrumentu. Nezahrnuje dividendy a není to výnos tvého portfolia ani automaticky výsledek v CZK po přepočtu kurzem." },
+    { id: "investor-return", type: "conceptCallout", title: "Instrument a osobní portfolio jsou různé pohledy", content: "Tvůj vlastní výsledek může záviset na tom, kdy nakoupíš a prodáš, kolik vložíš či vybereš, jaké dostaneš peněžní výplaty a jak se změní kurz. Samotný výnos ceny instrumentu tyto okolnosti nezachycuje. Vklad navíc není investiční zisk." },
+    { id: "comparison-example", type: "workedExample", title: "Dvě čísla +8 %", introduction: "Obě investice měří období od 1. 1. do 31. 12. 2025 v USD, před poplatky a daněmi, s konzistentním očištěním o splity. Liší se však definicí výnosu.", steps: [{ label: "A · cenový výnos", value: "+8 %" }, { label: "B · celkový výnos včetně distribucí", value: "+8 %" }], conclusion: "Než porovnáš výsledky, všimni si, co každý z údajů zahrnuje." },
+    { id: "fair-comparison", type: "multipleChoiceQuestion", prompt: "Můžeš z těchto dvou údajů +8 % vyvodit, že investice měly totožný výsledek včetně distribucí?", options: [{ id: "same-number", label: "Ano, stejné procento za stejný rok ve stejné měně to dokazuje." }, { id: "different-basis", label: "Ne, A měří jen cenu, B i distribuce. Nejdřív potřebuji stejnou definici výnosu." }, { id: "b-always-better", label: "Ne, B je určitě lepší, protože celkový výnos je vždy vyšší." }], correctOptionId: "different-basis", correctExplanation: "Stejné období a měna nestačí. Cenový výnos A neříká, zda A také něco vyplatila. Pro férové porovnání potřebuješ oba výnosy na stejném základě; samotná čísla neurčují vítěze.", incorrectExplanation: "Čísla mají jinou definici: A zahrnuje změnu ceny, B i distribuce. Výsledek A včetně případných distribucí neznáme. Shodných +8 % proto nestačí k závěru o totožném výsledku ani o lepší investici." },
+    { id: "takeaway", type: "takeaway", title: "Za každým výnosem hledej jeho základ", content: "Cenový výnos měří pohyb ceny. Celkový výnos bere v úvahu také distribuce podle dané metodiky. Před porovnáním zkontroluj období, měnu, definici výnosu, očištění a zacházení s poplatky a daněmi." },
+    { id: "checkpoint", type: "checkpoint", label: "Co už umíš rozlišit", content: "U stejného pohybu 100 → 105 může vyplacená hotovost změnit výsledek investora. Umíš vysvětlit 5 % proti zjednodušeným 7 %, rozpoznat neporovnatelná procenta a číst cenový výnos v Labu bez záměny za dividendový nebo osobní portfoliový výsledek." },
+  ],
+};

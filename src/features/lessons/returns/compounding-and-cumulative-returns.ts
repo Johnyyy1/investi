@@ -16,7 +16,7 @@ export const compoundingAndCumulativeReturnsLesson: AuthoredLesson = {
     { id: "asymmetry", label: "Asymetrie ztráty" },
     { id: "practice", label: "Procvičení" },
   ],
-  navigation: { previous: { href: "/learn/returns/simple-returns", label: "Jednoduché výnosy" } },
+  navigation: { previous: { href: "/learn/returns/simple-returns", label: "Jednoduché výnosy" }, next: { href: "/learn/returns/comparing-investments", label: returnsLessons[3].title } },
   blocks: [
     { id: "why-addition-fails", type: "heading", title: "V jednotlivých obdobích se výnosy násobí, ne jednoduše sčítají.", body: "Každé období mění hodnotu, od které začíná další období. Právě proto se posloupnost výnosů počítá násobením." },
     { id: "recap", type: "paragraph", content: "V lekci 2 jsme každé období posuzovali zvlášť. Teď je otázka jiná: jaký je po několika obdobích celkový výsledek a konečná hodnota?" },
