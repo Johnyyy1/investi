@@ -17,7 +17,7 @@
     "test:log-returns-persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-log-returns-persistence.mts",
     "test:log-returns-browser": "node scripts/validate-log-returns.mjs",
     "test:curriculum-seed": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-curriculum-seed.mts",
-    "test:product": "node scripts/validate-learning-loop.mjs",
+    "test:product": "node scripts/validate-product-shell.mjs",
     "test:persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-persistence.mts",
     "test:migration": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-practice-capital-migration.mts",
     "test:portfolio-persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-portfolio-persistence.mts",
@@ -36,6 +36,7 @@
     "test:personalization-browser": "node scripts/validate-personalization-browser.mjs"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "1.7.3",
     "@t3-oss/env-nextjs": "^0.13.11",
     "better-auth": "^1.7.3",
     "class-variance-authority": "^0.7.1",
@@ -58,7 +59,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",

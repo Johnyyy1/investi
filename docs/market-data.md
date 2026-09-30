@@ -1,6 +1,6 @@
 # Market data
 
-Investi accesses market data through the server-only normalized `MarketDataService` boundary. Security and FX capabilities may be supplied by different providers; provider response objects and credentials must not enter client components.
+investi accesses market data through the server-only normalized `MarketDataService` boundary. Security and FX capabilities may be supplied by different providers; provider response objects and credentials must not enter client components.
 
 ## Configuration
 
@@ -91,7 +91,7 @@ The server-only readiness diagnostic reports the selected security and FX provid
 
 ## Deferred limitations
 
-Cross-provider security-identity migration, live provider health monitoring, early-close/ad-hoc-closure calendars, additional exchange calendars, historical portfolio FX/performance, corporate-action processing, total-return series, wider Investi currency support, distributed caching, and background refresh are deferred. Fundamentals, statements, ratios, estimates, ratings, DCF, news, intraday data, crypto, and streaming are outside the current market-data scope.
+Cross-provider security-identity migration, live provider health monitoring, early-close/ad-hoc-closure calendars, additional exchange calendars, historical portfolio FX/performance, corporate-action processing, total-return series, wider Investi currency support, distributed caching, and background refresh are deferred. Equity fundamentals and ETF analytics are current Instrument Detail capabilities. Equity snapshots normalize valuation, profitability, business performance, and balance-sheet metrics with observation/reporting dates and explicit unavailable fields; ETF snapshots normalize holdings/concentration and allocation/exposure metadata. Deterministic fixtures and FMP adapters implement both behind the service boundary. `scripts/smoke-equity-fundamentals.mts` remains a manual-only provider/cache check. Estimates, ratings, DCF, news, intraday data, crypto, and streaming remain outside the current scope.
 
 ## Manual FMP smoke test
 

@@ -103,7 +103,7 @@ export function AccountSecurity({ providers, initialError }: {
     }
   }
 
-  return <section className="mt-12 border-t border-border pt-8" aria-labelledby="account-security-title">
+  return <section className="mt-12 break-words border-t border-border pt-8" aria-labelledby="account-security-title">
     <h2 id="account-security-title" className="text-section-title font-bold">Přihlášení a zabezpečení</h2>
     <p className="mt-2 max-w-2xl text-body text-secondary">Spravuj způsoby, kterými se přihlašuješ do svého účtu.</p>
     {error ? <p className="mt-5 rounded-control border border-danger-ink/20 bg-surface p-4 text-small text-danger-ink" role="alert">{error}</p> : null}

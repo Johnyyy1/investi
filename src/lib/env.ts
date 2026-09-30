@@ -15,8 +15,8 @@ export const env = createEnv({
     FX_DATA_PROVIDER: z.enum(["deterministic", "frankfurter"]).optional(),
     MARKET_DATA_PROVIDER: z.enum(["deterministic", "fmp"]).default("deterministic"),
   },
-  client: { NEXT_PUBLIC_APP_URL: z.url().optional() },
-  experimental__runtimeEnv: { NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL },
+  client: {},
+  experimental__runtimeEnv: {},
   skipValidation: process.env.SKIP_ENV_VALIDATION === "true",
   emptyStringAsUndefined: true,
 });

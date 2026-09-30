@@ -17,7 +17,7 @@ Use separate development and production applications/credentials. Do not use pro
 | Google | `http://localhost:3000/api/auth/callback/google` |
 | Facebook | `http://localhost:3000/api/auth/callback/facebook` |
 
-Production callbacks must use the **actual HTTPS production origin** with these same paths. Set `BETTER_AUTH_URL` to that origin (and keep `NEXT_PUBLIC_APP_URL` consistent). Custom local ports require matching callback registrations. No production hostname is assumed here.
+Production callbacks must use the **actual HTTPS production origin** with these same paths. Set `BETTER_AUTH_URL` to that origin. Custom local ports require matching callback registrations. No production hostname is assumed here.
 
 - **Google Cloud:** configure the OAuth consent screen/audience, create a Web application OAuth client, add the authorized redirect URI and relevant app origin, and add test users while in testing mode. Complete Google's publishing/verification requirements as applicable.
 - **Meta Developers:** create/configure an app with Facebook Login, enable web OAuth login, register the exact Valid OAuth Redirect URI, and configure the app domain/site URL. Add app-role testers in development mode. Configure privacy policy/data deletion details and complete the permissions/access and live-mode requirements shown in the console before public launch. If the console requires HTTPS for your development setup, register a development HTTPS origin and use it consistently in `BETTER_AUTH_URL`.
@@ -28,7 +28,7 @@ Better Auth's built-in scopes request Google identity/email/profile and Facebook
 
 Keep Better Auth's safe defaults: implicit linking requires a matching email, a verified local email, and a verified provider email (there is no trusted-provider override). `allowDifferentEmails` is not enabled. Existing linked accounts continue to use their provider account identity.
 
-**Current limitation:** email/password registration does not verify email and this phase does not introduce email verification or an account-linking settings flow. Signing in socially with an existing unverified local email therefore returns `account_not_linked`; it does not create a second user. The page asks the learner to sign in using their original method. Facebook profiles lacking a verified email claim cannot implicitly link even to a verified local account. Do not disable `requireLocalEmailVerified` or force provider trust to bypass this.
+**Current limitation:** email/password registration does not verify email. Settings provides explicit link/unlink controls, but implicit linking retains the verified-email safeguards. Signing in socially with an existing unverified local email therefore returns `account_not_linked`; it does not create a second user. The page asks the learner to sign in using their original method. Facebook profiles lacking a verified email claim cannot implicitly link even to a verified local account. Do not disable `requireLocalEmailVerified` or force provider trust to bypass this.
 
 Both social buttons call `authClient.signIn.social` with `callbackURL: "/learn"`. The existing authenticated layout decides whether a new learner needs onboarding; returning learners retain their normal destination. Email registration keeps its existing `/onboarding` redirect. Authentication adds no lesson progress or rewards.
 

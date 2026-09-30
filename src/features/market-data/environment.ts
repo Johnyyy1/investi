@@ -4,7 +4,6 @@ import { env } from "@/lib/env";
 import { MarketDataError } from "./errors";
 import { createMarketDataService } from "./composition";
 import type { FxDataProviderName, MarketDataProviderName } from "./composition";
-import { inspectMarketDataReadiness } from "./readiness";
 
 let configuredService: ReturnType<typeof createMarketDataService> | undefined;
 
@@ -36,13 +35,5 @@ export function getConfiguredFxDataProviderName(): FxDataProviderName {
     provider: env.MARKET_DATA_PROVIDER,
     operation: "configuration",
     reason: "missing-fx-provider",
-  });
-}
-
-export function getConfiguredMarketDataReadiness() {
-  return inspectMarketDataReadiness({
-    securityProvider: env.MARKET_DATA_PROVIDER,
-    fxProvider: getConfiguredFxDataProviderName(),
-    fmpApiKey: env.FMP_API_KEY,
   });
 }

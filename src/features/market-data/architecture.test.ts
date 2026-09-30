@@ -32,7 +32,6 @@ describe("market-data architecture boundary", () => {
       "fmp/client.ts",
       "fmp/equity-fundamentals.ts",
       "fmp/provider.ts",
-      "fmp/service.ts",
       "frankfurter/client.ts",
       "frankfurter/provider.ts",
       "frankfurter/service.ts",

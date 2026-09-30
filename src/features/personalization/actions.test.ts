@@ -17,6 +17,14 @@ describe("personalization authority", () => {
     expect(operation).toHaveBeenCalledWith("owner", {});
     expect(mocks.revalidate).toHaveBeenCalledWith("/", "layout");
   });
+  it("normalizes a failed session lookup without writing", async () => {
+    mocks.user.mockRejectedValue(new Error("private session database information"));
+    const result = await completePersonalizationAction({});
+    expect(result).toMatchObject({ ok: false });
+    expect(JSON.stringify(result)).not.toContain("private");
+    expect(mocks.complete).not.toHaveBeenCalled();
+    expect(mocks.revalidate).not.toHaveBeenCalled();
+  });
   it.each(actions)("normalizes storage/validation failures", async (action, operation) => {
     operation.mockRejectedValue(new Error("private database information"));
     const result = await action({});

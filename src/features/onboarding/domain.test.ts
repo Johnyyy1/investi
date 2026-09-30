@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canContinue, draftPayloadSchema, draftSchema, emptyDraft, experienceValues, preferencesSchema, recommendLearningPath, resumeStep, type Preferences } from "./domain";
+import { draftPayloadSchema, draftSchema, emptyDraft, experienceValues, preferencesSchema, recommendLearningPath, resumeStep, type Preferences } from "./domain";
 import { moduleCatalog } from "../learning/catalog";
 
 const answers: Preferences = { experienceLevel: "BASIC", goals: ["CONFIDENCE"], interests: ["STOCKS"], dailyGoalMinutes: 10 };
@@ -64,12 +64,5 @@ describe("onboarding state", () => {
   it("allows review and ready to resume independently of completion", () => {
     expect(resumeStep(answers, 5)).toBe(5);
     expect(resumeStep(answers, 6)).toBe(6);
-  });
-  it("requires an answer on each question", () => {
-    for (const step of [1, 2, 3, 4]) {
-      expect(canContinue(emptyDraft, step)).toBe(false);
-      expect(canContinue(answers, step)).toBe(true);
-    }
-    expect(canContinue(emptyDraft, 0)).toBe(true);
   });
 });

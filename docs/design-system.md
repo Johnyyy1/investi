@@ -1,6 +1,6 @@
-# Investi product design system
+# investi product design system
 
-This document describes Phase 1 of the product-wide design-system migration. The current marketing landing page remains the source of truth for the Investi identity; the application uses the same language more quietly. Product screens have not been redesigned in this phase.
+The marketing landing page defines the expressive brand identity; product surfaces use the same palette and typography more quietly. This document describes the shared tokens and primitives used by the current application.
 
 Preview the foundation at `/dev/design-system` under `npm run dev`. The route returns 404 in production and is excluded from normal navigation. All rewards, chart values, and learner state in the preview are illustrative.
 
@@ -21,7 +21,7 @@ New reusable UI primitives live in `src/components/ui`:
 
 Existing learning APIs remain stable. `LearningButton`, `LearningLink`, and `LearningProgressBar` are compatibility exports or wrappers over the canonical primitives. `FinanceInput`, `TextInput`, lesson feedback, concept cards, charts, and lab controls now share the same underlying styles.
 
-There are no application dialogs or tooltips in the current repository, so this phase does not add speculative dialog or tooltip dependencies. Native details/summary interactions remain unchanged.
+Portfolio order/review overlays implement their own accessible dialog behavior. Native details/summary interactions remain in use. No speculative dialog or tooltip library is installed.
 
 ## Color tokens
 
@@ -76,7 +76,7 @@ Motion uses 180ms micro interactions, 270ms surface transitions, and 400ms large
 
 Focus-visible treatment is a three-pixel Deep Blue outline with separation from the control. Native controls retain labels, touch targets, keyboard behavior, disabled semantics, and error descriptions. Correctness is always communicated with text/state in addition to color.
 
-This phase changes visual infrastructure only. Authentication, sessions, XP, streaks, persisted progress, lesson completion, demo isolation, database behavior, and financial calculations remain untouched.
+Design-system work must preserve authentication, sessions, reward policy, streaks, persisted progress, lesson completion, demo isolation, database behavior, and financial calculations.
 
 ## Validation
 

@@ -1,7 +1,4 @@
 import type { AuthoredLesson } from "../types";
-import { returnsLessons } from "./manifest";
-
-export const compoundingRoute = `/learn/returns/${returnsLessons[2].slug}`;
 
 /** Presentation order only. Explanations, examples and answers stay in the authored lesson. */
 export const compoundingSteps = [

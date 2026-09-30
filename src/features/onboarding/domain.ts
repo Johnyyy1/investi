@@ -2,32 +2,9 @@ import { z } from "zod";
 import { recommendLearning } from "../personalization/recommendation";
 import { readLearnerProfile } from "../personalization/profile";
 
-export const experienceOptions = [
-  { value: "BEGINNER", label: "Začínám úplně od nuly" },
-  { value: "BASIC", label: "Znám základy" },
-  { value: "INVESTOR", label: "Už investuji" },
-  { value: "ADVANCED", label: "Vyznám se i v pokročilých pojmech" },
-] as const;
-export const goalOptions = [
-  { value: "CONFIDENCE", label: "Začít investovat s jistotou" },
-  { value: "MARKETS", label: "Porozumět trhům" },
-  { value: "PORTFOLIO", label: "Sestavit lepší portfolio" },
-  { value: "COMPANIES", label: "Analyzovat společnosti" },
-  { value: "QUANT", label: "Naučit se kvantitativní investování" },
-  { value: "KNOWLEDGE", label: "Rozšířit si znalosti investování" },
-] as const;
-export const interestOptions = [
-  { value: "STOCKS", label: "Akcie" },
-  { value: "ETFS", label: "ETFs" },
-  { value: "PORTFOLIO", label: "Sestavování portfolia" },
-  { value: "MARKETS", label: "Trhy a ekonomika" },
-  { value: "FUNDAMENTALS", label: "Fundamentální analýza" },
-  { value: "QUANT", label: "Kvantitativní strategie" },
-] as const;
 export const experienceValues = ["BEGINNER", "BASIC", "INVESTOR", "ADVANCED"] as const;
 export const goalValues = ["CONFIDENCE", "MARKETS", "PORTFOLIO", "COMPANIES", "QUANT", "KNOWLEDGE", "LONG_TERM_ETF"] as const;
 export const interestValues = ["STOCKS", "ETFS", "PORTFOLIO", "MARKETS", "FUNDAMENTALS", "QUANT", "DATA", "BACKTESTING"] as const;
-export const dailyGoals = [5, 10, 15, 20] as const;
 const goalsSchema = z.array(z.enum(goalValues)).max(6).refine((v) => new Set(v).size === v.length);
 const interestsSchema = z.array(z.enum(interestValues)).max(9).refine((v) => new Set(v).size === v.length);
 export const preferencesSchema = z.object({
@@ -50,9 +27,6 @@ export const emptyDraft: OnboardingDraft = { experienceLevel: null, goals: [], i
 export function resumeStep(draft: OnboardingDraft, savedStep: number): number {
   const firstMissing = !draft.experienceLevel ? 1 : !draft.goals.length ? 2 : !draft.interests.length ? 3 : !draft.dailyGoalMinutes ? 4 : 6;
   return Math.max(0, Math.min(Number.isInteger(savedStep) ? savedStep : 0, firstMissing));
-}
-export function canContinue(draft: OnboardingDraft, step: number): boolean {
-  return step === 1 ? draft.experienceLevel !== null : step === 2 ? draft.goals.length > 0 : step === 3 ? draft.interests.length > 0 : step === 4 ? draft.dailyGoalMinutes !== null : true;
 }
 export const draftPayloadSchema = z.object({ answers: draftSchema, step: z.number().int().min(0).max(6) }).strict()
   .refine(({ answers, step }) => resumeStep(answers, step) === step);

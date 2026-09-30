@@ -6,10 +6,10 @@ Portfolio Lab is an educational paper portfolio. Its base currency is CZK. It co
 
 Each learner has at most one active portfolio generation. Reset closes that row, links a new generation through `reset_from_portfolio_id`, and retains every prior trade. `opening_capital_minor` is the exact receipt entitlement observed when the generation opened; it is an audit baseline, not a mutable balance.
 
-Current contributed Practice Capital is always the lifetime sum of legitimate `lesson_award.practice_capital_minor` receipts. Cash for the active generation is:
+Current contributed Practice Capital is always the lifetime sum of legitimate `lesson_award.practice_capital_minor` receipts and `progression_unlock.practice_capital_minor` grants. Cash for the active generation is:
 
 ```text
-receipt entitlement + sum(active-generation trade cash deltas)
+receipt and unlock-grant entitlement + sum(active-generation trade cash deltas)
 ```
 
 This makes a later lesson reward available as cash without counting it as investment performance. Reset starts with no active-generation trade cash flows, so it restores the same lifetime entitlement without copying or double-counting rewards.

@@ -1,60 +1,58 @@
-# Product reset: learning loop, rewards, demo, and Lab
+# Product learning and persistence contracts
 
-## Product and navigation
+This document records current behavior and the historical migration rationale needed to preserve existing learners. The public landing page stays public. Authenticated navigation is Learn, Lab, and Progress; account controls expose Settings. `/dashboard` is a compatibility redirect to `/learn`. Active lessons omit the ordinary app shell.
 
-The production information architecture is intentionally limited to **Learn**, **Lab**, and **Progress**. Settings is behind the account control. `/dashboard` is retained only as a compatibility redirect to `/learn`; `/` sends authenticated learners to `/learn` and other visitors to sign-in. Available lesson routes use focus mode and omit the application navigation.
+## Learning continuity and completion
 
-Learn is the authenticated entry experience. Its one dominant action is selected centrally by `getLearnerSummary`:
+The learner summary selects the latest active published lesson, then incomplete learning in the last completed module, then the recommended module, then curriculum order. Ties use curriculum order; unknown/unpublished progress is ignored. The current Learn recommendation also uses the personalization engine, with a link back to a different active lesson. Completion uses the shared continuity result and sends a fully completed learner to Lab.
 
-1. Most recently updated `IN_PROGRESS` lesson.
-2. First incomplete lesson in the module of the most recently completed lesson.
-3. First incomplete lesson in the learner's recommended module.
-4. First incomplete implemented lesson in curriculum order.
+Twelve lessons are published: seven Foundations and five Returns. Checkpoints remain planned. [Foundations](investing-foundations.md), [Returns](returns.md), and [onboarding](onboarding.md) describe their current contracts.
 
-Unknown and unpublished lessons are ignored. Equal timestamps use curriculum order. If all available lessons are complete, Learn offers review while the completion loop points to the Lab.
+Clients send only lesson identity, cursor, and answer IDs. The server derives the owner from the session, bounds cursor moves to one forward authored step, and requires a correct evaluated answer when crossing a question. Completion requires the final persisted step. Attempts and explorer inputs remain ephemeral; cursor and completion persist. Reviewed completed lessons do not mutate their receipt, cursor, or original completion timestamp.
 
-## Onboarding and compatibility
+The completion transaction locks the user row, preserves an existing completion time, and inserts at most one lifetime `(user_id, lesson_id)` receipt. Award failure rolls back completion. Refresh, retry, review, and concurrent calls cannot repeat an award. Internal first-completion XP remains 60; the client cannot choose the amount.
 
-New accounts see one experience-level choice with Beginner selected by default, then **Start learning** opens the first lesson directly on an interaction. The quick-start profile stores an empty goal/interest list, a ten-minute daily preference, the browser's validated IANA timezone, and the normal onboarding completion marker. Deeper preferences remain editable in Settings.
+## Current reward policy and historical rationale
 
-Completed profiles never replay onboarding. Existing answers, completion timestamps, lesson rows, and active Returns cursors remain intact. The loader recomputes a suitable recommendation without rewriting stored preferences. A stale onboarding tab cannot overwrite a completed profile.
+The committed application uses policy v2: new lesson receipts contain **zero Practice Capital**. Completing all seven Foundations and reaching 420 internal XP creates one Portfolio Lab entitlement with **500000 CZK minor units (5,000 Kč)**. Stored entitlements grandfather existing access. Anonymous demos receive one `demo_access` grant with the same amount, independently of lesson prerequisites. Neither repeated completion nor reset repeats a grant.
 
-## Completion transaction, XP, and Practice Capital
+Practice Capital is the sum of authoritative stored lesson receipts **and unlock grants**. Historical v1 lesson receipts retain their original 200000 minor units (2,000 Kč each); their amount is never recalculated from XP. There is no mutable balance counter. These are virtual educational funds, not withdrawable money.
 
-The client sends only the lesson identifier, cursor, and—when crossing a question step—the attempted answer. User identity always comes from the server session. XP remains the server constant `LESSON_XP = 60`; no client payload can choose a reward amount. Practice Capital policy v1 awards exactly `200000` CZK minor units (2,000.00 Kč) for an eligible first lesson completion. It is virtual educational capital, not real money, not withdrawable, and not investment advice.
+Some repository agent instructions still describe v1 as the current approved reward policy. This hygiene audit preserves committed runtime/tests and records that discrepancy for a separately authorized product-policy decision.
 
-The repository validates that movement advances by no more than one authored step and that a question was attempted before leaving its step. Completion requires the final saved authored step. The completion transaction locks the account row, preserves an existing `completedAt`, changes an unfinished progress row to completed, and inserts one `lesson_award` receipt containing 60 legacy XP, 200000 Practice Capital minor units, and reward policy version 1. The receipt primary key `(user_id, lesson_id)` and database checks enforce one lifetime positive reward per lesson. The transaction then derives the updated read model and next lesson. If the award write fails, the lesson update rolls back. Repeated, refreshed, reviewed, or concurrent completion requests cannot add a second receipt. Practice Capital is the user-facing learning reward; XP remains internal compatibility data.
+Historical migrations remain necessary:
 
-Migration `0003_chunky_sphinx.sql` intentionally backfills one 60-XP receipt for each pre-existing published completed lesson. It uses the real stored completion/update timestamp and UTC because the historical timezone was not recorded. This preserves credit without duplicating completion or inventing a separate time-spent measure; the composite primary key makes deployment/retry idempotent. No time minutes are inferred.
+- `0003` backfills missing 60-XP receipts for actual completed published lessons, preserving stored completion/update time and using UTC where no historical timezone exists. Composite receipt identity makes reruns idempotent.
+- `0004` expands receipts with Practice Capital fields, reconciles missing eligible receipts, backfills v1 amounts, then adds non-null/value checks.
+- `0006` adds the persistent unlock ledger; migration code preserves legacy access and original capital.
+- `0008` permits nonnegative receipt capital for v2 without rewriting historical receipts.
 
-Migration `0004_awesome_sebastian_shaw.sql` expands the same receipt with nullable Practice Capital fields, reconciles completed published lessons that are missing a receipt under the existing UTC historical rule, backfills every authoritative receipt to policy v1, and only then enforces non-null positive values. The receipt is the authority: Practice Capital is never calculated from XP. The server-side summary sums the receipt bigint values exactly and does not store a mutable user balance.
+All migrations and metadata are retained. Apply the entire committed chain before running the app, then run the idempotent curriculum seed; do not rewrite old migrations or reset user progress.
 
-## Streak and daily goal semantics
+## Streak and daily lesson goal
 
-An award's `learning_date` is the local calendar date at the first legitimate completion. Multiple first completions on the same date count as one streak day, while each still counts toward that day's lesson target. A run of consecutive learning dates ending today is the active streak. A run ending yesterday remains active through today; a gap before yesterday resets the active streak to zero. Reviews do not create a learning day. There are no streak freezes.
+`learning_date` is the learner's local date at first completion. Multiple first completions on a day count once for streak, separately for that day's lesson target. A run ending today is active; a run ending yesterday remains active through today; earlier gaps reset the active streak. Reviews create no learning day and there are no freezes.
 
-The learner timezone is a validated IANA identifier and is pinned on the profile so travel or later device changes cannot manufacture days. New onboarding stores the browser timezone; demo state uses UTC. Historical backfill uses UTC explicitly because no prior timezone exists.
+A validated IANA timezone is pinned on the profile; demo history uses UTC. Historical backfill uses UTC because prior timezone is unknown. Minutes map to a lesson target (5/10 → one, 15/20 → two, 30 → three, missing → one); this is a preference, not measured time-on-task.
 
-Daily minutes map deterministically to lesson targets: 5 → 1, 10 → 1, 15 → 2, 20 → 2, and no stored preference → 1. Progress uses real first-completion receipts. The UI never claims measured time-on-task.
+## Demo identity and operations
 
-## Demo architecture and cleanup
+Better Auth creates an isolated anonymous user/session. Server initialization verifies anonymous ownership and transactionally seeds a deterministic profile, six completed lessons with matching v2 receipts, and one in-progress lesson. Repeated/concurrent initialization is safe; rollback permits retry. Existing demo mutations are not overwritten on subsequent visits.
 
-**Explore demo** asks Better Auth to create a fresh anonymous user/session. There is no shared email or password. Before the session is usable, a transaction verifies the anonymous owner and seeds a deterministic profile, six completed lessons with matching award receipts, and one in-progress lesson. Concurrent or repeated initialization is safe, and a failed seed rolls back profile/progress/rewards together. Separate visitors receive separate owners and mutable state.
+The seed derives 360 XP and a four-day streak from its rows. Its receipts grant zero capital under current policy; the independent one-time demo entitlement grants access and 5,000 Kč. Browser/device identity flags cannot authorize a normal account.
 
-The resulting read model is 360 XP, 1,200,000 Practice Capital minor units from six receipts, a four-day streak, one of two daily lessons, completed Foundations/Returns history, and an in-progress Risk vs reward lesson ready at its final interaction. These values are derived from the stored seed rows rather than hardcoded UI metrics.
+Anonymous sessions expire after 24 hours. `demo:cleanup` is a dry run; `demo:cleanup -- --apply` removes only marked anonymous users older than seven days and their cascading user-owned data. Scheduling remains an operator responsibility.
 
-Anonymous sessions expire after 24 hours. `npm run demo:cleanup` is a dry run; `npm run demo:cleanup -- --apply` removes only anonymous identities older than seven days, with related data deleted by cascade. Scheduling that command daily is sufficient for the current scale.
+## Labs
 
-## Portfolio Lab
+[Portfolio Lab](portfolio-lab.md) is a persistent CZK paper portfolio: append-only trades, exact arithmetic, retained reset generations, server-derived execution, and explicit unavailable valuations. Contributions never become investment gain. The pure stocks/bonds/cash allocation exercise remains used by the lesson builder and Backtesting Lab; it is not an abandoned personal-portfolio implementation.
 
-Portfolio Lab keeps Stocks/Bonds/Cash at exactly 100% by redistributing the remaining allocation deterministically. It reuses the lesson's weighted-return utility, accepts negative hypothetical returns down to −100%, rejects non-finite/invalid amounts and returns, and refuses non-finite final values. Portfolio return is displayed as `%`; each asset's allocation-times-return contribution is displayed in percentage points (`pp`), with negative zero normalized. Examples are explicitly hypothetical and are not forecasts, recommendations, or an optimal/safe/best allocation.
+Backtesting Lab compounds a frozen mix of synthetic monthly simple returns over inclusive calendar years. CAGR uses monthly intervals divided by 12. Annualized volatility uses sample standard deviation (`n−1`) multiplied by `√12`. Maximum drawdown includes the initial value and month-end peaks. It supports −100% returns but rejects lower, non-finite, missing, duplicate, unordered, incomplete-month, and overflowing inputs.
 
-## Backtesting Lab and synthetic fixture
+The Jan 2015–Dec 2025 fixture is invented educational data. The UI labels it synthetic/demo, exposes a textual monthly-value table, and assumes monthly rebalancing without costs, tax, inflation, cash flows, or FX. It does not backtest the learner's transaction history.
 
-Backtesting Lab compounds monthly simple returns for a chosen deterministic mix, inclusive calendar-year period, and positive starting value. It reports final value, CAGR, maximum drawdown, and annualized volatility. CAGR uses the number of monthly return intervals divided by 12. Volatility is sample standard deviation (`n − 1`) multiplied by `√12`. Drawdown includes the initial value and month-end peaks. A −100% return is supported; returns below −100%, missing/duplicate/unordered observations, non-finite inputs, incomplete months, and overflow are rejected.
+## Validation and limits
 
-The bundled Jan 2015–Dec 2025 sequence is wholly invented educational data. Calendar labels are illustrative; it is not live or historical market data and is never named as a real index. The UI labels it **Demo data** and **synthetic**, and exposes the full monthly value table as the chart's textual alternative. Assumptions omit costs, tax, inflation, cash flows, and currency conversion and assume monthly rebalancing.
+Run the static gates plus persistence, reward migration, progression, portfolio, log-return, and curriculum-seed suites. Browser scripts cover production flows and development-only design previews under their appropriate runtimes. [Environment settings](environment.md) describes guarded disposable QA.
 
-## Known limitations
-
-Only seven Foundations and three Returns lessons are implemented; planned lessons remain unavailable. Lesson explorer inputs and answers are transient even though the saved cursor/completion persists. Lab data is simplified and synthetic. Chromium automation covers the declared responsive/accessibility flows, but Safari, Firefox, physical devices, and screen-reader hardware are not automated. Demo cleanup is an operational command rather than a lifecycle service.
+Safari, Firefox, physical devices, and screen-reader hardware remain outside automated Chromium coverage. Lessons persist position/completion rather than explorer answers. Demo cleanup is an operator command. Sample and live providers retain different provenance; neither missing quotes nor FX become zero.

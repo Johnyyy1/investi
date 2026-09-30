@@ -19,7 +19,7 @@ try {
   await page.getByRole("button", { name: "Primary", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "primary button pressed." }).first().waitFor();
 
-  for (const width of [1440, 1024, 768, 390, 320]) {
+  for (const width of [1440, 1024, 768, 390, 375, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForFunction(() => {
       const chart = document.querySelector(".recharts-wrapper");
@@ -34,10 +34,10 @@ try {
     console.log(`Layout and chart: ${width}px passed`);
   }
 
-  await page.getByText("View data table", { exact: true }).press("Enter");
+  await page.getByText("Zobrazit tabulku dat", { exact: true }).press("Enter");
   assert.equal(await page.getByRole("table").isVisible(), true);
   assert.equal(await page.getByRole("cell", { name: "9,600", exact: true }).isVisible(), true);
-  assert.equal(await page.getByText("No data to display yet.", { exact: true }).isVisible(), true);
+  assert.equal(await page.getByText("Zatím nejsou k dispozici žádná data.", { exact: true }).isVisible(), true);
   await page.getByRole("textbox", { name: "Number of periods" }).fill("3");
   assert.equal(await page.getByRole("textbox", { name: "Number of periods" }).getAttribute("aria-invalid"), "false");
   await page.getByRole("textbox", { name: "Number of periods" }).fill("");
@@ -67,12 +67,12 @@ try {
       await page.mouse.up();
     }
     await check.press("Enter");
-    const next = page.getByRole("button", { name: "Continue", exact: true });
+    const next = page.getByRole("button", { name: "Pokračovat", exact: true });
     await next.waitFor();
     assert.equal(await next.evaluate((element) => element === document.activeElement), true);
     assert.ok(await next.getAttribute("aria-describedby"));
     await next.press("Enter");
-    const finish = page.getByRole("button", { name: "Continue learning", exact: true });
+    const finish = page.getByRole("button", { name: "Pokračovat v učení", exact: true });
     await finish.waitFor();
     assert.equal(await finish.evaluate((element) => element === document.activeElement), true);
     await page.waitForFunction(() => {
@@ -80,14 +80,14 @@ try {
       return heading && heading.getBoundingClientRect().top >= 0;
     });
     await finish.press("Enter");
-    assert.equal(await page.getByRole("button", { name: "Back to Learn" }).evaluate((element) => element === document.activeElement), true);
+    assert.equal(await page.getByRole("button", { name: "Zpět na Učení" }).evaluate((element) => element === document.activeElement), true);
     console.log(`Keyboard flow and motion preference: ${reducedMotion} passed`);
   }
 
   const noJS = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 800 } });
   const fallbackPage = await noJS.newPage();
   await fallbackPage.goto(`${baseURL}/dev/design-system`);
-  await fallbackPage.getByText("View data table", { exact: true }).click();
+  await fallbackPage.getByText("Zobrazit tabulku dat", { exact: true }).click();
   assert.equal(await fallbackPage.getByRole("cell", { name: "9,600", exact: true }).isVisible(), true);
   assert.equal(await fallbackPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await noJS.close();

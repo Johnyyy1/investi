@@ -2,6 +2,11 @@
 .next
 node_modules
 coverage
+playwright-report
+test-results
+blob-report
+.obsidian
+fine-details
 .env
 .env.*
 !.env.example
