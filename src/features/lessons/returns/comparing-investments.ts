@@ -18,7 +18,7 @@ export const comparingInvestmentsLesson: AuthoredLesson = {
     { id: "instrument-detail", label: "Přenes to do Labu" },
     { id: "fair-comparison", label: "Ověř si porozumění" },
   ],
-  navigation: { previous: { href: "/learn/returns/compounding-and-cumulative-returns", label: returnsLessons[2].title } },
+  navigation: { previous: { href: "/learn/returns/compounding-and-cumulative-returns", label: returnsLessons[2].title }, next: { href: "/learn/returns/log-returns", label: returnsLessons[4].title } },
   blocks: [
     {
       id: "prediction", type: "multipleChoiceQuestion",

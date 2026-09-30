@@ -14,6 +14,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
+    "test:log-returns-persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-log-returns-persistence.mts",
+    "test:log-returns-browser": "node scripts/validate-log-returns.mjs",
     "test:curriculum-seed": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-curriculum-seed.mts",
     "test:product": "node scripts/validate-learning-loop.mjs",
     "test:persistence": "tsx --tsconfig scripts/tsconfig.persistence.json scripts/validate-persistence.mts",

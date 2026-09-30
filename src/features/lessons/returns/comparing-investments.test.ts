@@ -9,13 +9,13 @@ import { getGuidedSteps } from "./guided-flow";
 const questions = lesson.blocks.filter(isQuestion);
 
 describe("price return and fair comparison lesson", () => {
-  it("opens with an assessed prediction and connects L3 to L4 without exposing an unavailable next lesson", () => {
+  it("opens with an assessed prediction and connects L3 to L4 and L4 to the published L5", () => {
     const steps = getGuidedSteps(lesson);
     expect(steps).toHaveLength(8);
     expect(steps[0].blocks).toEqual([questions[0]]);
     expect(compoundingAndCumulativeReturnsLesson.navigation?.next?.href).toBe(`/learn/returns/${lesson.slug}`);
     expect(lesson.navigation?.previous?.href).toBe("/learn/returns/compounding-and-cumulative-returns");
-    expect(lesson.navigation?.next).toBeUndefined();
+    expect(lesson.navigation?.next?.href).toBe("/learn/returns/log-returns");
   });
 
   it("keeps the 5% price return separate from the scoped 7% cash-inclusive result", () => {

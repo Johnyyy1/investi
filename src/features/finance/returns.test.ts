@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FinancialInputError, absoluteChange, compoundPeriods, compoundValue, consecutiveSimpleReturns, cumulativeReturn, recoveryReturn, simpleReturn } from "./returns";
+import { FinancialInputError, absoluteChange, compoundPeriods, compoundValue, consecutiveSimpleReturns, cumulativeReturn, recoveryReturn, simpleReturn, logReturn, simpleReturnFromLog } from "./returns";
 
 describe("simpleReturn", () => {
   it.each([
@@ -91,5 +91,41 @@ describe("compounding", () => {
     expect(recoveryReturn(0.1)).toBeCloseTo(0.111111111111111, 12);
     expect(recoveryReturn(0.5)).toBe(1);
     expect(() => recoveryReturn(1)).toThrow(FinancialInputError);
+  });
+});
+
+describe("log returns", () => {
+  it.each([[100, 110], [100, 99], [100, 100], [0.1, 0.25], [0.25, 1.3333]])("calculates and reverses %d → %d without presentation rounding", (start, end) => {
+    const value = logReturn(start, end);
+    expect(value).toBeCloseTo(Math.log(end / start), 12);
+    expect(simpleReturnFromLog(value)).toBeCloseTo(simpleReturn(start, end), 12);
+  });
+
+  it.each([[100, 110, 99], [100, 105, 110]])("adds consecutive logs for %j", (start, middle, end) => {
+    const sum = logReturn(start, middle) + logReturn(middle, end);
+    expect(sum).toBeCloseTo(logReturn(start, end), 12);
+    expect(simpleReturnFromLog(sum)).toBeCloseTo(simpleReturn(start, end), 12);
+  });
+
+  it("keeps small returns close without treating the two definitions as equal", () => {
+    const value = logReturn(100, 100.2);
+    expect(value).toBeCloseTo(0.001998002662673, 14);
+    expect(value).not.toBe(simpleReturn(100, 100.2));
+    expect(simpleReturnFromLog(1e-12)).toBeCloseTo(1.0000000000005e-12, 26);
+    expect(logReturn(100, 100)).toBe(0);
+  });
+
+  it.each([0, -1, NaN, Infinity, -Infinity])("rejects invalid prices %s in either position", (price) => {
+    expect(() => logReturn(price, 100)).toThrow(FinancialInputError);
+    expect(() => logReturn(100, price)).toThrow(FinancialInputError);
+  });
+
+  it("handles extreme positive price ratios without emitting infinity", () => {
+    expect(logReturn(Number.MIN_VALUE, Number.MAX_VALUE)).toBeCloseTo(Math.log(Number.MAX_VALUE) - Math.log(Number.MIN_VALUE), 12);
+    expect(logReturn(Number.MAX_VALUE, Number.MIN_VALUE)).toBeCloseTo(Math.log(Number.MIN_VALUE) - Math.log(Number.MAX_VALUE), 12);
+  });
+
+  it.each([NaN, Infinity, -Infinity, 1000, -1000])("rejects invalid or unrepresentable inverse returns %s", (value) => {
+    expect(() => simpleReturnFromLog(value)).toThrow(FinancialInputError);
   });
 });

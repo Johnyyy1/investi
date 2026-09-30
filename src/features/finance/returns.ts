@@ -46,6 +46,30 @@ export function simpleReturn(start: number, end: number) {
   return end / start - 1;
 }
 
+/** Unrounded decimal log return. Both prices must be finite and strictly positive. */
+export function logReturn(previousPrice: number, currentPrice: number) {
+  assertStartingPrice(previousPrice);
+  assertFinite(currentPrice, "Konečná cena");
+  if (currentPrice <= 0) {
+    throw new FinancialInputError("Pro logaritmický výnos musí být konečná cena větší než nula.");
+  }
+  const ratio = currentPrice / previousPrice;
+  // Positive finite prices can still overflow or underflow during division.
+  return ratio > 0 && Number.isFinite(ratio)
+    ? Math.log(ratio)
+    : Math.log(currentPrice) - Math.log(previousPrice);
+}
+
+/** Converts an unrounded decimal log return back to a decimal simple return. */
+export function simpleReturnFromLog(value: number) {
+  assertFinite(value, "Logaritmický výnos");
+  const result = Math.expm1(value);
+  if (!Number.isFinite(result) || result <= -1) {
+    throw new FinancialInputError("Výnos je mimo číselný rozsah výpočtu.");
+  }
+  return result;
+}
+
 /** Unrounded period returns for each consecutive pair in a price series. */
 export function consecutiveSimpleReturns(prices: readonly number[]) {
   if (prices.length < 2) {

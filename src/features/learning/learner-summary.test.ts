@@ -25,25 +25,25 @@ describe("real learner summary", () => {
   it("continues a module after completion even if the recommendation changed", () => {
     const summary = getLearnerSummary([row("returns-what-is-a-return", "completed")]);
     expect(summary.next.id).toBe("returns-simple-returns");
-    expect(summary.percentage).toBe(9);
+    expect(summary.percentage).toBe(8);
     expect(getLearnerSummary([row("foundations-why-invest", "completed")], "returns").next.id).toBe("foundations-stocks");
   });
   it("moves to Returns when all available Foundations lessons are completed", () => {
     expect(getLearnerSummary(availableLessons.filter((lesson) => lesson.moduleSlug === "investing-foundations").map((lesson) => row(lesson.id, "completed"))).next.id).toBe("returns-what-is-a-return");
   });
-  it("continues from the former Returns endpoint into comparison, then completes without a planned route", () => {
-    const prior = availableLessons.filter((lesson) => lesson.id !== "returns-comparing").map((lesson) => row(lesson.id, "completed"));
+  it("continues from comparison into log returns, then completes without a planned route", () => {
+    const prior = availableLessons.filter((lesson) => lesson.id !== "returns-log-returns").map((lesson) => row(lesson.id, "completed"));
     const summary = getLearnerSummary(prior);
     expect(summary.allComplete).toBe(false);
-    expect(summary.next.id).toBe("returns-comparing");
-    expect(getLearnerSummary([...prior, row("returns-comparing", "completed")]).allComplete).toBe(true);
+    expect(summary.next.id).toBe("returns-log-returns");
+    expect(getLearnerSummary([...prior, row("returns-log-returns", "completed")]).allComplete).toBe(true);
   });
-  it("counts only implemented learning and offers review when all eleven are complete", () => {
+  it("counts only implemented learning and offers review when all twelve are complete", () => {
     const summary = getLearnerSummary(curriculumLessons.map((lesson) => row(lesson.id, "completed")));
     expect(summary.percentage).toBe(100);
     expect(summary.allComplete).toBe(true);
-    expect(summary.completed).toHaveLength(11);
-    expect(summary.recent).toHaveLength(11);
+    expect(summary.completed).toHaveLength(12);
+    expect(summary.recent).toHaveLength(12);
   });
   it("ignores unknown/planned progress and never unlocks upcoming lessons", () => {
     const states = [row("foundations-checkpoint", "completed"), row("unknown", "in_progress")];

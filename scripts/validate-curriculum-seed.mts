@@ -35,6 +35,16 @@ try {
     "Seeded lessons must preserve canonical module ownership.",
   );
 
+  // Include planned entries so publication and ordering are checked together.
+  for (const learningModuleDefinition of moduleCatalog.filter(({ status }) => status === "available")) {
+    const definitions = getModuleLessons(learningModuleDefinition.slug);
+    const rows = await db.select({ id: lesson.id, position: lesson.position, isPublished: lesson.isPublished })
+      .from(lesson).where(eq(lesson.moduleId, definitions[0].moduleId)).orderBy(asc(lesson.position));
+    assert.deepEqual(rows, definitions.map((definition, index) => ({
+      id: definition.id, position: index + 1, isPublished: definition.status === "available",
+    })), "All seeded positions and planned/published states must match the curriculum.");
+  }
+
   const availableModules = moduleCatalog.filter(({ status }) => status === "available");
   const seededModules = await db
     .select({ id: learningModule.id, slug: learningModule.slug, isPublished: learningModule.isPublished })

@@ -30,7 +30,7 @@ try {
     await page.getByRole("textbox", { name: "E-mail", exact: true }).fill(email);
     await page.getByRole("textbox", { name: "Heslo", exact: true }).fill(password);
     await page.getByRole("button", { name: "Přihlásit se", exact: true }).click();
-    await page.getByRole("heading", { name: "Pokračovat v učení", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Připraven na další krok?", exact: true }).waitFor();
   }
   async function signOut() {
     const response = await page.request.post(`${baseURL}/api/auth/sign-out`, { data: {}, headers: { Origin: baseURL } });
@@ -45,14 +45,14 @@ try {
   await page.getByRole("textbox", { name: "Heslo", exact: true }).fill(password);
   await page.getByRole("button", { name: "Vytvořit účet", exact: true }).click();
   await finishOnboarding(page);
-  await page.getByRole("heading", { name: "Pokračovat v učení", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Připraven na další krok?", exact: true }).waitFor();
   [{ id: userId }] = await sql`select id from "user" where email = ${email}`;
   assert.equal(await page.locator(".learning-theme").count(), 1, "Dashboard uses the shared theme");
-  await heading("Pokračovat v učení");
+  await heading("Připraven na další krok?");
   assert.equal(await page.locator(".learning-theme").count(), 1, "Learn uses the shared theme");
   await page.locator('a[href="/learn/returns"]').click();
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "0 / 4 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "0 / 5 lekcí dokončeno");
   const compounding = page.getByRole("listitem").filter({ hasText: "Složené a kumulativní výnosy" });
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -60,7 +60,7 @@ try {
     const mobileNav = page.getByRole("navigation", { name: "Mobilní navigace" });
     assert.equal(await mobileNav.isVisible(), width < 1024);
   }
-  assert.equal(await page.getByRole("listitem").filter({ hasText: "Logaritmické výnosy" }).getByRole("button").count(), 0);
+  assert.equal(await page.getByRole("listitem").filter({ hasText: "Kontrola výnosů" }).getByRole("button").count(), 0);
   await compounding.getByRole("button", { name: "Začít lekci" }).click();
   await heading("Od jednoho období k posloupnosti");
   assert.equal(await page.getByRole("navigation", { name: /^(Hlavní|Mobilní) navigace$/ }).count(), 0, "Lesson mode has no app navigation");
@@ -159,15 +159,15 @@ try {
   assert.equal(completed.status, "completed");
   await page.getByRole("link", { name: "Zobrazit modul", exact: true }).click();
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 4 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 5 lekcí dokončeno");
   await page.reload();
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 4 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 5 lekcí dokončeno");
   await signOut();
   await signIn();
   await page.goto(`${baseURL}/learn/returns`);
   await heading("Výnos a složené zhodnocení");
-  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 4 lekcí dokončeno");
+  assert.equal(await page.getByTestId("module-progress").textContent(), "1 / 5 lekcí dokončeno");
   await compounding.getByRole("button", { name: "Zopakovat lekci" }).click();
   await heading("Od jednoho období k posloupnosti");
   await page.emulateMedia({ reducedMotion: "reduce" });

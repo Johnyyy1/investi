@@ -23,7 +23,7 @@ describe("shared persisted lesson actions", () => {
       allComplete: false,
     });
   });
-  it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["foundations-markets", "module-investing-foundations"], ["foundations-risk-reward", "module-investing-foundations"], ["foundations-portfolio", "module-investing-foundations"], ["returns-compounding", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
+  it.each([["foundations-stocks", "module-investing-foundations"], ["foundations-bonds-cash", "module-investing-foundations"], ["foundations-markets", "module-investing-foundations"], ["foundations-risk-reward", "module-investing-foundations"], ["foundations-portfolio", "module-investing-foundations"], ["returns-compounding", "module-returns"], ["returns-log-returns", "module-returns"]])("counts the correct module for %s", async (id, moduleId) => {
     expect(await completeLessonAction(id)).toMatchObject({ ok: true, completedLessons: 2 });
     expect(mocks.complete).toHaveBeenCalledWith("session-owner", id);
     expect(mocks.count).toHaveBeenCalledWith("session-owner", moduleId);
@@ -50,7 +50,7 @@ describe("shared persisted lesson actions", () => {
     expect(result).toMatchObject({ ok: true, reward: { xpAwarded: 60 } });
     expect(mocks.complete).toHaveBeenCalledWith("session-owner", "foundations-stocks");
   });
-  it.each(["foundations-checkpoint", "returns-log-returns", "unknown"])("rejects writes to %s", async (id) => {
+  it.each(["foundations-checkpoint", "returns-checkpoint", "unknown"])("rejects writes to %s", async (id) => {
     expect(await markLessonStartedAction(id)).toMatchObject({ ok: false });
     expect(await saveLessonPositionAction(id, 1)).toMatchObject({ ok: false });
     expect(await completeLessonAction(id)).toMatchObject({ ok: false });

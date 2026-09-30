@@ -182,7 +182,7 @@ try {
   await page.goto(`${baseURL}/learn/returns/what-is-a-return`); await heading("What does a return measure?");
   await next("Put the change in context");
   assert.deepEqual(await row("returns-what-is-a-return"), saved, "Review does not alter completion or position");
-  await page.goto(`${baseURL}/learn/returns/log-returns`); await heading("This page isn’t available"); await layouts("unavailable");
+  await page.goto(`${baseURL}/learn/returns/returns-checkpoint`); await heading("This page isn’t available"); await layouts("unavailable");
   await page.goto(`${baseURL}/dashboard`); await heading("Continue learning"); await page.getByLabel("Account menu").click(); await button("Sign out").click(); await heading("Welcome back");
   await page.getByRole("link", { name: "Create an account" }).click(); await heading("Create account");
   await page.getByLabel("Name", { exact: true }).fill("Duplicate QA"); await page.getByLabel("Email", { exact: true }).fill(email); await page.getByLabel("Password", { exact: true }).fill(password); await button("Create account").click();

@@ -38,11 +38,22 @@ const comparingSteps: Step[] = [
   { title: "Stačí shodných osm procent?", kind: "mastery", blocks: ["comparison-example", "fair-comparison"] },
   { title: "Shrň si to", blocks: ["takeaway", "checkpoint"] },
 ];
+const logSteps: Step[] = [
+  { title: "Deset nahoru, deset dolů", blocks: ["prediction"] },
+  { title: "Proč jednoduché výnosy nesčítáme", blocks: ["multiplication", "purpose"] },
+  { title: "Seznam se s logaritmickým výnosem", blocks: ["log-definition", "log-formula", "log-example", "log-calculation"] },
+  { title: "Převeď výnos tam a zpět", blocks: ["conversion", "to-log", "to-simple", "round-trip"] },
+  { title: "Od násobení ke sčítání", blocks: ["time-addition", "transformation", "log-identity"] },
+  { title: "Blízko neznamená stejně", blocks: ["small-moves", "small-check"] },
+  { title: "Spoj dvě období správně", kind: "mastery", blocks: ["comparison", "comparison-check"] },
+  { title: "Shrň si to", blocks: ["summary", "takeaway", "checkpoint"] },
+];
 export function getStepDefinitions(lessonId: string): readonly Step[] {
   if (lessonId === returnsLessons[0].id) return introductionSteps;
   if (lessonId === returnsLessons[1].id) return simpleSteps;
   if (lessonId === returnsLessons[2].id) return compoundingSteps;
   if (lessonId === returnsLessons[3].id) return comparingSteps;
+  if (lessonId === returnsLessons[4].id) return logSteps;
   if (foundationsSteps[lessonId]) return foundationsSteps[lessonId];
   throw new Error("This lesson is not available.");
 }
