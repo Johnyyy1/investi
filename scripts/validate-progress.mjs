@@ -60,8 +60,9 @@ try {
     for (const width of [1440, 768, 375, 320]) {
       await page.setViewportSize({ width, height: 1024 });
       await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: 200% text overflow at ${width}`);
       await page.screenshot({ path: `${screenshotDir}/${label}-${width}-text-200.png`, fullPage: true, animations: "disabled" });
+      const wide = await page.evaluate(() => [...document.querySelectorAll("main *")].filter((el) => el.getBoundingClientRect().right > innerWidth + 1 || el.scrollWidth > el.clientWidth + 1).map((el) => ({ tag: el.tagName, text: el.textContent?.slice(0, 50), width: el.clientWidth, scroll: el.scrollWidth, right: el.getBoundingClientRect().right })));
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: 200% text overflow at ${width}: ${JSON.stringify(wide)}`);
       await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     }
     await page.setViewportSize({ width: 1440, height: 1024 });
@@ -96,6 +97,8 @@ try {
   await render("xp-without-prerequisites", 420, 7, false);
   assert.equal(await page.getByText("XP už máš. Dokonči všechny lekce Základů investování.", { exact: true }).count(), 1);
   await complete(lessons);
+  // Raw fixture insertion bypasses completion transactions; let the existing unlock repair run before reading the grant.
+  await page.goto(`${baseURL}/lab`);
   await render("completed", 720, 12, true);
   assert.match(await page.getByTestId("total-practice-capital").textContent(), /5\s000\sKč/);
   assert.equal(await page.getByRole("progressbar", { name: "Dokončené lekce modulu Základy investování" }).getAttribute("aria-valuenow"), "7");
